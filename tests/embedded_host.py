@@ -7,6 +7,7 @@ import math
 import os
 from pathlib import Path
 import tempfile
+import threading
 import time
 
 def main():
@@ -28,6 +29,8 @@ def main():
     dll.c3d_patch_json.restype = c.c_char_p
     dll.c3d_messages_json.argtypes = [c.c_void_p, c.c_char_p]
     dll.c3d_messages_json.restype = c.c_char_p
+    dll.c3d_panel_rgba.argtypes = [c.c_void_p, c.c_char_p, c.POINTER(c.c_uint32), c.POINTER(c.c_uint32)]
+    dll.c3d_panel_rgba.restype = c.POINTER(c.c_uint8)
     fp = c.POINTER(c.c_float)
     dll.c3d_process.argtypes = [c.c_void_p, fp, fp, fp, fp, c.c_uint32]
     dll.c3d_process.restype = c.c_int
@@ -90,6 +93,32 @@ def main():
             elapsed = time.perf_counter() - started
             rms = math.sqrt(energy / 96000)
             assert rms > .01 and peak <= 1.01, (rms, peak)
+            # UI work must never manufacture silent blocks on the DSP thread.
+            # All native widget access stays on the owner thread, as upstream.
+            running, ready = threading.Event(), threading.Event()
+            running.set()
+            blocks, failures = [], []
+            def audio_worker():
+                left, right = (c.c_float * 256)(), (c.c_float * 256)()
+                ready.set()
+                while running.is_set():
+                    if not dll.c3d_process(host, None, None, left, right, 256):
+                        failures.append('Concurrent audio callback failed')
+                        break
+                    blocks.append(sum(v*v for v in left))
+            worker = threading.Thread(target=audio_worker, daemon=True)
+            worker.start()
+            assert ready.wait(2)
+            try:
+                for _ in range(64):
+                    assert dll.c3d_messages_json(host, b''), dll.c3d_error(host)
+                    width, height = c.c_uint32(), c.c_uint32()
+                    assert dll.c3d_panel_rgba(host, b'1', c.byref(width), c.byref(height)), dll.c3d_error(host)
+            finally:
+                running.clear()
+                worker.join(timeout=5)
+            assert not worker.is_alive() and not failures, failures
+            assert len(blocks) > 100 and min(blocks) > .001, ('UI interrupted audio', len(blocks), min(blocks, default=0))
             assert dll.c3d_save(host, str(saved).encode()), dll.c3d_error(host)
             assert saved.is_file() and saved.stat().st_size > 0
             assert dll.c3d_load(host, str(saved).encode()), dll.c3d_error(host)
@@ -99,7 +128,8 @@ def main():
             print(json.dumps(dict(result='PASS', pid=os.getpid(), modules=2, cables=1,
                                   audio_rms=rms, audio_peak=peak, offline_seconds=2,
                                   processing_seconds=elapsed, patch_roundtrip=True,
-                                  direct_catalog_models=190, direct_actions_undo=True)))
+                                  direct_catalog_models=190, direct_actions_undo=True,
+                                  concurrent_ui_audio_blocks=len(blocks), silent_blocks=0)))
     finally:
         dll.c3d_destroy(host)
     # A fresh lifetime must work after teardown, without stale context or registry.

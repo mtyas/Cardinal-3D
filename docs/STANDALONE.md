@@ -13,6 +13,9 @@ An initial Windows engine DLL and Godot extension are now implemented in
 native patches, discover the original 190 models, and exercise cable removal,
 module addition and undo through a direct in-process command adapter. This is
 an experimental target, not yet a replacement for the working VR application.
+The offscreen graphics variant also reuses original NanoVG module artwork and
+context menus inside the same process. Panel and metadata work run alongside
+the native audio thread without the former UI gate producing silent blocks.
 See `embedded/README.md` for the isolated build/check commands and remaining
 acceptance work. The confirmed runtime is tagged `quest2-tested-2026-10-10`.
 

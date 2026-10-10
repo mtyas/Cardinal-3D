@@ -24,6 +24,8 @@ C3D_API int c3d_save(void* host, const char* patch_path);
 // JSON pointer belongs to host, valid until next call or destroy; UI thread only.
 C3D_API const char* c3d_patch_json(void* host);
 C3D_API const char* c3d_messages_json(void* host, const char* command_json);
+C3D_API const char* c3d_render_surface(void* host);
+C3D_API const uint8_t* c3d_surface_rgba(void* host, uint32_t* width, uint32_t* height);
 // Original panel SVG rendered on the owner thread. Returned pixels belong to
 // host and are valid until the next panel request or destroy. RGBA8, top-down.
 C3D_API const uint8_t* c3d_panel_rgba(void* host, const char* module_id, uint32_t* width, uint32_t* height);

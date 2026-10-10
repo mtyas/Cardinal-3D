@@ -12,7 +12,7 @@ def git(*args):
 pin = json.loads((ROOT / 'upstream.lock.json').read_text())
 assert git('rev-parse', 'HEAD').strip() == pin['commit']
 changed = set(git('diff', 'HEAD', '--name-only').splitlines())
-allowed = {'src/CardinalUI.cpp', 'src/override/ModuleWidget.cpp', 'src/Makefile.cardinal.mk', 'plugins/Makefile', 'dpf', 'src/Rack'}
+allowed = {'src/CardinalUI.cpp', 'src/override/ModuleWidget.cpp', 'src/override/Window.cpp', 'src/Makefile.cardinal.mk', 'plugins/Makefile', 'dpf', 'src/Rack'}
 assert changed <= allowed, f'Unexpected upstream changes: {changed-allowed}'
 def verify_overlay(relative, replacements):
     checkout = source / relative

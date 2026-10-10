@@ -36,6 +36,23 @@ def main():
     # Preserve subclass destructors during standalone extraction. Only registered
     # widgets remove a module from the live engine; preview widgets still own/delete it.
     replace(CARDINAL / "src/override/ModuleWidget.cpp", '\t\tAPP->engine->removeModule(this->module);', '\t\tif (APP->engine->getModule(this->module->id) == this->module)\n\t\t\tAPP->engine->removeModule(this->module);')
+    # Enter Cardinal's existing hidden GL context without creating a second app
+    # process or a desktop UI. The embedding host restores its caller's WGL context.
+    replace(CARDINAL / "src/override/Window.cpp", 'void WindowSetMods(Window* const window, const int mods)', '''void WindowRunEmbedded(Window* window, void (*callback)(void*), void* user)
+{
+    const DGL_NAMESPACE::Window::ScopedGraphicsContext scope(window->internal->hiddenWindow);
+    const double now = system::getTime();
+    if (std::isfinite(window->internal->frameTime))
+        window->internal->lastFrameDuration = now - window->internal->frameTime;
+    window->internal->frameTime = now;
+    window->internal->fbCount = 0;
+    nvgReset(window->vg);
+    if (window->uiFont != nullptr) bndSetFont(window->uiFont->handle);
+    callback(user);
+    ++window->internal->frame;
+}
+
+void WindowSetMods(Window* const window, const int mods)''')
     replace(ui, '#include "WindowParameters.hpp"', '#include "WindowParameters.hpp"\n#if defined(CARDINAL_3D_BRIDGE) && !defined(DISTRHO_OS_WASM)\n#include "cardinal3d/Cardinal3DBridge.hpp"\n#endif')
     replace(ui, '    int rateLimitStep = 0;', '    int rateLimitStep = 0;\n#ifdef CARDINAL_3D_BRIDGE\n    cardinal3d::Bridge spatialBridge;\n#endif')
     replace(ui, '        context->window->step();\n    }\n\n    void uiIdle()', '        context->window->step();\n#ifdef CARDINAL_3D_BRIDGE\n        spatialBridge.render();\n#endif\n    }\n\n    void uiIdle()')

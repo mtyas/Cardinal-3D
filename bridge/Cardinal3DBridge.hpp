@@ -59,6 +59,8 @@ inline std::string encode(json_t* value) {
 class Bridge {
     Transport transport;
     json_t* localMessages = nullptr;
+    bool inProcessMode = false;
+    std::function<void(json_t*, const std::vector<uint8_t>&)> localSurface;
     bool enabled = false, authenticated = false, overlayRequested = false, compressSurfaces = false;
     std::string token;
     uint64_t generation = 1;
@@ -619,6 +621,7 @@ class Bridge {
 public:
     ~Bridge() { cancelScan(); }
     Bridge(bool inProcess = false) {
+        inProcessMode = inProcess;
         if (inProcess) { authenticated = true; return; }
         const char* port = std::getenv("CARDINAL_3D_PORT");
         if (!port) return; // Existing Cardinal behaves normally unless explicitly enabled.
@@ -723,8 +726,9 @@ public:
         transport.flush();
     }
 #ifndef HEADLESS
+    void setLocalSurfaceCallback(std::function<void(json_t*, const std::vector<uint8_t>&)> callback) { localSurface = std::move(callback); }
     void render() {
-        if (!enabled || !authenticated || !APP->window->fbVg) return;
+        if ((!enabled && !inProcessMode) || !authenticated || !APP->window->fbVg) return;
         const double now = system::getTime();
         if (now - lastSurface < 1.0/30) return;
         auto modules = APP->scene->rack->getModules();
@@ -817,6 +821,11 @@ public:
         artwork.reserve(pixels.size());
         for (int row = height - 1; row >= 0; --row)
             artwork.insert(artwork.end(), pixels.begin()+row*width*4, pixels.begin()+(row+1)*width*4);
+        if (inProcessMode && localSurface) {
+            localSurface(header, artwork);
+            json_decref(header);
+            return;
+        }
         if (compressSurfaces) {
             std::vector<uint8_t> compressed(ZSTD_compressBound(artwork.size()));
             const size_t compressedSize = ZSTD_compress(compressed.data(), compressed.size(), artwork.data(), artwork.size(), 1);

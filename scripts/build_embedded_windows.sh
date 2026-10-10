@@ -9,7 +9,7 @@ source="$root/vendor/Cardinal"
 target="$source/src/CardinalEmbedded"
 mkdir -p "$target"
 cp embedded/Host.cpp embedded/Host.h embedded/Makefile "$target/"
-for file in CardinalPlugin.cpp CardinalCommon.cpp CardinalRemote.cpp common.cpp RemoteNanoVG.cpp RemoteWindow.cpp DistrhoPluginInfo.h; do
+for file in CardinalPlugin.cpp CardinalCommon.cpp CardinalCommon-UI.cpp CardinalRemote.cpp CardinalUI.cpp common.cpp RemoteNanoVG.cpp RemoteWindow.cpp DistrhoPluginInfo.h glfw.cpp MenuBar.cpp Window.cpp distrho.rc; do
     ln -sf "../CardinalNative/$file" "$target/$file"
 done
 cd "$source"
@@ -20,7 +20,12 @@ set -u
 args=(-j"${CARDINAL_3D_BUILD_JOBS:-4}" STATIC_BUILD=true PKG_CONFIG=false NOPLUGINS=true CARDINAL_3D_PROTOTYPE=true HEADLESS=true NOOPT=true)
 make -C plugins plugins.a "${args[@]}" HEADLESS=false
 make -C src rack-headless.a "${args[@]}"
-make -C src/CardinalEmbedded embedded "${args[@]}"
+if [[ "${CARDINAL_EMBEDDED_GRAPHICS:-0}" == 1 ]]; then
+    make -C src rack.a "${args[@]}" HEADLESS=false
+    make -C src/CardinalEmbedded embedded "${args[@]}" HEADLESS=false EMBEDDED_GRAPHICS=true
+else
+    make -C src/CardinalEmbedded embedded "${args[@]}"
+fi
 mkdir -p "$root/dist/embedded"
 cp bin/Cardinal3DEngine.dll "$root/dist/embedded/"
 cd "$root"

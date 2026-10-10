@@ -1,12 +1,18 @@
 NAME = CardinalEmbedded
 CARDINAL_VARIANT = native
+ifeq ($(EMBEDDED_GRAPHICS),true)
+NAME = CardinalEmbeddedGraphics
+HEADLESS = false
+else
 HEADLESS = true
+endif
 include ../Makefile.cardinal.mk
 # Retain the exact module widget factories/DSP used by the working VR build.
 # Upstream's headless HostAudio widget omits panel size, knobs and jack layout.
 RACK_EXTRA_LIBS := $(subst plugins-headless.a,plugins.a,$(RACK_EXTRA_LIBS))
 
-.PHONY: embedded
+.PHONY: embedded force-embedded-link
+force-embedded-link:
 embedded: ../../bin/Cardinal3DEngine.dll
 $(BUILD_DIR)/Host.cpp.o: Host.cpp Host.h
 	@mkdir -p $(dir $@)
@@ -14,6 +20,11 @@ $(BUILD_DIR)/Host.cpp.o: Host.cpp Host.h
 # DPF's Windows MAPI adapter also contains the plugin implementation; Host.cpp
 # supplies that implementation directly, so retain only Cardinal's DSP objects.
 EMBEDDED_OBJS = $(filter-out %/DistrhoPluginMain_MAPI.cpp.o,$(OBJS_DSP))
-../../bin/Cardinal3DEngine.dll: $(EMBEDDED_OBJS) $(BUILD_DIR)/Host.cpp.o Makefile
+ifeq ($(EMBEDDED_GRAPHICS),true)
+EMBEDDED_OBJS += $(OBJS_UI) $(BUILD_DIR)/DistrhoUIMain_STATIC.cpp.o
+EMBEDDED_LIBS = $(EXTRA_UI_LIBS) $(DGL_LIBS)
+../../bin/Cardinal3DEngine.dll: $(DGL_LIB)
+endif
+../../bin/Cardinal3DEngine.dll: $(EMBEDDED_OBJS) $(BUILD_DIR)/Host.cpp.o Makefile force-embedded-link
 	@mkdir -p $(dir $@)
-	$(CXX) $(filter %.o,$^) $(BUILD_CXX_FLAGS) $(LINK_FLAGS) $(EXTRA_LIBS) $(EXTRA_DSP_LIBS) -shared -Wl,--out-implib,../../bin/libCardinal3DEngine.dll.a -o $@
+	$(CXX) $(filter %.o %.a,$^) $(BUILD_CXX_FLAGS) $(LINK_FLAGS) $(EXTRA_LIBS) $(EXTRA_DSP_LIBS) $(EMBEDDED_LIBS) -shared -Wl,--out-implib,../../bin/libCardinal3DEngine.dll.a -o $@

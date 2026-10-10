@@ -10,7 +10,8 @@ rsync -a --exclude=.git --exclude=vendor --exclude=build --exclude=dist \
 cd /root/cardinal3d
 sed -i 's/\r$//' scripts/*.sh
 if [[ "${3:-False}" == True ]]; then exit 0; fi
-if [[ "${4:-runtime}" == embedded ]]; then
+if [[ "${4:-runtime}" == embedded* ]]; then
+    if [[ "$4" == embedded-graphics ]]; then export CARDINAL_EMBEDDED_GRAPHICS=1; fi
     bash scripts/build_embedded_windows.sh
     python3 tests/source_audit.py
     mkdir -p "$source_path/dist/embedded"

@@ -5,7 +5,8 @@ It loads Cardinal DSP, the original 190-model prototype registry, native patch
 manager, widget metadata and undo history into Godot's process. There is no
 Cardinal executable or socket in this target. Original upstream DSP is unchanged.
 
-Build locally with `scripts/build_local_windows.ps1 -Embedded`. It reuses the
+Build locally with `scripts/build_local_windows.ps1 -Embedded` for the engine-only
+variant, or `-EmbeddedGraphics` for the original offscreen graphics backend. Both reuse the
 dedicated WSL compiler cache and writes `dist/embedded`; it does not install over
 the working VR bundle. The normal local build command is unchanged. The builder
 needs SCons (`apt-get install scons` in the dedicated build distro). Godot C++
@@ -27,10 +28,13 @@ patch load/save, serialized patch inspection, direct native protocol messages,
 offline audio blocks and an experimental native AudioStream. One engine and one
 active audio playback are supported. Host settings live in an explicit caller
 directory, separate from the current Cardinal standalone settings. Patch/metadata
-operations require the owner thread. Audio processing uses preallocated buffers;
-it never waits for the UI gate. A busy UI operation currently produces silence
-for that block. Before release this must be replaced with a command queue and
-immutable control snapshots so UI work cannot interrupt the audio stream.
+operations require the owner thread. Audio processing uses preallocated buffers
+and runs concurrently with the UI using upstream Rack's engine synchronization.
+Panel rendering and control snapshots no longer replace audio blocks with silence.
+The stress check rasterizes panels and reads snapshots while a separate thread
+processes DSP, rejecting any silent block. Native structural edits still use
+upstream locks; a bounded command queue and immutable control snapshots remain
+required before release to reduce contention and measure worst-case timing.
 
 The optional `CARDINAL_3D_EMBEDDED=1` frontend selects a direct backend. The
 builder stages it in `dist/embedded/rack` and keeps the normal launcher unchanged.
@@ -39,15 +43,21 @@ verified in a clean-cache Godot project with native audio and no TCP connection.
 The original non-headless module library is reused; upstream's headless-only
 audio widget has no usable panel geometry. Static artwork comes from the actual
 parsed native SVG, including Cardinal's colour transforms, rather than guessed
-filenames or recreated labels. Custom drawing is still incomplete.
+filenames or recreated labels. The graphics variant uses Cardinal's existing
+hidden GL context and exact NanoVG module drawing, including custom displays and
+module context menus, with direct RGBA images instead of compressed TCP frames.
+Physical controls and LEDs remain separate live 3D overlays. Godot's WGL context
+is restored after each owner-thread native call. Run the check command with
+`--graphics` to require native artwork and menu images and exercise a real
+Godot desktop GL window in addition to the headless tests.
 
 Cold editor imports use a frame delay before shutdown to avoid the confirmed
 [Godot extension documentation race](https://github.com/godotengine/godot/issues/111048).
 Checks require success markers and reject native assertions/script errors;
 timeouts terminate only the test's own process tree.
 
-Still required for a playable replacement: offscreen custom artwork rendering,
-live VR input integration (including pointer modifiers), immutable state/command
+Still required for a playable replacement: complete custom artwork coverage and
+render scheduling, hardware VR input validation, immutable state/command
 queue, complete audio/MIDI and host settings UI, all module menus, full Windows
 registry, and hardware latency comparisons. The existing VR launcher deliberately
 continues using the tested two-process build until these acceptance checks pass.

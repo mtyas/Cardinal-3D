@@ -7,6 +7,7 @@ var commands: Array[Dictionary] = []
 var panel_requests: Dictionary = {}
 var panels: Dictionary = {}
 var local_snapshot := {}
+var native_surface_count := 0
 
 func _ready() -> void:
 	_boot.call_deferred()
@@ -60,6 +61,13 @@ func _process(_delta: float) -> void:
 	var state: String = native.messages_json("")
 	if not state.is_empty(): _ingest(state)
 	_load_panels(1)
+	var header_text: String = native.render_surface()
+	if not header_text.is_empty():
+		var header: Variant = JSON.parse_string(header_text)
+		var image: Image = native.surface_image()
+		if header is Dictionary and image != null:
+			native_surface_count += 1
+			surface_received.emit(header, image)
 
 func _ingest(payload: String) -> void:
 	var messages: Variant = JSON.parse_string(payload)

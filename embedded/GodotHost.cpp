@@ -32,6 +32,8 @@ protected:
         ClassDB::bind_method(D_METHOD("render_block", "frames"), &CardinalEmbeddedHost::render_block);
         ClassDB::bind_method(D_METHOD("create_audio_stream"), &CardinalEmbeddedHost::create_audio_stream);
         ClassDB::bind_method(D_METHOD("panel_image", "module_id"), &CardinalEmbeddedHost::panel_image);
+        ClassDB::bind_method(D_METHOD("render_surface"), &CardinalEmbeddedHost::render_surface);
+        ClassDB::bind_method(D_METHOD("surface_image"), &CardinalEmbeddedHost::surface_image);
     }
 public:
     ~CardinalEmbeddedHost() { close(); }
@@ -72,6 +74,18 @@ public:
         return result;
     }
     Ref<AudioStream> create_audio_stream();
+    String render_surface() {
+        const char* text = host ? c3d_render_surface(host) : nullptr;
+        return text ? String::utf8(text) : String();
+    }
+    Ref<Image> surface_image() {
+        uint32_t width = 0, height = 0;
+        const uint8_t* pixels = host ? c3d_surface_rgba(host, &width, &height) : nullptr;
+        if (!pixels) return Ref<Image>();
+        PackedByteArray bytes; bytes.resize(int64_t(width) * height * 4);
+        memcpy(bytes.ptrw(), pixels, bytes.size());
+        return Image::create_from_data(width, height, false, Image::FORMAT_RGBA8, bytes);
+    }
     Ref<Image> panel_image(const String& module_id) {
         uint32_t width = 0, height = 0;
         const uint8_t* pixels = host ? c3d_panel_rgba(host, module_id.utf8().get_data(), &width, &height) : nullptr;
