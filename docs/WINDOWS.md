@@ -10,6 +10,8 @@ The UI transport supports Winsock and POSIX with the same authenticated loopback
 
 In GitHub Actions, select **Windows desktop build → Run workflow**. Download `Cardinal-3D-Windows`, extract both archive layers, install Python 3 from its official distribution, and double-click **Launch Cardinal 3D.bat**. The original Cardinal window is available for choosing the native audio device. Closing Godot leaves synthesis running; close Cardinal normally to save native state.
 
+A successful manual build automatically triggers one frontend refresh against current `main`. Download that refresh's artifact to get the latest VR interface. It reuses the native executable only after verifying identical bridge sources, build instructions and dependency pins. A later UI-only update can also specify a successful run ID in the workflow's optional reuse field.
+
 The bundle carries dependency artwork and license notices for private development. It is not cleared for public distribution. Personal patches, session tokens, downloaded tools, local build directories and imported Godot state are excluded from the repository.
 
 ## Cloud execution
