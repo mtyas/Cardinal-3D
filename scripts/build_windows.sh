@@ -11,6 +11,9 @@ python3 scripts/fetch_source.py
 python3 scripts/install_bridge.py
 cd vendor/Cardinal
 export PAWPAW_SKIP_QT=1 PAWPAW_SKIP_LTO=1 PAWPAW_FAST_MATH=1
+# A local WSL builder is noninteractive, just like the hosted cross compiler.
+# Avoid Wine onboarding and executing foreign-platform dependency test programs.
+export PAWPAW_CI=1 PAWPAW_SKIP_TESTS=1
 export PAWPAW_SKIP_GLIB=1 PAWPAW_SKIP_LV2=1 PAWPAW_SKIP_OPENSSL=1 PAWPAW_SKIP_SAMPLERATE=1
 if [[ "${CARDINAL_3D_INSTALL_BUILD_DEPS:-0}" == 1 ]]; then
     ./deps/PawPaw/.github/workflows/bootstrap-deps.sh win64

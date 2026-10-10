@@ -1,9 +1,17 @@
-param([string]$Distribution = 'Cardinal3DBuild', [int]$Jobs = 4)
+param([string]$Distribution = 'Cardinal3DBuild', [ValidateRange(1,64)][int]$Jobs = 4, [switch]$PrepareOnly)
 $ErrorActionPreference = 'Stop'
 $project = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $linuxProject = (& wsl.exe -d $Distribution -u root -- wslpath -a $project).Trim()
 if ($LASTEXITCODE -ne 0) { throw "Cannot access WSL builder $Distribution" }
-# Keep sources and compiler caches in Linux storage; upstream cannot build in paths with spaces.
-& wsl.exe -d $Distribution -u root -- bash -c 'set -e; mkdir -p /root/cardinal3d; rsync -a --exclude=.git --exclude=vendor --exclude=build --exclude=dist --exclude=.tools --exclude=setup --exclude=.godot --exclude=__pycache__ "$1/" /root/cardinal3d/; cd /root/cardinal3d; sed -i "s/\r$//" scripts/*.sh; CARDINAL_3D_BUILD_JOBS="$2" CARDINAL_3D_INSTALL_BUILD_DEPS=1 bash scripts/build_windows.sh; mkdir -p "$1/dist"; cp -a dist/. "$1/dist/"' build $linuxProject $Jobs
+# An LF-only driver also avoids nested shell quoting in Windows PowerShell 5.
+$tools = Join-Path $project '.tools'
+New-Item -ItemType Directory -Force $tools | Out-Null
+$driver = Join-Path $tools 'local-builder.sh'
+$program = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'local_windows_builder.sh')).Replace("`r", '')
+[IO.File]::WriteAllText($driver, $program, [Text.UTF8Encoding]::new($false))
+$linuxDriver = (& wsl.exe -d $Distribution -u root -- wslpath -a $driver).Trim()
+if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve the local build driver' }
+& wsl.exe -d $Distribution -u root -- bash $linuxDriver $linuxProject $Jobs $PrepareOnly.IsPresent
 if ($LASTEXITCODE -ne 0) { throw 'Local build failed; compiler caches have been retained for the next attempt.' }
-Write-Host "Local Windows bundle built in $project\dist"
+if ($PrepareOnly) { Write-Host 'Local source staging verified.' }
+else { Write-Host "Local Windows bundle built in $project\dist" }
