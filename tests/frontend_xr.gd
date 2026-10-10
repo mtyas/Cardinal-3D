@@ -17,6 +17,7 @@ class Host:
 	var modules := {}
 	var generation := "first"
 	var snapshot := {}
+	var module_browser := Control.new()
 	var local_pending_cable := {}
 	var dragging := false
 	var wire_cursor := Vector3.ZERO
@@ -67,6 +68,8 @@ func run() -> void:
 	check(hand.sample(tracker).is_empty(), "Non-finite joint data must cancel")
 	var host := Host.new()
 	root.add_child(host)
+	host.add_child(host.module_browser)
+	host.module_browser.hide()
 	var session = load("res://scripts/xr_session.gd").new()
 	host.add_child(session)
 	session.host = host
@@ -197,6 +200,22 @@ func run() -> void:
 	var before_cancel: int = host.bridge.commands.size()
 	session.interact("left", pose(false), {})
 	check(host.bridge.commands.size() == before_cancel, "An expired or incompatible socket must cancel the cable drop without patch changes")
+	host.snapshot.cables = [{"id": "77", "input_module": "1", "input_port": 1, "output_module": "2", "output_port": 0}]
+	hit.control = {"kind": "port", "direction": "input", "id": 1}
+	session.interact("left", pose(true), hit)
+	session.interact("left", pose(true), hit)
+	session.interact("left", pose(false), {})
+	check(host.bridge.commands[-1].command != "disconnect_cable", "Release tremor without pulling must preserve an existing cable")
+	session.interact("left", pose(true), hit)
+	session.interact("left", pose(true), hit)
+	session.interact("left", pose(true, Vector3(0.06, 0, 0)), {})
+	session.interact("left", pose(false, Vector3(0.06, 0, 0)), {})
+	check(host.bridge.commands[-1].command == "disconnect_cable" and host.bridge.commands[-1].fields.cable_id == "77", "Pulling an input plug clear and releasing must unplug exactly the grabbed cable")
+	session.interact("left", pose(true), hit)
+	session.interact("left", pose(true, Vector3(0.06, 0, 0)), {})
+	before_cancel = host.bridge.commands.size()
+	session.cancel()
+	check(host.bridge.commands.size() == before_cancel + 1 and host.bridge.commands[-1].command == "release", "Tracking cancellation must preserve the cable and only release the gesture")
 	var count := host.bridge.commands.size()
 	session.interact("left", pose(true), {"kind": "case", "world": Vector3.ZERO})
 	session.interact("left", pose(true, Vector3(0.1, 0, 0)), {})

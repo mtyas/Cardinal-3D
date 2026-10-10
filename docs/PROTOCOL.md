@@ -1,5 +1,7 @@
 # Local bridge v1
 
+VR unplugging uses `disconnect_cable` with `cable_id`, `input_module`, and `input_port`. The host removes exactly that cable after validating its current input endpoint and records a native undo action. Missing or changed cables fail without removing another connection. A pulled plug released over empty space disconnects; tracking loss or an unpulled click preserves the cable. Output sockets continue to support creating additional connections.
+
 Enable with `CARDINAL_3D_PORT` (loopback TCP only, 1024â€“65535) and `CARDINAL_3D_TOKEN`. The launcher allocates a port and a random token; its local session file has mode 0600. The original application behaves normally without the port variable.
 
 Every frame starts with a little-endian uint32 byte count, followed by a kind byte. Kind 1 contains UTF-8 JSON. Kind 2 contains uint32 JSON-header length, JSON header and top-down RGBA8 artwork. A client may request `surface_compression: "zstd"` in its hello. Compressed surfaces carry `encoding: "zstd"`; missing encoding means raw pixels. Decompressed size must equal width times height times four and is capped at 16 MiB. The frame count includes the kind byte. The maximum output frame and queue size is 24 MiB; commands are limited to 64 KiB.

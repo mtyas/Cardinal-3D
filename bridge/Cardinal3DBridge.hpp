@@ -504,6 +504,19 @@ class Bridge {
             }
             connect(output, outputId, input, inputId, group);
             APP->history->push(group);
+        } else if (op == "disconnect_cable") {
+            release();
+            for (auto* cw : APP->scene->rack->getCompleteCables()) {
+                auto* c = cw->getCable();
+                if (std::to_string(c->id) != text(cmd, "cable_id")) continue;
+                if (std::to_string(c->inputModule->id) != text(cmd, "input_module") || c->inputId != number(cmd, "input_port"))
+                    throw std::runtime_error("Cable endpoint changed; try again");
+                auto* action = new history::CableRemove; action->setCable(cw);
+                APP->scene->rack->removeCable(cw); delete cw;
+                APP->history->push(action);
+                return;
+            }
+            throw std::runtime_error("Cable was removed; try again");
         } else if (op == "disconnect_port") {
             release(); auto* mw = module(text(cmd, "module"));
             if (!mw) throw std::runtime_error("Module was removed");

@@ -23,6 +23,17 @@ var search: LineEdit
 var sort_picker: OptionButton
 var type_picker: OptionButton
 var manufacturer_picker: OptionButton
+var category_button: Button
+var manufacturer_button: Button
+var filter_panel: PanelContainer
+var filter_grid: GridContainer
+var filter_label: Label
+var filter_previous: Button
+var filter_next: Button
+var filter_picker: OptionButton
+var filter_page := 0
+var filter_scroll_elapsed := 0.35
+const FILTER_PAGE_SIZE := 20
 var count: Label
 var selection: Label
 var add_button: Button
@@ -57,11 +68,23 @@ func setup(client: CardinalBridgeClient) -> void:
 	manufacturer_picker.tooltip_text = "Show one manufacturer"
 	manufacturer_picker.item_selected.connect(func(_index: int): _filter(); _reset_scroll())
 	header.add_child(manufacturer_picker)
+	manufacturer_picker.hide()
+	manufacturer_button = Button.new()
+	manufacturer_button.custom_minimum_size = Vector2(240, 56)
+	manufacturer_button.add_theme_font_size_override("font_size", 20)
+	manufacturer_button.pressed.connect(func(): _show_filter_choices(manufacturer_picker))
+	header.add_child(manufacturer_button)
 	type_picker = OptionButton.new()
 	type_picker.custom_minimum_size.x = 150
 	type_picker.add_item("All types")
 	type_picker.item_selected.connect(func(_index: int): _filter(); _reset_scroll())
 	header.add_child(type_picker)
+	type_picker.hide()
+	category_button = Button.new()
+	category_button.custom_minimum_size = Vector2(220, 56)
+	category_button.add_theme_font_size_override("font_size", 20)
+	category_button.pressed.connect(func(): _show_filter_choices(type_picker))
+	header.add_child(category_button)
 	sort_picker = OptionButton.new()
 	for label in ["Sort: Name", "Sort: Manufacturer", "Sort: Module type"]: sort_picker.add_item(label)
 	sort_picker.tooltip_text = "Order modules by"
@@ -70,6 +93,29 @@ func setup(client: CardinalBridgeClient) -> void:
 	var close := Button.new(); close.text = "Close"
 	close.pressed.connect(close_browser)
 	header.add_child(close)
+	filter_panel = PanelContainer.new()
+	column.add_child(filter_panel)
+	var filter_column := VBoxContainer.new()
+	filter_panel.add_child(filter_column)
+	var navigation := HBoxContainer.new()
+	filter_column.add_child(navigation)
+	filter_previous = Button.new(); filter_previous.text = "Previous"
+	filter_previous.custom_minimum_size = Vector2(140, 48)
+	filter_previous.pressed.connect(func(): _filter_page_by(-1))
+	navigation.add_child(filter_previous)
+	filter_label = Label.new(); filter_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	filter_label.add_theme_font_size_override("font_size", 20)
+	navigation.add_child(filter_label)
+	filter_next = Button.new(); filter_next.text = "Next"
+	filter_next.custom_minimum_size = Vector2(140, 48)
+	filter_next.pressed.connect(func(): _filter_page_by(1))
+	navigation.add_child(filter_next)
+	var dismiss := Button.new(); dismiss.text = "Done"; dismiss.custom_minimum_size = Vector2(100, 48)
+	dismiss.pressed.connect(func(): filter_panel.hide())
+	navigation.add_child(dismiss)
+	filter_grid = GridContainer.new(); filter_grid.columns = 4
+	filter_column.add_child(filter_grid)
+	filter_panel.hide()
 	var shelf := HBoxContainer.new()
 	shelf.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(shelf)
@@ -121,7 +167,7 @@ func setup(client: CardinalBridgeClient) -> void:
 	add_button.pressed.connect(_insert)
 	footer.add_child(add_button)
 	var hint := Label.new()
-	hint.text = "Scroll to explore · Click to select · Drag to rotate · Double-click to add · Escape to close"
+	hint.text = "Stick up/down to scroll · Click to select · Drag to rotate · Add selected module · Escape to close"
 	hint.add_theme_font_size_override("font_size", 12)
 	column.add_child(hint)
 	visible = false
@@ -155,6 +201,7 @@ func set_catalog(models: Array) -> void:
 
 func show_browser() -> void:
 	visible = true
+	filter_panel.hide()
 	_filter()
 	_reset_scroll()
 	search.grab_focus()
@@ -166,6 +213,8 @@ func close_browser() -> void:
 	_clear_gallery()
 
 func _filter() -> void:
+	category_button.text = type_picker.get_item_text(maxi(type_picker.selected, 0))
+	manufacturer_button.text = manufacturer_picker.get_item_text(maxi(manufacturer_picker.selected, 0))
 	filtered.clear()
 	var query := search.text.to_lower()
 	var type_filter := "" if type_picker.selected <= 0 else type_picker.get_item_text(type_picker.selected)
@@ -177,6 +226,53 @@ func _filter() -> void:
 		if (manufacturer_filter.is_empty() or maker == manufacturer_filter) and (type_filter.is_empty() or type_filter in tags) and (query.is_empty() or query in text.to_lower()):
 			filtered.append(model)
 	filtered.sort_custom(func(a: Dictionary, b: Dictionary): return _sort_key(a) < _sort_key(b))
+
+func _show_filter_choices(picker: OptionButton) -> void:
+	filter_picker = picker
+	filter_page = maxi(picker.selected, 0) / FILTER_PAGE_SIZE
+	filter_panel.show()
+	_render_filter_choices()
+
+func _filter_page_by(amount: int) -> void:
+	filter_page = clampi(filter_page + amount, 0, maxi(0, ceili(float(filter_picker.item_count) / FILTER_PAGE_SIZE) - 1))
+	_render_filter_choices()
+
+func _render_filter_choices() -> void:
+	for child in filter_grid.get_children():
+		filter_grid.remove_child(child)
+		child.queue_free()
+	var pages := maxi(1, ceili(float(filter_picker.item_count) / FILTER_PAGE_SIZE))
+	filter_label.text = "%s — page %d / %d" % ["Categories" if filter_picker == type_picker else "Manufacturers", filter_page + 1, pages]
+	filter_previous.disabled = filter_page == 0
+	filter_next.disabled = filter_page == pages - 1
+	for index in range(filter_page * FILTER_PAGE_SIZE, mini((filter_page + 1) * FILTER_PAGE_SIZE, filter_picker.item_count)):
+		var button := Button.new()
+		button.text = filter_picker.get_item_text(index)
+		button.custom_minimum_size = Vector2(280, 56)
+		button.add_theme_font_size_override("font_size", 20)
+		button.toggle_mode = true
+		button.button_pressed = index == filter_picker.selected
+		button.pressed.connect(func(): _choose_filter(index))
+		filter_grid.add_child(button)
+
+func _choose_filter(index: int) -> void:
+	filter_picker.select(index)
+	filter_panel.hide()
+	_filter()
+	_reset_scroll()
+
+func scroll_vr(axis: float, delta: float) -> void:
+	if absf(axis) <= 0.18:
+		filter_scroll_elapsed = 0.35
+		return
+	if filter_panel.visible:
+		filter_scroll_elapsed += delta
+		if filter_scroll_elapsed >= 0.35:
+			_filter_page_by(-1 if axis > 0 else 1)
+			filter_scroll_elapsed = 0
+		return
+	var amount := signf(axis) * (absf(axis) - 0.18) / 0.82
+	scrollbar.value = clampf(scrollbar.value - amount * 240.0 * delta, 0, maxf(0, scrollbar.max_value - scrollbar.page))
 
 func _sort_key(model: Dictionary) -> String:
 	var name := str(model.get("module_name", model["name"])).to_lower()

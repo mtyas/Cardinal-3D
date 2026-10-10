@@ -84,6 +84,9 @@ func _cable_drop_hit(hit: Dictionary) -> Dictionary:
 		cable_target_time = Time.get_ticks_msec()
 		return hit
 	# Absorb a brief aiming tremor while releasing, but never latch indefinitely.
+	# Once an existing plug has been pulled clear, don't snap it back to its origin.
+	if capture.get("cable_pulled", false) and not capture.get("replace_cable", "").is_empty() and not cable_target.is_empty():
+		if str(cable_target.view.descriptor.id) == capture.module and int(cable_target.control.id) == int(capture.control.id): return {}
 	if Time.get_ticks_msec() - cable_target_time <= 150 and is_instance_valid(cable_target.get("view")) and _compatible_socket(cable_target):
 		return cable_target
 	return {}
@@ -98,6 +101,8 @@ func _begin_cable(hit: Dictionary) -> void:
 				fixed = {"module": str(cable.output_module), "port": cable.output_port, "direction": "output"}
 				break
 	capture.cable = fixed
+	capture.cable_start_position = last_position
+	capture.cable_pulled = false
 	host.local_pending_cable = fixed
 	host.wire_cursor = hit.world
 	host.dragging = true
@@ -111,6 +116,14 @@ func _commit_cable(drop: Dictionary) -> void:
 	var input: Dictionary = destination if fixed.direction == "output" else fixed
 	fields.merge({"output_module": output.module, "output_port": output.port, "input_module": input.module, "input_port": input.port})
 	host.bridge.send_command("patch_cable", fields)
+
+func _track_cable_pull(sample: Dictionary) -> void:
+	if not _cable_active() or capture.get("replace_cable", "").is_empty(): return
+	var to_socket: Vector3 = capture.world - sample.origin
+	var direction: Vector3 = sample.direction.normalized()
+	var ray_distance := (to_socket - direction * to_socket.dot(direction)).length()
+	if ray_distance > 0.045 or sample.position.distance_to(capture.cable_start_position) > 0.025:
+		capture.cable_pulled = true
 
 func _nearest_free_position(view: CardinalModuleView, wanted: Vector2) -> Vector2:
 	var grid := Vector2(15, 380)
@@ -418,6 +431,13 @@ func _move_player(stick: Vector2, _unused_turn: float, delta: float) -> void:
 	if not gesture_owner.is_empty():
 		move_velocity = Vector3.ZERO
 		return
+	if host.module_browser.visible:
+		move_velocity = Vector3.ZERO
+		host.module_browser.scroll_vr(stick.y, delta)
+		return
+	if is_instance_valid(ui_panel) and ui_panel.visible:
+		move_velocity = Vector3.ZERO
+		return
 	var amount := stick.length()
 	var desired := Vector3.ZERO
 	if amount > STICK_DEADZONE:
@@ -529,6 +549,7 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 		if not is_instance_valid(view) or host.generation != capture["generation"] or not host.modules.has(capture["module"]):
 			cancel()
 			return
+	_track_cable_pull(sample)
 	if start and not hit.is_empty():
 		cable_target.clear()
 		gesture_owner = side
@@ -573,6 +594,8 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 				elif _cable_active():
 					var drop := _cable_drop_hit(hit)
 					if not drop.is_empty(): _commit_cable(drop)
+					elif capture.get("cable_pulled", false) and not capture.get("replace_cable", "").is_empty():
+						host.bridge.send_command("disconnect_cable", {"cable_id": capture.replace_cable, "input_module": capture.module, "input_port": capture.control.id})
 				elif hit.get("kind") == "module": _pointer(hit, "up")
 				else: host.bridge.send_command("release")
 		gesture_owner = ""

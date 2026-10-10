@@ -67,6 +67,13 @@ func run() -> void:
 	check(knob.get_node("ColourCap").material_override.albedo_color.is_equal_approx(Color("#dd6622")), "Knob cap must preserve the colour supplied by the original native SVG")
 	var marker: MeshInstance3D = knob.get_node("ValueIndicator")
 	check(marker.material_override.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED and marker.position.z > 0.015, "The value marker must stay bright and in front of the knob cap")
+	var white_data: Dictionary = module.duplicate(true)
+	white_data.controls[0].body_color = "#ffffff"
+	var white_view = load("res://scripts/module_view.gd").new()
+	root.add_child(white_view)
+	white_view.setup(white_data)
+	check(white_view.knobs["2"].node.get_node("ValueIndicator").material_override.albedo_color == Color.BLACK, "White knobs must use a black position marker")
+	white_view.queue_free()
 	var changed: Dictionary = module.duplicate(true)
 	changed.controls[0].normalized = 0.8
 	panel.update_state(changed)

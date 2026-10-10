@@ -106,7 +106,8 @@ func setup(data: Dictionary) -> void:
 			mark.size = Vector3(radius * 0.16, radius * 0.57, 0.002)
 			var indicator := StandardMaterial3D.new()
 			indicator.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			indicator.albedo_color = Color("f4fff8")
+			var brightness := face_color.r * 0.2126 + face_color.g * 0.7152 + face_color.b * 0.0722
+			indicator.albedo_color = Color.BLACK if brightness > 0.5 else Color("f4fff8")
 			var marker := mesh_node(mark, Vector3(0, radius * 0.58, 0.018), indicator, pivot)
 			marker.name = "ValueIndicator"
 			marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
