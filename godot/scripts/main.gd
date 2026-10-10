@@ -7,6 +7,7 @@ const RackCase := preload("res://scripts/rack_case.gd")
 const ControlFocus := preload("res://scripts/control_focus.gd")
 const ModuleBrowser := preload("res://scripts/module_browser.gd")
 var module_browser
+var xr_session
 var bridge: CardinalBridgeClient
 var camera: Camera3D
 var environment: Environment
@@ -112,12 +113,17 @@ func _ready() -> void:
 	_update_camera()
 	_build_ui()
 	get_tree().auto_accept_quit = false
+	if OS.get_environment("CARDINAL_3D_XR") == "1":
+		xr_session = load("res://scripts/xr_session.gd").new()
+		add_child(xr_session)
+		if not xr_session.setup(self): xr_session.queue_free(); xr_session = null
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		bridge.send_command("release")
 		get_tree().quit()
 	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT and bridge != null:
+		if xr_session != null and xr_session.active: xr_session.cancel()
 		_release()
 		_clear_focus()
 		orbiting = false
@@ -442,7 +448,7 @@ func _rebuild_cables(descriptions: Array) -> void:
 		var start: Vector3 = modules[output_id].port_position(int(cable["output_port"]), "output")
 		var end: Vector3 = modules[input_id].port_position(int(cable["input_port"]), "input")
 		var color := Color(str(cable.get("color", "#dd9456")))
-		_draw_wire(start, end, color, cables)
+		_draw_wire(cables.to_local(start), cables.to_local(end), color, cables)
 
 func _draw_wire(start: Vector3, end: Vector3, color: Color, parent_node: Node3D) -> void:
 	if start.distance_to(end) < 0.0001:
@@ -495,7 +501,7 @@ func _pending_wire() -> void:
 	if not dragging or not modules.has(id):
 		return
 	var start: Vector3 = modules[id].port_position(int(pending["port"]), str(pending["direction"]))
-	_draw_wire(start, wire_cursor, Color(str(pending.get("color", "#e39756"))), pending_wire)
+	_draw_wire(pending_wire.to_local(start), pending_wire.to_local(wire_cursor), Color(str(pending.get("color", "#e39756"))), pending_wire)
 
 func _frame_rack() -> void:
 	if modules.is_empty():
@@ -655,6 +661,7 @@ func _release() -> void:
 	_pending_wire()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if xr_session != null and xr_session.active: return
 	if module_browser != null and module_browser.visible: return
 	if overlay_mode == "menu":
 		if event is InputEventMouseButton and event.pressed:

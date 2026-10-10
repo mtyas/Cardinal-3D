@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Launch the private Windows development bundle without transporting audio."""
 from pathlib import Path
+import argparse
 import os
 import secrets
 import socket
@@ -9,6 +10,9 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--vr", action="store_true")
+    args = parser.parse_args()
     if os.name != 'nt':
         raise RuntimeError('Use scripts/run.py on macOS')
     cardinal = ROOT / 'Cardinal/CardinalNative.exe'
@@ -25,9 +29,10 @@ def main():
         reservation.bind(('127.0.0.1', 0)); port = reservation.getsockname()[1]
     env = os.environ.copy()
     env.update(CARDINAL_3D_PORT=str(port), CARDINAL_3D_TOKEN=secrets.token_hex(24), CARDINAL_3D_OVERRIDES=str(ROOT / 'bridge/overrides.json'))
+    if args.vr: env['CARDINAL_3D_XR'] = '1'
     native = subprocess.Popen([str(cardinal)], cwd=cardinal.parent, env=env)
     try:
-        frontend = subprocess.Popen([str(executables[0]), '--path', str(ROOT / 'godot')], cwd=ROOT, env=env)
+        frontend = subprocess.Popen([str(executables[0]), '--path', str(ROOT / 'godot'), '--xr-mode', 'on' if args.vr else 'off'], cwd=ROOT, env=env)
         print('Cardinal 3D started. Closing the frontend leaves Cardinal audio running.', flush=True)
         frontend.wait()
         native.wait()

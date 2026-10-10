@@ -16,3 +16,6 @@ textures/default_filters/use_nearest_mipmap_filter=false
 
 [debug]
 file_logging/enable_file_logging=false
+
+[xr]
+openxr/extensions/hand_tracking=true

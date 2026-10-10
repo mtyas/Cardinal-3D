@@ -18,11 +18,21 @@ Codex Cloud can work on the private GitHub source and prepare/review changes. Th
 
 Official cloud setup: https://learn.chatgpt.com/docs/cloud . Choose the private `mtyas/Cardinal-3D` repository when configuring the environment. Dependency setup needs access to upstream repositories and source/tool download hosts.
 
+## VR and hands prototype
+
+**Launch Cardinal 3D VR.bat** starts Godot with OpenXR enabled. Connect Quest Link and select the Meta PC OpenXR runtime before launching. Enable hand tracking on the headset; Meta documents Developer Runtime Features for development over Link. See [Meta's Link development requirements](https://developers.meta.com/vr/documentation/native/android/mobile-passthrough-over-link/). Actual extension availability must be checked on the PC.
+
+Both tracked hands display joint lines and pointing rays. A visible marker snaps to nearby controls. Point and pinch to press switches, adjust knobs by moving the hand vertically, drag sliders, and connect or move cables between sockets. Open the fingers to release. Pinching the module's top strip moves the module through Cardinal's history; pinching the exposed case moves the whole rack in space without changing patch coordinates. Controller trigger actions take over when optical tracking is absent. The floating UI contains the module browser, filters, scrolling arrows, lighting, save/load, undo/redo and a Control menu button for the last hovered control.
+
+Pinch detection uses separate press/release distances. Tracking recovery requires opening the fingers before another press. Focus loss, bridge disconnect, patch reload and module deletion release active gestures. Inferred controller hands do not generate optical pinch presses. Cable meshes use rack-local coordinates so spatial rack movement keeps endpoints attached.
+
+Automated synthetic joint and interaction checks pass on macOS; the Windows workflow also runs them. These verify routing and lifecycle behavior, not physical hand accuracy or headset rendering. The first virtual hands are joint outlines; detailed hand meshes and direct fingertip touching remain later work. There is no headset keyboard yet; use the PC keyboard for search and file names.
+
 ## Next acceptance steps
 
 1. Launch the Windows desktop bundle, build a wired patch, verify native save/load and inspect the original Cardinal window.
 2. Compare deterministic audio with the same pinned Windows baseline, sample rate and settings.
-3. Enable OpenXR, position the rack at a comfortable scale, and validate stereo rendering through Quest Link.
-4. Add controller rays and tracked hands. Hand pointing/pinching must operate knobs, switches and wires; loss of tracking must release gestures. Grabbing the case changes scene placement only.
+3. Launch VR, position the rack at a comfortable scale, and validate stereo rendering through Quest Link.
+4. Exercise controller rays and tracked hands. Hand pointing/pinching must operate knobs, switches and wires; loss of tracking must release gestures. Grabbing the case changes scene placement only.
 5. Verify which OpenXR hand extensions the active PC runtime exposes; retain controllers when tracking is unavailable. Test clarity, frame timing and sustained audio while interacting.
 6. Explore Android standalone after the PC VR interaction is usable. Evaluate RackDroid platform code against the pinned Cardinal runtime and native patch compatibility.

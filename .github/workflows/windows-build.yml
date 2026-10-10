@@ -1,8 +1,14 @@
 name: Windows desktop build
 on:
   workflow_dispatch:
+    inputs:
+      reuse_run:
+        description: 'Optional successful build run ID: reuse its unchanged native runtime and package current frontend'
+        required: false
+        default: ''
 permissions:
   contents: read
+  actions: read
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -12,11 +18,34 @@ jobs:
       CARDINAL_3D_BUILD_JOBS: '4'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Build pinned Windows x64 runtime and package frontend
+        if: inputs.reuse_run == ''
         run: bash scripts/build_windows.sh
+      - name: Verify the previous runtime has identical native sources
+        if: inputs.reuse_run != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ inputs.reuse_run }}
+          GH_REPO: ${{ github.repository }}
+        run: python scripts/verify_windows_runtime.py
+      - name: Download the previous private runtime
+        if: inputs.reuse_run != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: Cardinal-3D-Windows
+          run-id: ${{ inputs.reuse_run }}
+          github-token: ${{ github.token }}
+          path: build/previous-artifact
+      - name: Package current frontend with the verified runtime
+        if: inputs.reuse_run != ''
+        run: |
+          python -m zipfile -e build/previous-artifact/Cardinal-3D-Windows.zip build/previous
+          python scripts/package_windows.py --reuse-runtime build/previous/Cardinal-3D-Windows
       - name: Preserve private development artifact
         uses: actions/upload-artifact@v4
         with:
