@@ -31,6 +31,27 @@ var move_ghost: MeshInstance3D
 var proposed_position := Vector2.ZERO
 var snapped_position := Vector2.ZERO
 var move_start := Vector2.ZERO
+var cable_target := {}
+var cable_target_time := 0
+
+func _cable_active() -> bool:
+	return capture.get("kind", "") == "module" and capture.get("control", {}).get("kind", "") == "port" and not gesture_owner.is_empty()
+
+func _compatible_socket(hit: Dictionary) -> bool:
+	if hit.get("kind", "") != "module" or hit.get("control", {}).get("kind", "") != "port": return false
+	var source: Dictionary = host.snapshot.get("pending_cable", {})
+	if source.is_empty(): source = capture.get("control", {})
+	return hit.control.get("direction", "") != source.get("direction", "")
+
+func _cable_drop_hit(hit: Dictionary) -> Dictionary:
+	if _compatible_socket(hit):
+		cable_target = hit.duplicate()
+		cable_target_time = Time.get_ticks_msec()
+		return hit
+	# Absorb a brief aiming tremor while releasing, but never latch indefinitely.
+	if Time.get_ticks_msec() - cable_target_time <= 150 and is_instance_valid(cable_target.get("view")) and _compatible_socket(cable_target):
+		return cable_target
+	return {}
 
 func _nearest_free_position(view: CardinalModuleView, wanted: Vector2) -> Vector2:
 	var grid := Vector2(15, 380)
@@ -202,6 +223,7 @@ func _make_ui() -> void:
 func _refresh_ui() -> void:
 	var visible_ui: bool = main_menu.visible or host.module_browser.visible or host.dialog.visible or host.overlay.visible
 	ui_panel.visible = visible_ui
+	ui_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if visible_ui else SubViewport.UPDATE_DISABLED
 	ui_collision.disabled = not visible_ui
 	ui_rect = Rect2(0, 0, 1440, 900)
 	if main_menu.visible and not host.module_browser.visible and not host.dialog.visible and not host.overlay.visible and not host.settings_panel.visible:
@@ -350,8 +372,11 @@ func _hit(from: Vector3, direction: Vector3) -> Dictionary:
 	var pixel := view.pixel_at(hit["position"])
 	var closest := {}
 	var separation := 24.0
+	var patching := _cable_active()
+	if patching: separation = 32.0
 	for control: Dictionary in view.descriptor.get("controls", []) if pixel.y > 32 else []:
 		if not control.get("visible", true) or not control["kind"] in ["knob", "slider", "switch", "button", "port", "custom"]: continue
+		if patching and not _compatible_socket({"kind": "module", "control": control}): continue
 		var candidate := Vector2(float(control["x"]), float(control["y"]))
 		var distance := pixel.distance_to(candidate)
 		if distance < separation:
@@ -384,6 +409,7 @@ func _ui_button(pixel: Vector2, pressed: bool) -> void:
 	ui_viewport.push_input(event, true)
 
 func cancel() -> void:
+	cable_target.clear()
 	_clear_move_preview()
 	if capture.get("kind", "") == "ui" and ui_viewport != null: _ui_button(ui_position, false)
 	if host != null:
@@ -422,6 +448,7 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 			cancel()
 			return
 	if start and not hit.is_empty():
+		cable_target.clear()
 		gesture_owner = side
 		capture = hit.duplicate()
 		last_position = sample["position"]
@@ -457,10 +484,15 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 					_clear_move_preview()
 				elif capture.get("control", {}).is_empty(): pass
 				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"]: host.bridge.send_command("release")
+				elif _cable_active():
+					var drop := _cable_drop_hit(hit)
+					if not drop.is_empty(): _pointer(drop, "up")
+					else: host.bridge.send_command("release")
 				elif hit.get("kind") == "module": _pointer(hit, "up")
 				else: host.bridge.send_command("release")
 		gesture_owner = ""
 		capture.clear()
+		cable_target.clear()
 		host.dragging = false
 		host._pending_wire()
 	elif pressed and gesture_owner == side:
@@ -477,6 +509,11 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 					host.bridge.send_command("drag_delta", {"dx": 0.0, "dy": _controller_knob_delta(sample), "mods": 0})
 				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"]:
 					host.bridge.send_command("drag_delta", {"dx": delta.x / SCALE, "dy": -delta.y / SCALE, "mods": 0})
+				elif _cable_active():
+					var socket := _cable_drop_hit(hit)
+					if not socket.is_empty():
+						_pointer(socket, "motion")
+						hit = socket
 				elif hit.get("kind") == "module":
 					_pointer(hit, "motion")
 				else: host.bridge.send_command("drag_delta", {"dx": delta.x / SCALE, "dy": -delta.y / SCALE, "mods": 0})

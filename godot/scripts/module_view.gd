@@ -188,7 +188,10 @@ func apply_surface(image: Image) -> void:
 		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		face.material_override = mat
 	else:
-		texture.set_image(image)
+		if texture.get_width() == image.get_width() and texture.get_height() == image.get_height():
+			texture.update(image)
+		else:
+			texture.set_image(image)
 	for display in screens:
 		display.apply_texture(texture)
 

@@ -27,6 +27,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <cxxabi.h>
+#include <zstd.h>
 
 namespace rack { namespace window { void WindowSetMods(Window*, int); } }
 
@@ -55,7 +56,7 @@ inline std::string encode(json_t* value) {
 
 class Bridge {
     Transport transport;
-    bool enabled = false, authenticated = false, overlayRequested = false;
+    bool enabled = false, authenticated = false, overlayRequested = false, compressSurfaces = false;
     std::string token;
     uint64_t generation = 1;
     std::string topology;
@@ -398,6 +399,7 @@ class Bridge {
         if (op == "hello") {
             if (number(cmd, "version") != 1) throw std::runtime_error("Unsupported bridge protocol");
             if (!token.empty() && text(cmd, "token") != token) throw std::runtime_error("Invalid session token");
+            compressSurfaces = text(cmd, "surface_compression") == "zstd";
             authenticated = true; catalog(); snapshot(); return;
         }
         if (!authenticated) throw std::runtime_error("Send hello before commands");
@@ -707,13 +709,25 @@ public:
             json_object_set_new(header, "origin_x", json_real(region.pos.x));
             json_object_set_new(header, "origin_y", json_real(region.pos.y));
         }
+        std::vector<uint8_t> artwork;
+        artwork.reserve(pixels.size());
+        for (int row = height - 1; row >= 0; --row)
+            artwork.insert(artwork.end(), pixels.begin()+row*width*4, pixels.begin()+(row+1)*width*4);
+        if (compressSurfaces) {
+            std::vector<uint8_t> compressed(ZSTD_compressBound(artwork.size()));
+            const size_t compressedSize = ZSTD_compress(compressed.data(), compressed.size(), artwork.data(), artwork.size(), 1);
+            if (!ZSTD_isError(compressedSize) && compressedSize < artwork.size()) {
+                compressed.resize(compressedSize);
+                artwork.swap(compressed);
+                string(header, "encoding", "zstd");
+            }
+        }
         std::string metadata = encode(header); json_decref(header);
         std::vector<uint8_t> payload;
         uint32_t size = metadata.size();
         for (int i = 0; i < 4; ++i) payload.push_back((size >> (8*i)) & 255);
         payload.insert(payload.end(), metadata.begin(), metadata.end());
-        for (int row = height - 1; row >= 0; --row)
-            payload.insert(payload.end(), pixels.begin()+row*width*4, pixels.begin()+(row+1)*width*4);
+        payload.insert(payload.end(), artwork.begin(), artwork.end());
         transport.queue(2, payload, "surface/" + id);
         transport.flush();
     }

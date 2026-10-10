@@ -16,6 +16,7 @@ class Host:
 	var bridge := Bridge.new()
 	var modules := {}
 	var generation := "first"
+	var snapshot := {}
 	var dragging := false
 	var wire_cursor := Vector3.ZERO
 	var pending_updates := 0
@@ -157,13 +158,23 @@ func run() -> void:
 	session.interact("left", pose(false), hit)
 	check(host.bridge.commands.size() == before_move, "Blank panel space must never reach Cardinal's panel drag handler")
 	hit.pixel.y = 100
-	hit.control = {"kind": "port"}
+	hit.control = {"kind": "port", "direction": "output"}
 	session.interact("left", pose(true), hit)
 	hit.pixel.x = 80
+	hit.control = {"kind": "port", "direction": "input"}
 	session.interact("left", pose(true, Vector3(0.01, 0, 0)), hit)
 	check(host.bridge.commands[-1].fields.phase == "motion" and host.pending_updates > 0, "Cable pinch must forward socket motion and update its visual")
-	session.interact("left", pose(false), hit)
-	check(host.bridge.commands[-1].fields.phase == "up", "Cable drop must use Cardinal's native pointer release")
+	session.interact("left", pose(false), {})
+	check(host.bridge.commands[-1].fields.phase == "up" and host.bridge.commands[-1].fields.x == 80, "A brief release tremor must keep the last compatible socket")
+	hit.control.direction = "output"
+	session.interact("left", pose(true), hit)
+	check(not session._compatible_socket(hit), "A cable must not snap to a socket with the same direction")
+	host.snapshot.pending_cable = {"direction": "input"}
+	check(session._compatible_socket(hit), "Repatching an existing cable must follow its actual fixed endpoint")
+	host.snapshot.clear()
+	session.cable_target_time = Time.get_ticks_msec() - 200
+	session.interact("left", pose(false), {})
+	check(host.bridge.commands[-1].command == "release", "An expired or incompatible socket must cancel the cable drop")
 	var count := host.bridge.commands.size()
 	session.interact("left", pose(true), {"kind": "case", "world": Vector3.ZERO})
 	session.interact("left", pose(true, Vector3(0.1, 0, 0)), {})
@@ -235,7 +246,15 @@ func run() -> void:
 	view.snapshot.pending_cable = {"module": "1", "port": 0, "direction": "output"}
 	view.wire_cursor = Vector3(4, 2, -1)
 	view._pending_wire()
-	check(view.endpoints[1].is_equal_approx(view.wire_cursor), "Pending cable tips must follow the world-space hand ray")
+	var preview: MeshInstance3D = view.pending_mesh
+	var vertices: PackedVector3Array = preview.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	check(preview.to_global(vertices[-1]).is_equal_approx(view.wire_cursor + rack_space.basis * Vector3(0, 0, 0.04)), "Pending cable tips must follow the world-space hand ray")
+	view.wire_cursor += Vector3(0.01, 0, 0)
+	view._pending_wire()
+	check(view.pending_mesh == preview and view.pending_wire.get_child_count() == 1, "Cable motion must reuse a single lightweight preview mesh")
+	view.dragging = false
+	view._pending_wire()
+	check(not preview.visible, "Releasing must hide the reusable preview")
 	view.bridge.connected = false
 	view.queue_free()
 	print("XR hands, controls, cables and lifecycle: %s" % ("PASS" if failures == 0 else "FAIL"))

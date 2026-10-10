@@ -67,6 +67,12 @@ var panning := false
 var snapshot: Dictionary = {}
 var status_timer := 0.0
 var cable_signature := ""
+var pending_mesh: MeshInstance3D
+var pending_signature := ""
+var performance_elapsed := 0.0
+var performance_frames := 0
+var performance_worst := 0.0
+var performance_previous_usec := 0
 
 func _ready() -> void:
 	bridge = BridgeClient.new()
@@ -487,15 +493,36 @@ func _draw_wire(start: Vector3, end: Vector3, color: Color, parent_node: Node3D)
 			Hardware.ring(parent_node, 0.0048, 0.0068 - index * 0.0004, endpoint + Vector3(0, 0, 0.02 + index * 0.006), Hardware.finish(color.darkened(0.18), 0, 0.5))
 
 func _pending_wire() -> void:
-	for child in pending_wire.get_children():
-		pending_wire.remove_child(child)
-		child.queue_free()
 	var pending: Dictionary = snapshot.get("pending_cable", {})
 	var id := str(pending.get("module", ""))
 	if not dragging or not modules.has(id):
+		if is_instance_valid(pending_mesh): pending_mesh.hide()
+		pending_signature = ""
 		return
 	var start: Vector3 = modules[id].port_position(int(pending["port"]), str(pending["direction"]))
-	_draw_wire(pending_wire.to_local(start), pending_wire.to_local(wire_cursor), Color(str(pending.get("color", "#e39756"))), pending_wire)
+	var signature := str([start, wire_cursor, pending.get("color", "#e39756")])
+	if signature == pending_signature: return
+	pending_signature = signature
+	if not is_instance_valid(pending_mesh):
+		pending_mesh = MeshInstance3D.new()
+		pending_mesh.mesh = ImmediateMesh.new()
+		pending_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		pending_mesh.material_override = mat
+		pending_wire.add_child(pending_mesh)
+	pending_mesh.visible = true
+	pending_mesh.material_override.albedo_color = Color(str(pending.get("color", "#e39756")))
+	var mesh: ImmediateMesh = pending_mesh.mesh
+	mesh.clear_surfaces()
+	mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+	var a := pending_wire.to_local(start)
+	var b := pending_wire.to_local(wire_cursor)
+	var sag := minf(a.distance_to(b) * 0.3, 0.2)
+	for index in range(25):
+		var t := float(index) / 24
+		mesh.surface_add_vertex(a.lerp(b, t) + Vector3(0, -4 * sag * t * (1 - t), 0.04))
+	mesh.surface_end()
 
 func _frame_rack() -> void:
 	if modules.is_empty():
@@ -829,6 +856,22 @@ func _overlay_input(event: InputEvent) -> void:
 		overlay.accept_event()
 
 func _process(delta: float) -> void:
+	if OS.get_environment("CARDINAL_3D_DIAGNOSTICS") == "1":
+		var now := Time.get_ticks_usec()
+		var frame_seconds := float(now - performance_previous_usec) / 1000000.0 if performance_previous_usec > 0 else 0.0
+		performance_previous_usec = now
+		performance_elapsed += frame_seconds
+		performance_frames += 1
+		performance_worst = maxf(performance_worst, frame_seconds)
+		if performance_elapsed >= 5:
+			print("VR timing: %.1f fps, worst %.1f ms, process %.1f ms, physics %.1f ms, draw calls %d" % [performance_frames / performance_elapsed, performance_worst * 1000, Performance.get_monitor(Performance.TIME_PROCESS) * 1000, Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000, Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)])
+			var diagnostics := FileAccess.open(ProjectSettings.globalize_path("res://../vr-timing.json"), FileAccess.WRITE)
+			if diagnostics != null:
+				diagnostics.store_string(JSON.stringify({"fps": performance_frames / performance_elapsed, "worst_frame_ms": performance_worst * 1000, "process_ms": Performance.get_monitor(Performance.TIME_PROCESS) * 1000, "physics_ms": Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000, "draw_calls": Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), "modules": modules.size(), "xr_focused": xr_session != null and xr_session.was_focused, "snapshot_hz": bridge.snapshot_count / performance_elapsed, "incoming_bytes": bridge.incoming.size(), "outgoing_bytes": bridge.outgoing.size() }))
+			bridge.snapshot_count = 0
+			performance_elapsed = 0
+			performance_frames = 0
+			performance_worst = 0
 	status_timer = maxf(status_timer - delta, 0)
 	if bridge.connected and status_timer == 0 and not snapshot.is_empty():
 		status_label.text = "  %d modules · %d cables · %d fps · Cardinal owns audio and patch state" % [modules.size(), snapshot.get("cables", []).size(), Engine.get_frames_per_second()]

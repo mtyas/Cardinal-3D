@@ -10,8 +10,8 @@ func frame(kind: int, bytes: PackedByteArray) -> PackedByteArray:
 	return result
 func snapshot(value: int) -> PackedByteArray:
 	return frame(1, JSON.stringify({"type": "snapshot", "generation": "test", "value": value}).to_utf8_buffer())
-func surface(value: int) -> PackedByteArray:
-	var metadata := JSON.stringify({"module": "1", "generation": "test", "width": 512, "height": 512}).to_utf8_buffer()
+func surface(value: int, compressed := false) -> PackedByteArray:
+	var metadata := JSON.stringify({"module": "1", "generation": "test", "width": 512, "height": 512, "encoding": "zstd" if compressed else "raw"}).to_utf8_buffer()
 	var bytes := PackedByteArray()
 	bytes.resize(4)
 	bytes.encode_u32(0, metadata.size())
@@ -19,6 +19,7 @@ func surface(value: int) -> PackedByteArray:
 	var pixels := PackedByteArray()
 	pixels.resize(512 * 512 * 4)
 	pixels.fill(value)
+	if compressed: pixels = pixels.compress(FileAccess.COMPRESSION_ZSTD)
 	bytes.append_array(pixels)
 	return frame(2, bytes)
 func _initialize() -> void: call_deferred("run")
@@ -52,6 +53,11 @@ func run() -> void:
 		quit(1)
 		return
 	assert(bridge.incoming.is_empty())
+	events.clear()
+	bridge.incoming.append_array(surface(30, true))
+	bridge.incoming.append_array(snapshot(3))
+	bridge._process(0.01)
+	assert(events == [["snapshot", 3.0], ["surface", 30]], "Compressed artwork must decode exactly and keep control updates first")
 	bridge._drop()
 	sender.disconnect_from_host()
 	server.stop()

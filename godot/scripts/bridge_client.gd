@@ -15,6 +15,7 @@ var heartbeat := 0.0
 var next_id := 1
 var generation := ""
 var port := 39413
+var snapshot_count := 0
 
 func _ready() -> void:
 	if OS.has_environment("CARDINAL_3D_PORT"):
@@ -65,7 +66,7 @@ func _process(delta: float) -> void:
 		peer.set_no_delay(true)
 		connected = true
 		connection_changed.emit(true)
-		send_command("hello", {"version": 1, "token": OS.get_environment("CARDINAL_3D_TOKEN")})
+		send_command("hello", {"version": 1, "token": OS.get_environment("CARDINAL_3D_TOKEN"), "surface_compression": "zstd"})
 	heartbeat += delta
 	if heartbeat >= 0.5:
 		heartbeat = 0
@@ -104,6 +105,7 @@ func _process(delta: float) -> void:
 			var message: Variant = JSON.parse_string(payload.get_string_from_utf8())
 			if message is Dictionary:
 				if message.get("type") == "snapshot":
+					snapshot_count += 1
 					generation = str(message["generation"])
 					latest_snapshot = message
 				else: message_received.emit(message)
@@ -118,6 +120,10 @@ func _process(delta: float) -> void:
 			var width := int(header.get("width", 0))
 			var height := int(header.get("height", 0))
 			var pixels := payload.slice(4 + header_length)
+			if width <= 0 or height <= 0 or width > 4096 or height > 4096: continue
+			if header.get("encoding", "raw") == "zstd":
+				pixels = pixels.decompress(width * height * 4, FileAccess.COMPRESSION_ZSTD)
+			elif header.get("encoding", "raw") != "raw": continue
 			if width > 0 and height > 0 and width <= 4096 and height <= 4096 and pixels.size() == width * height * 4:
 				latest_surfaces[str(header["module"])] = {"header": header, "pixels": pixels, "width": width, "height": height}
 	# Apply live positions and control values before expensive texture uploads.
