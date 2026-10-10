@@ -108,12 +108,13 @@ func run() -> void:
 	check(session.origin.position == Vector3.ZERO, "Thumbstick drift must stay inside the deadzone")
 	session._move_player(Vector2(0, 1), 0, 1.0)
 	check(is_equal_approx(session.origin.position.z, -session.MOVE_SPEED), "Forward movement must follow headset yaw at the configured speed")
+	session.move_velocity = Vector3.ZERO
 	var head_position: Vector3 = session.headset.global_position
 	session._move_player(Vector2.ZERO, 1.0, 0.1)
-	check(session.headset.global_position.is_equal_approx(head_position), "Snap turning must rotate around the headset")
+	check(session.headset.global_position.is_equal_approx(head_position), "Smooth turning must rotate around the headset")
 	var turned: Basis = session.origin.basis
 	session._move_player(Vector2.ZERO, 1.0, 0.1)
-	check(session.origin.basis.is_equal_approx(turned), "A held turn stick must snap only once")
+	check(not session.origin.basis.is_equal_approx(turned), "A held turn stick must continue turning smoothly")
 	session.gesture_owner = "left"
 	var player_position: Vector3 = session.origin.position
 	session._move_player(Vector2(0, 1), 0, 1.0)
@@ -169,9 +170,21 @@ func run() -> void:
 	ui_session._make_ui()
 	await process_frame
 	ui_session._sync_layout()
-	check(ui_session.ui_panel.position.z < -0.5, "An empty rack must still expose the floating module browser")
+	check(not ui_session.ui_panel.visible and ui_session.ui_viewport.transparent_bg, "VR must start without a permanent panel or opaque blank window")
+	ui_session._menu_buttons("right", false, true)
+	check(ui_session.main_menu.visible and ui_session.ui_panel.visible, "B must open the contextual main menu")
+	ui_session._menu_buttons("right", false, true)
+	check(ui_session.main_menu.visible, "Holding B must not repeatedly toggle the menu")
+	ui_session._menu_buttons("right", false, false)
+	ui_session._menu_buttons("right", true, false)
+	check(view.module_browser.visible and not ui_session.main_menu.visible, "A must open the module browser instead of the main menu")
+	ui_session._menu_buttons("right", false, false)
+	ui_session._menu_buttons("right", true, false)
+	check(not ui_session.ui_panel.visible, "Pressing A again must close the browser and remove its panel")
+	ui_session._toggle_menu()
+	await process_frame
 	var undo: Button
-	for button in view.toolbar.get_children():
+	for button in ui_session.main_menu.get_child(0).get_children():
 		if button is Button and button.text == "Undo": undo = button
 	var requests: int = view.bridge.next_id
 	var pixel := undo.get_global_rect().get_center()

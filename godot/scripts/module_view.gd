@@ -90,8 +90,13 @@ func setup(data: Dictionary) -> void:
 			grip.material_override = Hardware.finish(Color("171d22"), 0.0, 0.55)
 			pivot.add_child(grip)
 			var mark := BoxMesh.new()
-			mark.size = Vector3(radius * 0.1, radius * 0.5, 0.002)
-			mesh_node(mark, Vector3(0, radius * 0.62, 0.017), material(Color("e8ece8")), pivot)
+			mark.size = Vector3(radius * 0.16, radius * 0.57, 0.002)
+			var indicator := StandardMaterial3D.new()
+			indicator.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			indicator.albedo_color = Color("f4fff8")
+			var marker := mesh_node(mark, Vector3(0, radius * 0.58, 0.018), indicator, pivot)
+			marker.name = "ValueIndicator"
+			marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			knobs[str(control["id"])] = {"node": pivot, "control": control}
 		elif kind == "port":
 			var steel := Hardware.finish(Color("b6c0c9"), 0.95, 0.22)

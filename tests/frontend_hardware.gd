@@ -49,6 +49,14 @@ func run() -> void:
 	view.rack_case.sync([module])
 	check(view.rack_case.bounds.size.x < original_bounds.size.x, "Case must shrink after removal")
 	var panel = view.modules["10"]
+	var knob: Node3D = panel.knobs["2"].node
+	var marker: MeshInstance3D = knob.get_node("ValueIndicator")
+	check(marker.material_override.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED and marker.position.z > 0.015, "The value marker must stay bright and in front of the knob cap")
+	var changed: Dictionary = module.duplicate(true)
+	changed.controls[0].normalized = 0.8
+	panel.update_state(changed)
+	check(is_equal_approx(knob.rotation.z, -lerpf(-2.6, 2.6, 0.8)), "Live normalized values must visibly rotate the knob marker")
+	panel.update_state(module)
 	check(view.header_panel.size.y <= 65 and not view.settings_panel.visible, "Header must occupy a single compact row with view settings hidden")
 	var alternate: Dictionary = module["controls"][0].duplicate(true)
 	alternate["id"] = 3

@@ -7,7 +7,7 @@ const WRIST_PIXELS_PER_RADIAN := 90.0
 const DISTANCE_PIXELS_PER_METRE := 60.0
 const MOVE_SPEED := 0.65
 const STICK_DEADZONE := 0.2
-const SNAP_TURN := PI / 6.0
+const TURN_SPEED := PI / 3.0
 var host
 var interface: OpenXRInterface
 var origin: XROrigin3D
@@ -30,7 +30,12 @@ var last_hover := {}
 var was_focused := false
 var last_controller_basis := Basis.IDENTITY
 var last_knob_distance := 0.0
-var turn_armed := true
+var move_velocity := Vector3.ZERO
+var turn_velocity := 0.0
+var main_menu: PanelContainer
+var ui_collision: CollisionShape3D
+var button_states := {}
+var ui_rect := Rect2(0, 0, 1440, 900)
 
 func setup(view) -> bool:
 	host = view
@@ -54,9 +59,6 @@ func setup(view) -> bool:
 	case_shape = BoxShape3D.new()
 	collision.shape = case_shape
 	case_body.add_child(collision)
-	host._button("Control menu", _context_menu)
-	host._button("↑", func(): host.module_browser.scrollbar.value -= host.module_browser.scrollbar.page)
-	host._button("↓", func(): host.module_browser.scrollbar.value += host.module_browser.scrollbar.page)
 	_make_ui()
 	for side in ["left", "right"]:
 		var controller := XRController3D.new()
@@ -93,7 +95,7 @@ func setup(view) -> bool:
 func _make_ui() -> void:
 	ui_viewport = SubViewport.new()
 	ui_viewport.size = Vector2i(1440, 900)
-	ui_viewport.transparent_bg = false
+	ui_viewport.transparent_bg = true
 	ui_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	ui_viewport.gui_embed_subwindows = true
 	add_child(ui_viewport)
@@ -105,6 +107,7 @@ func _make_ui() -> void:
 	ui_panel.mesh = quad
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_texture = ui_viewport.get_texture()
 	ui_panel.material_override = mat
 	add_child(ui_panel)
@@ -112,16 +115,99 @@ func _make_ui() -> void:
 	body.set_meta("xr_ui", true)
 	ui_panel.add_child(body)
 	var collision := CollisionShape3D.new()
+	ui_collision = collision
 	var box := BoxShape3D.new()
 	box.size = Vector3(1.2, 0.75, 0.005)
 	collision.shape = box
 	body.add_child(collision)
+	host.header_panel.hide()
+	host.status_label.hide()
+	for node in host.header_panel.get_parent().get_children():
+		if node is Label: node.hide()
+	main_menu = PanelContainer.new()
+	main_menu.position = Vector2(510, 180)
+	main_menu.custom_minimum_size = Vector2(420, 0)
+	host.header_panel.get_parent().add_child(main_menu)
+	var column := VBoxContainer.new()
+	main_menu.add_child(column)
+	var title := Label.new()
+	title.text = "Cardinal 3D"
+	column.add_child(title)
+	for entry in [
+		["Browse modules (A)", _toggle_browser],
+		["Open patch…", func(): host._patch_action(0)],
+		["Save patch as…", func(): host._patch_action(1)],
+		["Undo", func(): host.bridge.send_command("undo")],
+		["Redo", func(): host.bridge.send_command("redo")],
+		["Bring rack here", func(): placed = false],
+		["View & lighting", func(): host.settings_panel.visible = not host.settings_panel.visible],
+		["Control context menu", _context_menu],
+		["Close (B)", _close_ui]]:
+		var button := Button.new()
+		button.text = entry[0]
+		button.custom_minimum_size.y = 42
+		button.pressed.connect(entry[1])
+		column.add_child(button)
+	main_menu.hide()
+	_refresh_ui()
+
+func _refresh_ui() -> void:
+	var visible_ui: bool = main_menu.visible or host.module_browser.visible or host.dialog.visible or host.overlay.visible
+	ui_panel.visible = visible_ui
+	ui_collision.disabled = not visible_ui
+	ui_rect = Rect2(0, 0, 1440, 900)
+	if main_menu.visible and not host.module_browser.visible and not host.dialog.visible and not host.overlay.visible and not host.settings_panel.visible:
+		var menu_rect := main_menu.get_global_rect().grow(8)
+		if menu_rect.has_area(): ui_rect = menu_rect
+	var size := ui_rect.size * (1.2 / 1440.0)
+	(ui_panel.mesh as QuadMesh).size = size
+	(ui_collision.shape as BoxShape3D).size = Vector3(size.x, size.y, 0.005)
+	var mat: StandardMaterial3D = ui_panel.material_override
+	mat.uv1_scale = Vector3(ui_rect.size.x / 1440.0, ui_rect.size.y / 900.0, 1)
+	mat.uv1_offset = Vector3(ui_rect.position.x / 1440.0, ui_rect.position.y / 900.0, 0)
+
+func _place_ui() -> void:
+	var facing := Basis(Vector3.UP, headset.global_rotation.y)
+	ui_panel.transform = Transform3D(facing, headset.global_position + facing * Vector3(0, -0.05, -0.95))
+	ui_placed = true
+
+func _close_ui() -> void:
+	cancel()
+	main_menu.hide()
+	host.module_browser.close_browser()
+	host.settings_panel.hide()
+	host.dialog.hide()
+	host.bridge.send_command("escape")
+	_refresh_ui()
+
+func _toggle_menu() -> void:
+	if main_menu.visible: _close_ui(); return
+	cancel()
+	host.module_browser.close_browser()
+	host.bridge.send_command("escape")
+	_place_ui()
+	main_menu.show()
+	_refresh_ui()
+
+func _toggle_browser() -> void:
+	if host.module_browser.visible: _close_ui(); return
+	cancel()
+	main_menu.hide()
+	host.settings_panel.hide()
+	host.bridge.send_command("escape")
+	_place_ui()
+	host.module_browser.show_browser()
+	_refresh_ui()
+
+func _menu_buttons(side: String, browse: bool, menu: bool) -> void:
+	var previous: Dictionary = button_states.get(side, {"browse": false, "menu": false})
+	if browse and not previous.browse: _toggle_browser()
+	if menu and not previous.menu: _toggle_menu()
+	button_states[side] = {"browse": browse, "menu": menu}
 
 func _sync_layout() -> void:
 	if not ui_placed:
-		var facing := Basis(Vector3.UP, headset.global_rotation.y)
-		ui_panel.transform = Transform3D(facing, headset.global_position + facing * Vector3(-1.05, -0.10, -0.85))
-		ui_placed = true
+		_place_ui()
 	if host.modules.is_empty(): return
 	if not placed:
 		var facing := Basis(Vector3.UP, headset.global_rotation.y)
@@ -172,20 +258,25 @@ func _controller_knob_delta(sample: Dictionary) -> float:
 func _move_player(stick: Vector2, turn: float, delta: float) -> void:
 	# Do not move the player under a held knob, cable, module or floating menu.
 	if not gesture_owner.is_empty():
-		turn_armed = absf(turn) < STICK_DEADZONE
+		move_velocity = Vector3.ZERO
+		turn_velocity = 0.0
 		return
 	var amount := stick.length()
+	var desired := Vector3.ZERO
 	if amount > STICK_DEADZONE:
 		var input := stick.normalized() * minf((amount - STICK_DEADZONE) / (1.0 - STICK_DEADZONE), 1.0)
 		var facing := Basis(Vector3.UP, headset.global_rotation.y)
-		origin.global_position += facing * Vector3(input.x, 0, -input.y) * MOVE_SPEED * delta
-	if absf(turn) < STICK_DEADZONE: turn_armed = true
-	elif absf(turn) > 0.7 and turn_armed:
+		desired = facing * Vector3(input.x, 0, -input.y) * MOVE_SPEED
+	var blend := 1.0 - exp(-12.0 * delta)
+	move_velocity = move_velocity.lerp(desired, blend)
+	origin.global_position += move_velocity * delta
+	var desired_turn := signf(turn) * maxf((absf(turn) - STICK_DEADZONE) / (1.0 - STICK_DEADZONE), 0.0) * TURN_SPEED
+	turn_velocity = lerpf(turn_velocity, desired_turn, blend)
+	if absf(turn_velocity) > 0.00001:
 		var pivot := headset.global_position
-		var yaw := -signf(turn) * SNAP_TURN
+		var yaw := -turn_velocity * delta
 		origin.global_basis = Basis(Vector3.UP, yaw) * origin.global_basis
 		origin.global_position = pivot + Basis(Vector3.UP, yaw) * (origin.global_position - pivot)
-		turn_armed = false
 
 func _draw_hand(mesh: ImmediateMesh, points: Dictionary) -> void:
 	var chains := [[1, 2, 3, 4, 5], [1, 6, 7, 8, 9, 10], [1, 11, 12, 13, 14, 15], [1, 16, 17, 18, 19, 20], [1, 21, 22, 23, 24, 25], [6, 11, 16, 21]]
@@ -204,7 +295,8 @@ func _hit(from: Vector3, direction: Vector3) -> Dictionary:
 	var body: Object = hit["collider"]
 	if body.has_meta("xr_ui"):
 		var local := ui_panel.to_local(hit["position"])
-		return {"kind": "ui", "pixel": Vector2((local.x / 1.2 + 0.5) * 1440, (0.5 - local.y / 0.75) * 900), "world": hit["position"]}
+		var size: Vector2 = (ui_panel.mesh as QuadMesh).size
+		return {"kind": "ui", "pixel": ui_rect.position + Vector2((local.x / size.x + 0.5) * ui_rect.size.x, (0.5 - local.y / size.y) * ui_rect.size.y), "world": hit["position"]}
 	if body.has_meta("xr_case"): return {"kind": "case", "world": hit["position"]}
 	if not body.has_meta("module_view"): return {}
 	var view: CardinalModuleView = body.get_meta("module_view")
@@ -342,6 +434,7 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 func _context_menu() -> void:
 	if last_hover.is_empty() or not is_instance_valid(last_hover.get("view")) or last_hover.get("generation") != host.generation: return
 	cancel()
+	if main_menu != null: main_menu.hide()
 	host.menu_anchor = Vector2(300, 200)
 	host.menu_surface_started = false
 	_pointer(last_hover, "down", 1)
@@ -364,8 +457,11 @@ func _physics_process(delta: float) -> void:
 		was_focused = false
 		return
 	_sync_layout()
+	_refresh_ui()
 	was_focused = true
 	for side: String in devices:
+		var controller: XRController3D = devices[side]["controller"]
+		_menu_buttons(side, controller.is_button_pressed("ax_button"), controller.is_button_pressed("by_button"))
 		var sample := _sample(side)
 		var hit := {} if sample.is_empty() else _hit(sample["origin"], sample["direction"])
 		interact(side, sample, hit)
@@ -385,4 +481,6 @@ func _physics_process(delta: float) -> void:
 			mesh.surface_end()
 	var left: XRController3D = devices["left"]["controller"]
 	var right: XRController3D = devices["right"]["controller"]
-	_move_player(left.get_vector2("primary") if left.get_has_tracking_data() else Vector2.ZERO, right.get_vector2("primary").x if right.get_has_tracking_data() else 0.0, delta)
+	var left_stick := left.get_vector2("primary") if left.get_has_tracking_data() else Vector2.ZERO
+	var right_stick := right.get_vector2("primary") if right.get_has_tracking_data() else Vector2.ZERO
+	_move_player(Vector2(left_stick.x, clampf(left_stick.y + right_stick.y, -1, 1)), right_stick.x, delta)
