@@ -114,7 +114,7 @@ func run() -> void:
 	check(session.headset.global_position.is_equal_approx(head_position), "Smooth turning must rotate around the headset")
 	var turned: Basis = session.origin.basis
 	session._move_player(Vector2.ZERO, 1.0, 0.1)
-	check(not session.origin.basis.is_equal_approx(turned), "A held turn stick must continue turning smoothly")
+	check(session.origin.basis.is_equal_approx(turned), "Stick navigation must never rotate the view")
 	session.gesture_owner = "left"
 	var player_position: Vector3 = session.origin.position
 	session._move_player(Vector2(0, 1), 0, 1.0)
@@ -135,6 +135,7 @@ func run() -> void:
 	hit.pixel.y = 10
 	session.interact("left", pose(true), hit)
 	check(host.bridge.commands[-1].command == "move_begin", "Only the module title starts module movement")
+	check(session._valid_selection() and module.selection_strip.visible, "Pressing the title must select and visibly mark the module")
 	session.interact("left", pose(true, Vector3(0.02, 0, 0)), hit)
 	check(host.bridge.commands[-1].command == "move_delta", "Title drag must use native module movement")
 	session.interact("left", pose(false), hit)
@@ -152,6 +153,7 @@ func run() -> void:
 	session.interact("left", pose(true, Vector3(0.1, 0, 0)), {})
 	session.interact("left", pose(false), {})
 	check(session.spatial.position.is_equal_approx(Vector3(0.1, 0, 0)) and host.bridge.commands.size() == count, "Grabbing the case changes scene placement without patch commands")
+	check(session.selected_module.is_empty() and not module.selection_strip.visible, "Clicking the case must deselect the module")
 	hit.control = {"kind": "knob"}
 	session.interact("left", pose(true), hit)
 	module.free()
@@ -200,6 +202,12 @@ func run() -> void:
 	second.controls[0].direction = "input"
 	var wire := {"output_module": "1", "output_port": 0, "input_module": "2", "input_port": 0}
 	view._on_message({"type": "snapshot", "generation": "xr", "modules": [first, second], "cables": [wire], "overlay_mode": "none"})
+	ui_session._close_ui()
+	ui_session._select_module({"kind": "module", "view": view.modules["1"], "pixel": Vector2(45, 10), "world": Vector3.ZERO})
+	requests = view.bridge.next_id
+	ui_session._toggle_menu()
+	check(view.bridge.next_id >= requests + 3 and not ui_session.main_menu.visible, "B on a selected module must release gestures and send native right-button down/up instead of opening the main menu")
+	check(view.modules["1"].selection_strip.visible, "The selected module must stay marked while opening its native menu")
 	var rack_space := Node3D.new()
 	view.add_child(rack_space)
 	for node in [view.rack, view.rack_case, view.cables, view.pending_wire]: node.reparent(rack_space, false)

@@ -75,6 +75,10 @@ func run() -> void:
 	overlap.queue_free()
 	var live_texture := Image.create(180, 760, false, Image.FORMAT_RGBA8)
 	panel.apply_surface(live_texture)
+	var refreshed: Dictionary = state.duplicate(true)
+	refreshed.generation = "2"
+	view._on_message(refreshed)
+	check(view.modules["10"] == panel and panel.texture != null, "Topology refreshes must preserve panel textures of unchanged modules")
 	check(panel.screens.size() == 1 and panel.screens[0].display_material.get_shader_parameter("panel_texture") == panel.texture, "Screens must reuse the live native texture")
 	var screen: Vector2 = view.camera.unproject_position(panel.to_global(Vector3(45 * 0.002, -100 * 0.002, 0)))
 	var hit: Dictionary = view._hit(screen)

@@ -53,6 +53,7 @@ func run() -> void:
 	click.button_index = MOUSE_BUTTON_LEFT; click.pressed = true; click.position = screen
 	browser._gallery_input(click)
 	check(browser.selected == descriptor["id"] and not browser.add_button.disabled, "Click must select a preview")
+	check(entry.highlight.visible and "SELECTED" in entry.label.text and descriptor.name in browser.add_button.text, "The selected module must have a visible card, label and named Add button")
 	var rotation: float = entry["pivot"].rotation.y
 	var motion := InputEventMouseMotion.new(); motion.relative = Vector2(20, 0)
 	browser._gallery_input(motion)

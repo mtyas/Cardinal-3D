@@ -331,12 +331,6 @@ func _on_connection(connected: bool) -> void:
 		dragging = false
 		moving = false
 		_pending_wire()
-		for module: Node3D in modules.values():
-			module.queue_free()
-		rack_case.sync([])
-		modules.clear()
-		for cable in cables.get_children():
-			cable.queue_free()
 
 func _on_message(message: Dictionary) -> void:
 	match message.get("type", ""):
@@ -352,13 +346,13 @@ func _on_message(message: Dictionary) -> void:
 				cable_signature = ""
 				_release()
 				_clear_focus()
-				for module: Node3D in modules.values():
-					module.queue_free()
-				modules.clear()
 			var present := {}
 			for descriptor: Dictionary in message.get("modules", []):
 				var id := str(descriptor["id"])
 				present[id] = true
+				if modules.has(id) and (modules[id].descriptor.get("plugin") != descriptor.get("plugin") or modules[id].descriptor.get("model") != descriptor.get("model")):
+					modules[id].queue_free()
+					modules.erase(id)
 				if not modules.has(id):
 					var view := ModuleView.new()
 					rack.add_child(view)

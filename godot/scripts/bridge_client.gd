@@ -75,7 +75,7 @@ func _process(delta: float) -> void:
 			_drop()
 			return
 		outgoing = outgoing.slice(sent[1])
-	var available := mini(peer.get_available_bytes(), 512 * 1024)
+	var available := mini(peer.get_available_bytes(), mini(8 * 1024 * 1024, MAX_FRAME + 4 - incoming.size()))
 	if available > 0:
 		var data := peer.get_partial_data(available)
 		if data[0] != OK:
@@ -86,7 +86,9 @@ func _process(delta: float) -> void:
 		_drop()
 		return
 	var handled := 0
-	while incoming.size() >= 4 and handled < 16:
+	var latest_snapshot := {}
+	var latest_surfaces := {}
+	while incoming.size() >= 4 and handled < 64:
 		var length := incoming.decode_u32(0)
 		if length < 1 or length > MAX_FRAME:
 			_drop()
@@ -102,7 +104,8 @@ func _process(delta: float) -> void:
 			if message is Dictionary:
 				if message.get("type") == "snapshot":
 					generation = str(message["generation"])
-				message_received.emit(message)
+					latest_snapshot = message
+				else: message_received.emit(message)
 		elif kind == 2 and payload.size() >= 4:
 			var header_length := payload.decode_u32(0)
 			if header_length > payload.size() - 4:
@@ -115,4 +118,9 @@ func _process(delta: float) -> void:
 			var height := int(header.get("height", 0))
 			var pixels := payload.slice(4 + header_length)
 			if width > 0 and height > 0 and width <= 4096 and height <= 4096 and pixels.size() == width * height * 4:
-				surface_received.emit(header, Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, pixels))
+				latest_surfaces[str(header["module"])] = {"header": header, "pixels": pixels, "width": width, "height": height}
+	# Apply live positions and control values before expensive texture uploads.
+	if not latest_snapshot.is_empty(): message_received.emit(latest_snapshot)
+	for surface: Dictionary in latest_surfaces.values():
+		if str(surface.header.get("generation")) == generation:
+			surface_received.emit(surface.header, Image.create_from_data(surface.width, surface.height, false, Image.FORMAT_RGBA8, surface.pixels))

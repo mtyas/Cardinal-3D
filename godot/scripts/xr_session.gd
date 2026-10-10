@@ -7,7 +7,6 @@ const WRIST_PIXELS_PER_RADIAN := 90.0
 const DISTANCE_PIXELS_PER_METRE := 60.0
 const MOVE_SPEED := 0.65
 const STICK_DEADZONE := 0.2
-const TURN_SPEED := PI / 3.0
 var host
 var interface: OpenXRInterface
 var origin: XROrigin3D
@@ -27,11 +26,11 @@ var ui_placed := false
 var layout_key := ""
 var active := false
 var last_hover := {}
+var selected_module := {}
 var was_focused := false
 var last_controller_basis := Basis.IDENTITY
 var last_knob_distance := 0.0
 var move_velocity := Vector3.ZERO
-var turn_velocity := 0.0
 var main_menu: PanelContainer
 var ui_collision: CollisionShape3D
 var button_states := {}
@@ -181,7 +180,11 @@ func _close_ui() -> void:
 	_refresh_ui()
 
 func _toggle_menu() -> void:
+	if host.overlay.visible: _close_ui(); return
 	if main_menu.visible: _close_ui(); return
+	if _valid_selection():
+		_context_menu(selected_module)
+		return
 	cancel()
 	host.module_browser.close_browser()
 	host.bridge.send_command("escape")
@@ -206,6 +209,9 @@ func _menu_buttons(side: String, browse: bool, menu: bool) -> void:
 	button_states[side] = {"browse": browse, "menu": menu}
 
 func _sync_layout() -> void:
+	if not selected_module.is_empty() and not _valid_selection():
+		if is_instance_valid(selected_module.get("view")): selected_module.view.set_selected(false)
+		selected_module.clear()
 	if not ui_placed:
 		_place_ui()
 	if host.modules.is_empty(): return
@@ -255,11 +261,10 @@ func _controller_knob_delta(sample: Dictionary) -> float:
 	last_knob_distance = distance
 	return pixels
 
-func _move_player(stick: Vector2, turn: float, delta: float) -> void:
+func _move_player(stick: Vector2, _unused_turn: float, delta: float) -> void:
 	# Do not move the player under a held knob, cable, module or floating menu.
 	if not gesture_owner.is_empty():
 		move_velocity = Vector3.ZERO
-		turn_velocity = 0.0
 		return
 	var amount := stick.length()
 	var desired := Vector3.ZERO
@@ -270,13 +275,6 @@ func _move_player(stick: Vector2, turn: float, delta: float) -> void:
 	var blend := 1.0 - exp(-12.0 * delta)
 	move_velocity = move_velocity.lerp(desired, blend)
 	origin.global_position += move_velocity * delta
-	var desired_turn := signf(turn) * maxf((absf(turn) - STICK_DEADZONE) / (1.0 - STICK_DEADZONE), 0.0) * TURN_SPEED
-	turn_velocity = lerpf(turn_velocity, desired_turn, blend)
-	if absf(turn_velocity) > 0.00001:
-		var pivot := headset.global_position
-		var yaw := -turn_velocity * delta
-		origin.global_basis = Basis(Vector3.UP, yaw) * origin.global_basis
-		origin.global_position = pivot + Basis(Vector3.UP, yaw) * (origin.global_position - pivot)
 
 func _draw_hand(mesh: ImmediateMesh, points: Dictionary) -> void:
 	var chains := [[1, 2, 3, 4, 5], [1, 6, 7, 8, 9, 10], [1, 11, 12, 13, 14, 15], [1, 16, 17, 18, 19, 20], [1, 21, 22, 23, 24, 25], [6, 11, 16, 21]]
@@ -384,12 +382,16 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 			"ui":
 				_ui_motion(hit["pixel"], false)
 				_ui_button(hit["pixel"], true)
-			"case": pass
+			"case":
+				if is_instance_valid(selected_module.get("view")): selected_module.view.set_selected(false)
+				selected_module.clear()
 			"module":
 				capture["generation"] = host.generation
 				capture["module"] = str(hit["view"].descriptor["id"])
 				capture["move"] = host._title_hit(hit)
-				if capture["move"]: host.bridge.send_command("move_begin", {"module": capture["module"]})
+				if capture["move"]:
+					_select_module(hit)
+					host.bridge.send_command("move_begin", {"module": capture["module"]})
 				else:
 					host.dragging = true
 					_pointer(hit, "down")
@@ -431,14 +433,26 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 			last_hover["generation"] = host.generation
 			_pointer(hit, "motion")
 
-func _context_menu() -> void:
-	if last_hover.is_empty() or not is_instance_valid(last_hover.get("view")) or last_hover.get("generation") != host.generation: return
+func _valid_selection() -> bool:
+	return not selected_module.is_empty() and is_instance_valid(selected_module.get("view")) and selected_module.get("generation") == host.generation and host.modules.has(str(selected_module.view.descriptor.id))
+
+func _select_module(hit: Dictionary) -> void:
+	if is_instance_valid(selected_module.get("view")): selected_module.view.set_selected(false)
+	selected_module = hit.duplicate()
+	selected_module.generation = host.generation
+	selected_module.view.set_selected(true)
+
+func _context_menu(target := {}) -> void:
+	if target.is_empty(): target = selected_module if _valid_selection() else last_hover
+	if target.is_empty() or not is_instance_valid(target.get("view")) or target.get("generation") != host.generation: return
 	cancel()
 	if main_menu != null: main_menu.hide()
+	host.module_browser.close_browser()
+	_place_ui()
 	host.menu_anchor = Vector2(300, 200)
 	host.menu_surface_started = false
-	_pointer(last_hover, "down", 1)
-	_pointer(last_hover, "up", 1)
+	_pointer(target, "down", 1)
+	_pointer(target, "up", 1)
 
 func _visual_target(side: String, hit: Dictionary) -> Dictionary:
 	if gesture_owner != side or capture.get("kind", "") != "module" or not is_instance_valid(capture.get("view")):
@@ -483,4 +497,4 @@ func _physics_process(delta: float) -> void:
 	var right: XRController3D = devices["right"]["controller"]
 	var left_stick := left.get_vector2("primary") if left.get_has_tracking_data() else Vector2.ZERO
 	var right_stick := right.get_vector2("primary") if right.get_has_tracking_data() else Vector2.ZERO
-	_move_player(Vector2(left_stick.x, clampf(left_stick.y + right_stick.y, -1, 1)), right_stick.x, delta)
+	_move_player((left_stick + right_stick).limit_length(1.0), 0.0, delta)

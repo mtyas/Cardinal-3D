@@ -227,6 +227,7 @@ func _refresh_window() -> void:
 		if id not in ids:
 			previews[id]["pivot"].queue_free()
 			previews[id]["label"].queue_free()
+			previews[id]["highlight"].queue_free()
 			previews.erase(id)
 	if not previews.has(selected):
 		selected = ""
@@ -272,7 +273,18 @@ func receive_descriptor(data: Dictionary) -> void:
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	gallery.add_child(label)
-	previews[id] = {"view": view, "pivot": pivot, "data": data, "label": label}
+	var highlight := MeshInstance3D.new()
+	var card := QuadMesh.new()
+	card.size = Vector2(0.445, 0.48)
+	highlight.mesh = card
+	var highlight_material := StandardMaterial3D.new()
+	highlight_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	highlight_material.albedo_color = Color("167c96")
+	highlight.material_override = highlight_material
+	highlight.position = Vector3(pivot.position.x, pivot.position.y, -0.08)
+	highlight.visible = false
+	gallery.add_child(highlight)
+	previews[id] = {"view": view, "pivot": pivot, "data": data, "label": label, "highlight": highlight, "title": label.text}
 	if preview_cache.size() >= 64 and not preview_cache.has(id): preview_cache.clear()
 	if not preview_cache.has(id): preview_cache[id] = {}
 	preview_cache[id]["data"] = data
@@ -307,7 +319,10 @@ func _gallery_input(event: InputEvent) -> void:
 			selected = id
 			for key in previews:
 				previews[key]["label"].modulate = Color("6ae1ff") if key == selected else Color.WHITE
+				previews[key]["highlight"].visible = key == selected
+				previews[key]["label"].text = ("✓ SELECTED\n" if key == selected else "") + previews[key]["title"]
 			selection.text = str(previews[id]["data"]["name"]) + " · " + str(previews[id]["data"]["plugin"])
+			add_button.text = "Add " + str(previews[id]["data"].get("name", previews[id]["data"]["model"]))
 			add_button.disabled = false
 			if event.double_click: _insert()
 	elif event is InputEventMouseMotion and rotating and previews.has(selected):
@@ -318,8 +333,10 @@ func _gallery_input(event: InputEvent) -> void:
 func _insert() -> void:
 	if not previews.has(selected): return
 	var data: Dictionary = previews[selected]["data"]
-	insert_requested.emit(str(data["plugin"]), str(data["model"]))
+	var plugin := str(data["plugin"])
+	var model := str(data["model"])
 	close_browser()
+	insert_requested.emit(plugin, model)
 
 func _input(event: InputEvent) -> void:
 	if visible and event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:

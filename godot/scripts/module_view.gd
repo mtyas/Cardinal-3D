@@ -12,6 +12,17 @@ var lights: Dictionary = {}
 var switches: Dictionary = {}
 var screens: Array = []
 var control_nodes: Dictionary = {}
+var selection_strip: MeshInstance3D
+
+func set_selected(selected: bool) -> void:
+	if selection_strip == null:
+		var strip := QuadMesh.new()
+		strip.size = Vector2(float(descriptor.get("width", 90)) * SCALE, 0.006)
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.albedo_color = Color("83e7ed")
+		selection_strip = mesh_node(strip, Vector3(strip.size.x / 2, -0.009, 0.007), mat)
+	selection_strip.visible = selected
 
 static func control_key(control: Dictionary) -> String:
 	return "%s/%s/%s" % [control["kind"], control["id"], control.get("direction", "")]
