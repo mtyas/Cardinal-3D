@@ -62,6 +62,7 @@ func _process(delta: float) -> void:
 	if status != StreamPeerTCP.STATUS_CONNECTED:
 		return
 	if not connected:
+		peer.set_no_delay(true)
 		connected = true
 		connection_changed.emit(true)
 		send_command("hello", {"version": 1, "token": OS.get_environment("CARDINAL_3D_TOKEN")})

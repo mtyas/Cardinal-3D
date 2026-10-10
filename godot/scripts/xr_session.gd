@@ -27,6 +27,55 @@ var layout_key := ""
 var active := false
 var last_hover := {}
 var selected_module := {}
+var move_ghost: MeshInstance3D
+var proposed_position := Vector2.ZERO
+var snapped_position := Vector2.ZERO
+var move_start := Vector2.ZERO
+
+func _nearest_free_position(view: CardinalModuleView, wanted: Vector2) -> Vector2:
+	var grid := Vector2(15, 380)
+	var rounded := (wanted / grid).round() * grid
+	var size := Vector2(float(view.descriptor.get("width", 90)), float(view.descriptor.get("height", 380)))
+	for step in range(10000):
+		var candidate := rounded + Vector2((-(step / 2) if step % 2 == 0 else step / 2 + 1) * 15, 0)
+		var free := true
+		for other in host.modules.values():
+			if other == view: continue
+			var data: Dictionary = other.descriptor
+			if Rect2(candidate, size).intersects(Rect2(float(data.x), float(data.y), float(data.width), float(data.height))):
+				free = false
+				break
+		if free: return candidate
+	return move_start
+
+func _begin_move_preview(view: CardinalModuleView) -> void:
+	move_start = Vector2(float(view.descriptor.get("x", 0)), float(view.descriptor.get("y", 0)))
+	proposed_position = move_start
+	snapped_position = move_start
+	move_ghost = MeshInstance3D.new()
+	var panel := QuadMesh.new()
+	panel.size = Vector2(float(view.descriptor.get("width", 90)), float(view.descriptor.get("height", 380))) * SCALE
+	move_ghost.mesh = panel
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(0.35, 0.9, 1, 0.55)
+	mat.albedo_texture = view.texture
+	move_ghost.material_override = mat
+	view.get_parent().add_child(move_ghost)
+	_update_move_preview(view, Vector2.ZERO)
+	move_ghost.hide()
+
+func _update_move_preview(view: CardinalModuleView, delta: Vector2) -> void:
+	proposed_position += delta
+	snapped_position = _nearest_free_position(view, proposed_position)
+	var size: Vector2 = (move_ghost.mesh as QuadMesh).size
+	move_ghost.position = Vector3(snapped_position.x * SCALE + size.x / 2, -snapped_position.y * SCALE - size.y / 2, 0.045)
+	move_ghost.visible = proposed_position.distance_to(move_start) > 3
+
+func _clear_move_preview() -> void:
+	if is_instance_valid(move_ghost): move_ghost.queue_free()
+	move_ghost = null
 var was_focused := false
 var last_controller_basis := Basis.IDENTITY
 var last_knob_distance := 0.0
@@ -335,6 +384,7 @@ func _ui_button(pixel: Vector2, pressed: bool) -> void:
 	ui_viewport.push_input(event, true)
 
 func cancel() -> void:
+	_clear_move_preview()
 	if capture.get("kind", "") == "ui" and ui_viewport != null: _ui_button(ui_position, false)
 	if host != null:
 		host.bridge.send_command("release")
@@ -391,15 +441,21 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 				capture["move"] = host._title_hit(hit)
 				if capture["move"]:
 					_select_module(hit)
-					host.bridge.send_command("move_begin", {"module": capture["module"]})
-				else:
+					_begin_move_preview(hit["view"])
+				elif not capture.get("control", {}).is_empty():
 					host.dragging = true
 					_pointer(hit, "down")
 	elif finish and gesture_owner == side:
 		match capture.get("kind", ""):
 			"ui": _ui_button(hit.get("pixel", ui_position) if hit.get("kind") == "ui" else ui_position, false)
 			"module":
-				if capture["move"]: host.bridge.send_command("move_end")
+				if capture["move"]:
+					if is_instance_valid(move_ghost) and move_ghost.visible and snapped_position != move_start:
+						host.bridge.send_command("move_begin", {"module": capture["module"]})
+						host.bridge.send_command("move_delta", {"dx": snapped_position.x - move_start.x, "dy": snapped_position.y - move_start.y})
+						host.bridge.send_command("move_end")
+					_clear_move_preview()
+				elif capture.get("control", {}).is_empty(): pass
 				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"]: host.bridge.send_command("release")
 				elif hit.get("kind") == "module": _pointer(hit, "up")
 				else: host.bridge.send_command("release")
@@ -415,7 +471,8 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 			"module":
 				var view: CardinalModuleView = capture["view"]
 				var delta: Vector3 = view.global_basis.inverse() * (sample["position"] - last_position)
-				if capture["move"]: host.bridge.send_command("move_delta", {"dx": delta.x / SCALE, "dy": -delta.y / SCALE})
+				if capture["move"]: _update_move_preview(view, Vector2(delta.x / SCALE, -delta.y / SCALE))
+				elif capture.get("control", {}).is_empty(): pass
 				elif capture.get("control", {}).get("kind", "") == "knob" and sample["source"] == "controller" and sample.has("basis"):
 					host.bridge.send_command("drag_delta", {"dx": 0.0, "dy": _controller_knob_delta(sample), "mods": 0})
 				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"]:

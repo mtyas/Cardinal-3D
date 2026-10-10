@@ -245,6 +245,15 @@ class Bridge {
                 json_object_set_new(control, "id", json_integer(light->firstLightId));
                 if (auto* value = light->getLight(0)) real(control, "brightness", value->getBrightness());
                 if (light->baseColors.size() == 1) string(control, "color", color::toHexString(light->baseColors.front()));
+                float r = 0, g = 0, b = 0;
+                for (size_t i = 0; i < light->baseColors.size(); ++i) {
+                    auto* value = light->getLight(i);
+                    const float brightness = value ? value->getBrightness() : 0;
+                    r += light->baseColors[i].r * brightness;
+                    g += light->baseColors[i].g * brightness;
+                    b += light->baseColors[i].b * brightness;
+                }
+                real(control, "emission_r", r); real(control, "emission_g", g); real(control, "emission_b", b);
             } else string(control, "id", "screw-" + std::to_string(screw++));
             json_array_append_new(controls, control);
         });
@@ -605,7 +614,7 @@ public:
             previousOverlayMode = mode;
             lastSnapshot = 0;
         }
-        if (authenticated && now - lastSnapshot > 0.05) { snapshot(); lastSnapshot = now; }
+        if (authenticated && now - lastSnapshot > 1.0 / 60) { snapshot(); lastSnapshot = now; }
         transport.flush();
     }
     void render() {

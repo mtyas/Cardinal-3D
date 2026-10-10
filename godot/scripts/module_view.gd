@@ -75,7 +75,7 @@ func setup(data: Dictionary) -> void:
 		var at := Vector3(float(control["x"]) * SCALE, -float(control["y"]) * SCALE, 0.014)
 		var radius := maxf(float(control["width"]) * SCALE / 2, 0.005)
 		var kind := str(control["kind"])
-		if not control.get("physical", false):
+		if not control.get("physical", false) and kind != "light":
 			continue
 		var first_child := get_child_count()
 		if kind == "knob":
@@ -129,6 +129,7 @@ func setup(data: Dictionary) -> void:
 			var lens := Hardware.finish(Color("142523")).duplicate() as StandardMaterial3D
 			lens.clearcoat_enabled = true
 			lens.clearcoat = 0.7
+			lens.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 			var node := mesh_node(bulb, at - Vector3(0, 0, 0.008), lens)
 			lights[str(control["id"])] = node
 		elif kind == "switch" or kind == "button":
@@ -171,9 +172,10 @@ func update_state(data: Dictionary) -> void:
 			var brightness := clampf(float(control.get("brightness", 0)), 0, 1)
 			var mat: StandardMaterial3D = lights[id].material_override
 			var light_color := Color(str(control.get("color", "#17d6b2")))
-			mat.albedo_color = light_color * maxf(brightness, 0.12)
+			var emission := Color(float(control.get("emission_r", light_color.r * brightness)), float(control.get("emission_g", light_color.g * brightness)), float(control.get("emission_b", light_color.b * brightness)))
+			mat.albedo_color = Color(0.025, 0.025, 0.025) + emission
 			mat.emission_enabled = true
-			mat.emission = light_color * brightness
+			mat.emission = emission
 
 func apply_surface(image: Image) -> void:
 	if texture == null:

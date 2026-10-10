@@ -45,6 +45,12 @@ int main() {
     assert(count == 16); // two 3-byte messages, each with a 5-byte frame header
     assert(std::string(reinterpret_cast<char*>(output+5), 3) == "ack");
     assert(std::string(reinterpret_cast<char*>(output+13), 3) == "new");
+    assert(server.queue(2, {'a', 'r', 't'}, "surface/1"));
+    assert(server.json("hot", "snapshot"));
+    server.flush();
+    count = recv(peer, reinterpret_cast<char*>(output), 16, MSG_WAITALL);
+    assert(count == 16 && output[4] == 1 && output[12] == 2);
+    assert(std::string(reinterpret_cast<char*>(output+5), 3) == "hot");
     uint8_t invalid[] = {0xff,0xff,0xff,0x7f};
     send(peer, reinterpret_cast<const char*>(invalid), sizeof(invalid), 0);
     for (int i=0; i<1000 && server.connected(); ++i) {

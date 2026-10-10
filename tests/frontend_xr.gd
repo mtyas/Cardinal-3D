@@ -73,7 +73,7 @@ func run() -> void:
 	for side in ["left", "right"]:
 		session.devices[side] = {"pressed": false, "source": "hand", "armed": false, "hand": load("res://scripts/xr_hand_input.gd").new()}
 	var module = load("res://scripts/module_view.gd").new()
-	module.descriptor = {"id": "1"}
+	module.descriptor = {"id": "1", "x": 0, "y": 0, "width": 90, "height": 380}
 	host.add_child(module)
 	host.modules["1"] = module
 	var hit := {"kind": "module", "view": module, "pixel": Vector2(40, 100), "control": {"kind": "knob"}, "world": Vector3.ZERO}
@@ -133,13 +133,22 @@ func run() -> void:
 	check(host.bridge.commands[-1].command == "release", "Module removal during pinch must release")
 	host.modules["1"] = module
 	hit.pixel.y = 10
+	var before_move := host.bridge.commands.size()
 	session.interact("left", pose(true), hit)
-	check(host.bridge.commands[-1].command == "move_begin", "Only the module title starts module movement")
+	check(host.bridge.commands.size() == before_move, "A header press must select locally without moving Cardinal")
 	check(session._valid_selection() and module.selection_strip.visible, "Pressing the title must select and visibly mark the module")
 	session.interact("left", pose(true, Vector3(0.02, 0, 0)), hit)
-	check(host.bridge.commands[-1].command == "move_delta", "Title drag must use native module movement")
+	check(host.bridge.commands.size() == before_move and session.move_ghost.visible and session.snapped_position == Vector2(15, 0), "Title drag must show a snapped ghost without moving the real module")
 	session.interact("left", pose(false), hit)
 	check(host.bridge.commands[-1].command == "move_end", "Module movement must end its undo gesture")
+	check(host.bridge.commands[-2].command == "move_delta" and host.bridge.commands[-2].fields.dx == 15, "Release must commit the snapped ghost destination")
+	hit.pixel.y = 100
+	hit.control = {}
+	before_move = host.bridge.commands.size()
+	session.interact("left", pose(true), hit)
+	session.interact("left", pose(true, Vector3(0.02, 0, 0)), hit)
+	session.interact("left", pose(false), hit)
+	check(host.bridge.commands.size() == before_move, "Blank panel space must never reach Cardinal's panel drag handler")
 	hit.pixel.y = 100
 	hit.control = {"kind": "port"}
 	session.interact("left", pose(true), hit)

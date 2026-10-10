@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <unistd.h>
 #endif
 #include <algorithm>
@@ -99,6 +100,8 @@ public:
         client = ::accept(listener, nullptr, nullptr);
         if (client == net::invalid) return false;
         if (!net::nonblock(client)) { closeClient(); return false; }
+        int noDelay = 1;
+        setsockopt(client, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&noDelay), sizeof(noDelay));
 #ifdef SO_NOSIGPIPE
         int yes = 1; setsockopt(client, SOL_SOCKET, SO_NOSIGPIPE, &yes, sizeof(yes));
 #endif
@@ -121,13 +124,21 @@ public:
         for (int i = 0; i < 4; ++i) frame.bytes.push_back((length >> (8*i)) & 255);
         frame.bytes.push_back(kind);
         frame.bytes.insert(frame.bytes.end(), payload.begin(), payload.end());
-        queued += frame.bytes.size(); output.push_back(std::move(frame)); return true;
+        queued += frame.bytes.size();
+        if (kind == 1) {
+            // Metadata must not wait behind unsent artwork. Never interrupt a
+            // partially transmitted frame or reorder JSON replies/snapshots.
+            auto at = output.begin();
+            while (at != output.end() && (at->offset != 0 || at->bytes[4] == 1)) ++at;
+            output.insert(at, std::move(frame));
+        } else output.push_back(std::move(frame));
+        return true;
     }
     bool json(const std::string& text, const std::string& key = "") {
         return queue(1, std::vector<uint8_t>(text.begin(), text.end()), key);
     }
     void flush() {
-        size_t budget = 512 * 1024;
+        size_t budget = 4 * 1024 * 1024;
         while (connected() && !output.empty() && budget) {
             auto& frame = output.front();
             size_t count = std::min(budget, frame.bytes.size() - frame.offset);
