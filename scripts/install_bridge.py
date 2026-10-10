@@ -21,6 +21,12 @@ def main():
     revision = subprocess.check_output(["git", "-C", str(CARDINAL), "rev-parse", "HEAD"], text=True).strip()
     if revision != pin:
         raise RuntimeError(f"Expected Cardinal {pin}, found {revision}")
+    # DPF's STATIC_BUILD also disables standalone bundle discovery. Keep its
+    # normal Windows executable/resources lookup for this portable prototype.
+    dpf = CARDINAL / "dpf/distrho/src"
+    replace(dpf / "DistrhoUtils.cpp", '  #ifndef STATIC_BUILD\n    if (filename.isNotEmpty())', '  #if !defined(STATIC_BUILD) || defined(DISTRHO_OS_WINDOWS)\n    if (filename.isNotEmpty())')
+    replace(dpf / "DistrhoPluginJACK.cpp", '#ifndef STATIC_BUILD\n# include "../DistrhoPluginUtils.hpp"', '#if !defined(STATIC_BUILD) || defined(DISTRHO_OS_WINDOWS)\n# include "../DistrhoPluginUtils.hpp"')
+    replace(dpf / "DistrhoPluginJACK.cpp", '   #ifndef STATIC_BUILD\n    // find plugin bundle', '   #if !defined(STATIC_BUILD) || defined(DISTRHO_OS_WINDOWS)\n    // find plugin bundle')
     target = CARDINAL / "src/cardinal3d"
     target.mkdir(exist_ok=True)
     for filename in ("Transport.hpp", "Cardinal3DBridge.hpp"):
