@@ -286,7 +286,7 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 				elif hit.get("kind") == "module":
 					_pointer(hit, "motion")
 				else: host.bridge.send_command("drag_delta", {"dx": delta.x / SCALE, "dy": -delta.y / SCALE, "mods": 0})
-				host.wire_cursor = sample["origin"] + sample["direction"] * 0.8
+				host.wire_cursor = hit.get("world", sample["origin"] + sample["direction"] * 0.8)
 				host._pending_wire()
 		last_position = sample["position"]
 	elif gesture_owner.is_empty():
