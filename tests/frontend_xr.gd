@@ -36,6 +36,11 @@ func joints(tracker: XRHandTracker, separation: float) -> void:
 		tracker.set_hand_joint_transform(joint, Transform3D(Basis.IDENTITY, positions[joint]))
 func pose(pressed: bool, position := Vector3.ZERO) -> Dictionary:
 	return {"source": "hand", "pressed": pressed, "position": position, "origin": position, "direction": Vector3.FORWARD}
+func controller_pose(pressed: bool, position: Vector3, rotation := Basis.IDENTITY) -> Dictionary:
+	var sample := pose(pressed, position)
+	sample.source = "controller"
+	sample.basis = rotation
+	return sample
 func run() -> void:
 	var hand = load("res://scripts/xr_hand_input.gd").new()
 	var tracker := XRHandTracker.new()
@@ -77,8 +82,43 @@ func run() -> void:
 	check(host.bridge.commands.size() == 1 and host.bridge.commands[0].command == "pointer", "Only one hand may own a native gesture")
 	session.interact("left", pose(true, Vector3(0, 0.02, 0)), hit)
 	check(host.bridge.commands[-1].command == "drag_delta" and is_equal_approx(host.bridge.commands[-1].fields.dy, -10), "Knob pinch must use Cardinal drag deltas")
-	session.interact("left", pose(false), hit)
-	check(host.bridge.commands[-1].fields.phase == "up" and not host.dragging, "Unpinch must release native controls")
+	var other_hit := hit.duplicate()
+	other_hit.pixel = Vector2(200, 250)
+	session.interact("left", pose(false), other_hit)
+	check(host.bridge.commands[-1].command == "release" and not host.dragging, "Releasing a knob over another control must not synthesize a final pointer jump")
+	session.interact("left", controller_pose(false, Vector3(0, 0, 1)), hit)
+	session.interact("left", controller_pose(true, Vector3(0, 0, 1)), hit)
+	check(not session.capture.move, "Holding a knob must never move the module")
+	session.interact("left", controller_pose(true, Vector3(0, 0, 1), Basis(Vector3.FORWARD, PI / 2)), {})
+	var coarse: float = host.bridge.commands[-1].fields.dy
+	check(is_equal_approx(coarse, -PI / 2 * session.WRIST_PIXELS_PER_RADIAN), "Clockwise wrist roll must increase a captured knob even when the ray misses")
+	check(session._visual_target("left", other_hit).pixel == hit.pixel, "The owning ray dot must stay on the captured knob")
+	check(session._visual_target("right", other_hit).pixel == other_hit.pixel, "The other controller must retain its own aiming dot")
+	session.interact("left", controller_pose(true, Vector3(0, 0, 1.1), Basis(Vector3.FORWARD, PI / 2)), other_hit)
+	var fine: float = host.bridge.commands[-1].fields.dy
+	check(is_equal_approx(fine, -6.0) and absf(fine) < absf(coarse) / 10, "Pulling away must provide a finer adjustment without changing the captured knob")
+	session.interact("left", controller_pose(false, Vector3(0, 0, 1.1)), other_hit)
+	check(host.bridge.commands[-1].command == "release", "Controller knob release must not jump to the current ray target")
+	session.origin = XROrigin3D.new()
+	session.add_child(session.origin)
+	session.headset = XRCamera3D.new()
+	session.origin.add_child(session.headset)
+	session.headset.position = Vector3(0.2, 1.6, 0.1)
+	session._move_player(Vector2(0.1, 0), 0.1, 1.0)
+	check(session.origin.position == Vector3.ZERO, "Thumbstick drift must stay inside the deadzone")
+	session._move_player(Vector2(0, 1), 0, 1.0)
+	check(is_equal_approx(session.origin.position.z, -session.MOVE_SPEED), "Forward movement must follow headset yaw at the configured speed")
+	var head_position: Vector3 = session.headset.global_position
+	session._move_player(Vector2.ZERO, 1.0, 0.1)
+	check(session.headset.global_position.is_equal_approx(head_position), "Snap turning must rotate around the headset")
+	var turned: Basis = session.origin.basis
+	session._move_player(Vector2.ZERO, 1.0, 0.1)
+	check(session.origin.basis.is_equal_approx(turned), "A held turn stick must snap only once")
+	session.gesture_owner = "left"
+	var player_position: Vector3 = session.origin.position
+	session._move_player(Vector2(0, 1), 0, 1.0)
+	check(session.origin.position == player_position, "Locomotion must pause during a captured gesture")
+	session.gesture_owner = ""
 	session.interact("left", pose(true), hit)
 	session.interact("left", {}, {})
 	check(host.bridge.commands[-1].command == "release" and session.gesture_owner.is_empty(), "Tracking loss must release gestures")

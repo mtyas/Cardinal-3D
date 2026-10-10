@@ -3,6 +3,11 @@ class_name CardinalXRSession
 
 const HandInput := preload("res://scripts/xr_hand_input.gd")
 const SCALE := 0.002
+const WRIST_PIXELS_PER_RADIAN := 90.0
+const DISTANCE_PIXELS_PER_METRE := 60.0
+const MOVE_SPEED := 0.65
+const STICK_DEADZONE := 0.2
+const SNAP_TURN := PI / 6.0
 var host
 var interface: OpenXRInterface
 var origin: XROrigin3D
@@ -23,6 +28,9 @@ var layout_key := ""
 var active := false
 var last_hover := {}
 var was_focused := false
+var last_controller_basis := Basis.IDENTITY
+var last_knob_distance := 0.0
+var turn_armed := true
 
 func setup(view) -> bool:
 	host = view
@@ -148,7 +156,36 @@ func _sample(side: String) -> Dictionary:
 	if not device["armed"]:
 		if not pressed: device["armed"] = true
 		pressed = false
-	return {"origin": controller.global_position, "direction": -controller.global_basis.z, "position": controller.global_position, "pressed": pressed, "source": "controller", "context": controller.is_button_pressed("ax_button")}
+	return {"origin": controller.global_position, "direction": -controller.global_basis.z, "position": controller.global_position, "basis": controller.global_basis, "pressed": pressed, "source": "controller", "context": controller.is_button_pressed("ax_button")}
+
+func _controller_knob_delta(sample: Dictionary) -> float:
+	var current_basis: Basis = sample["basis"]
+	var rotation := (last_controller_basis.inverse() * current_basis).get_rotation_quaternion()
+	# Extract wrist roll around the pointing axis, independent of aiming yaw/pitch.
+	var roll := wrapf(2.0 * atan2(rotation.z, rotation.w), -PI, PI)
+	var distance: float = sample["position"].distance_to(capture["world"])
+	var pixels := roll * WRIST_PIXELS_PER_RADIAN - (distance - last_knob_distance) * DISTANCE_PIXELS_PER_METRE
+	last_controller_basis = current_basis
+	last_knob_distance = distance
+	return pixels
+
+func _move_player(stick: Vector2, turn: float, delta: float) -> void:
+	# Do not move the player under a held knob, cable, module or floating menu.
+	if not gesture_owner.is_empty():
+		turn_armed = absf(turn) < STICK_DEADZONE
+		return
+	var amount := stick.length()
+	if amount > STICK_DEADZONE:
+		var input := stick.normalized() * minf((amount - STICK_DEADZONE) / (1.0 - STICK_DEADZONE), 1.0)
+		var facing := Basis(Vector3.UP, headset.global_rotation.y)
+		origin.global_position += facing * Vector3(input.x, 0, -input.y) * MOVE_SPEED * delta
+	if absf(turn) < STICK_DEADZONE: turn_armed = true
+	elif absf(turn) > 0.7 and turn_armed:
+		var pivot := headset.global_position
+		var yaw := -signf(turn) * SNAP_TURN
+		origin.global_basis = Basis(Vector3.UP, yaw) * origin.global_basis
+		origin.global_position = pivot + Basis(Vector3.UP, yaw) * (origin.global_position - pivot)
+		turn_armed = false
 
 func _draw_hand(mesh: ImmediateMesh, points: Dictionary) -> void:
 	var chains := [[1, 2, 3, 4, 5], [1, 6, 7, 8, 9, 10], [1, 11, 12, 13, 14, 15], [1, 16, 17, 18, 19, 20], [1, 21, 22, 23, 24, 25], [6, 11, 16, 21]]
@@ -248,6 +285,9 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 		gesture_owner = side
 		capture = hit.duplicate()
 		last_position = sample["position"]
+		if sample["source"] == "controller" and sample.has("basis"):
+			last_controller_basis = sample["basis"]
+			last_knob_distance = sample["position"].distance_to(hit["world"])
 		match hit["kind"]:
 			"ui":
 				_ui_motion(hit["pixel"], false)
@@ -266,6 +306,7 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 			"ui": _ui_button(hit.get("pixel", ui_position) if hit.get("kind") == "ui" else ui_position, false)
 			"module":
 				if capture["move"]: host.bridge.send_command("move_end")
+				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"]: host.bridge.send_command("release")
 				elif hit.get("kind") == "module": _pointer(hit, "up")
 				else: host.bridge.send_command("release")
 		gesture_owner = ""
@@ -281,6 +322,8 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 				var view: CardinalModuleView = capture["view"]
 				var delta: Vector3 = view.global_basis.inverse() * (sample["position"] - last_position)
 				if capture["move"]: host.bridge.send_command("move_delta", {"dx": delta.x / SCALE, "dy": -delta.y / SCALE})
+				elif capture.get("control", {}).get("kind", "") == "knob" and sample["source"] == "controller" and sample.has("basis"):
+					host.bridge.send_command("drag_delta", {"dx": 0.0, "dy": _controller_knob_delta(sample), "mods": 0})
 				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"]:
 					host.bridge.send_command("drag_delta", {"dx": delta.x / SCALE, "dy": -delta.y / SCALE, "mods": 0})
 				elif hit.get("kind") == "module":
@@ -304,7 +347,17 @@ func _context_menu() -> void:
 	_pointer(last_hover, "down", 1)
 	_pointer(last_hover, "up", 1)
 
-func _physics_process(_delta: float) -> void:
+func _visual_target(side: String, hit: Dictionary) -> Dictionary:
+	if gesture_owner != side or capture.get("kind", "") != "module" or not is_instance_valid(capture.get("view")):
+		return hit
+	if not capture.get("move", false) and not capture.get("control", {}).get("kind", "") in ["knob", "slider"]:
+		return hit
+	var target := capture.duplicate()
+	var pixel: Vector2 = capture["pixel"]
+	target["world"] = capture["view"].to_global(Vector3(pixel.x * SCALE, -pixel.y * SCALE, 0.04))
+	return target
+
+func _physics_process(delta: float) -> void:
 	if not active: return
 	if interface.get_session_state() != OpenXRInterface.SESSION_STATE_FOCUSED or not host.bridge.connected:
 		if was_focused: cancel()
@@ -315,16 +368,21 @@ func _physics_process(_delta: float) -> void:
 	for side: String in devices:
 		var sample := _sample(side)
 		var hit := {} if sample.is_empty() else _hit(sample["origin"], sample["direction"])
+		interact(side, sample, hit)
+		# A relative knob drag keeps its original target while the aiming ray moves.
+		var visual_hit := _visual_target(side, hit)
 		var mesh: ImmediateMesh = devices[side]["ray"].mesh
 		mesh.clear_surfaces()
 		var target: MeshInstance3D = devices[side]["target"]
-		target.visible = not hit.is_empty()
+		target.visible = not visual_hit.is_empty()
 		if target.visible:
-			target.global_position = hit["world"]
+			target.global_position = visual_hit["world"]
 			target.scale = Vector3.ONE * (1.5 if sample["pressed"] else 1.0)
 		if not sample.is_empty():
 			mesh.surface_begin(Mesh.PRIMITIVE_LINES)
 			mesh.surface_add_vertex(sample["origin"])
-			mesh.surface_add_vertex(hit.get("world", sample["origin"] + sample["direction"] * 2))
+			mesh.surface_add_vertex(visual_hit.get("world", sample["origin"] + sample["direction"] * 2))
 			mesh.surface_end()
-		interact(side, sample, hit)
+	var left: XRController3D = devices["left"]["controller"]
+	var right: XRController3D = devices["right"]["controller"]
+	_move_player(left.get_vector2("primary") if left.get_has_tracking_data() else Vector2.ZERO, right.get_vector2("primary").x if right.get_has_tracking_data() else 0.0, delta)
