@@ -351,7 +351,7 @@ func _hit(from: Vector3, direction: Vector3) -> Dictionary:
 	var closest := {}
 	var separation := 24.0
 	for control: Dictionary in view.descriptor.get("controls", []) if pixel.y > 32 else []:
-		if not control.get("visible", true) or control["kind"] == "light": continue
+		if not control.get("visible", true) or not control["kind"] in ["knob", "slider", "switch", "button", "port", "custom"]: continue
 		var candidate := Vector2(float(control["x"]), float(control["y"]))
 		var distance := pixel.distance_to(candidate)
 		if distance < separation:
