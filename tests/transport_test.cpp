@@ -14,8 +14,17 @@ static std::vector<uint8_t> frame(const std::string& text) {
 }
 int main() {
     Transport server;
-    uint16_t port = 41000 + std::chrono::steady_clock::now().time_since_epoch().count()%10000;
-    assert(server.listenOn(port));
+    const auto seed = static_cast<uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count());
+    uint16_t port = 0;
+    bool listening = false;
+    // Hosted Windows machines reserve blocks of ports for other services.
+    // Spread attempts over unprivileged ports rather than treating a collision
+    // on the first random choice as a broken transport.
+    for (uint64_t attempt = 0; attempt < 100 && !listening; ++attempt) {
+        port = static_cast<uint16_t>(1024 + (seed + attempt * 7919) % 62000);
+        listening = server.listenOn(port);
+    }
+    assert(listening);
     auto peer = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in address{}; address.sin_family = AF_INET; address.sin_port = htons(port);
     address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
