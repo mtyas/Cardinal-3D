@@ -1,0 +1,9 @@
+config_version=5
+[application]
+config/name="Cardinal embedded host validation"
+[audio]
+driver/mix_rate=48000
+[rendering]
+renderer/rendering_method="gl_compatibility"
+[debug]
+file_logging/enable_file_logging=false

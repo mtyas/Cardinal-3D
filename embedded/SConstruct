@@ -1,0 +1,9 @@
+from pathlib import Path
+env = SConscript('../.tools/godot-cpp/SConstruct')
+root = Path(Dir('.').abspath).parent
+env.Append(CPPPATH=[str(root / 'embedded')])
+env.Append(LIBS=[env.File(str(root / 'vendor/Cardinal/bin/libCardinal3DEngine.dll.a'))])
+env.Append(LINKFLAGS=['-static-libgcc', '-static-libstdc++'])
+env['SHLIBPREFIX'] = ''
+library = env.SharedLibrary('../dist/embedded/godot/bin/Cardinal3DExtension', ['GodotHost.cpp'])
+Default(library)

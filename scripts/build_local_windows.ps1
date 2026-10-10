@@ -1,4 +1,4 @@
-param([string]$Distribution = 'Cardinal3DBuild', [ValidateRange(1,64)][int]$Jobs = 4, [switch]$PrepareOnly)
+param([string]$Distribution = 'Cardinal3DBuild', [ValidateRange(1,64)][int]$Jobs = 4, [switch]$PrepareOnly, [switch]$Embedded)
 $ErrorActionPreference = 'Stop'
 $project = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $linuxProject = (& wsl.exe -d $Distribution -u root -- wslpath -a $project).Trim()
@@ -11,7 +11,9 @@ $program = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'local_windows_builde
 [IO.File]::WriteAllText($driver, $program, [Text.UTF8Encoding]::new($false))
 $linuxDriver = (& wsl.exe -d $Distribution -u root -- wslpath -a $driver).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve the local build driver' }
-& wsl.exe -d $Distribution -u root -- bash $linuxDriver $linuxProject $Jobs $PrepareOnly.IsPresent
+$mode = if ($Embedded) { 'embedded' } else { 'runtime' }
+& wsl.exe -d $Distribution -u root -- bash $linuxDriver $linuxProject $Jobs $PrepareOnly.IsPresent $mode
 if ($LASTEXITCODE -ne 0) { throw 'Local build failed; compiler caches have been retained for the next attempt.' }
 if ($PrepareOnly) { Write-Host 'Local source staging verified.' }
+elseif ($Embedded) { Write-Host "Experimental embedded host built in $project\dist\embedded" }
 else { Write-Host "Local Windows bundle built in $project\dist" }

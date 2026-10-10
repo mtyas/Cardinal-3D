@@ -1,0 +1,138 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Reuse upstream DPF's plugin lifecycle and Cardinal DSP without a UI or TCP.
+#include "Host.h"
+#include "src/DistrhoPlugin.cpp"
+// Use the portable Windows resource-directory convention. No standalone entry
+// point or audio-device backend is linked into this DLL.
+#define DISTRHO_PLUGIN_TARGET_JACK
+#define DISTRHO_IS_STANDALONE 0
+#include "src/DistrhoUtils.cpp"
+#undef DISTRHO_PLUGIN_TARGET_JACK
+#include "CardinalPluginContext.hpp"
+#include <patch.hpp>
+#include <asset.hpp>
+#include <settings.hpp>
+#include <system.hpp>
+#include <jansson.h>
+#include <cmath>
+#include <memory>
+#include <string>
+#include <thread>
+#include <vector>
+#include <atomic>
+#include "cardinal3d/Cardinal3DBridge.hpp"
+
+// RemoteWindow has no physical cursor. Pointer modifiers will be carried by the
+// embedded input adapter when live VR input is introduced.
+namespace rack { namespace window { void WindowSetMods(Window*, int) {} } }
+
+namespace {
+using namespace CardinalDISTRHO;
+struct Host {
+    std::string bundle, error, patch;
+    std::thread::id owner = std::this_thread::get_id();
+    uint32_t block;
+    std::vector<float> silence;
+    std::unique_ptr<PluginExporter> plugin;
+    std::unique_ptr<cardinal3d::Bridge> bridge;
+    CardinalPluginContext* context = nullptr;
+    std::atomic_flag busy = ATOMIC_FLAG_INIT;
+    Host(const char* path, const char* user, double rate, uint32_t frames)
+        : bundle(path), block(frames), silence(frames, 0.f) {
+        rack::asset::userDir = user;
+        rack::system::createDirectories(user);
+        rack::settings::settingsPath = rack::system::join(user, "embedded-settings.json");
+        d_nextBufferSize = frames;
+        d_nextSampleRate = rate;
+        d_nextBundlePath = bundle.c_str();
+        plugin.reset(new PluginExporter(nullptr, nullptr, nullptr, nullptr));
+        context = static_cast<CardinalBasePlugin*>(plugin->getInstancePointer())->context;
+        bridge.reset(new cardinal3d::Bridge(true));
+        plugin->activate();
+    }
+    ~Host() { bridge.reset(); if (plugin) plugin->deactivate(); }
+};
+Host* live = nullptr;
+std::string creation_error;
+struct Context {
+    Context(Host* h) { rack::contextSet(h->context); }
+    ~Context() { rack::contextSet(nullptr); }
+};
+Host* checked(void* ptr) { return ptr && ptr == live ? live : nullptr; }
+bool owner(Host* h) {
+    if (h->owner == std::this_thread::get_id()) return true;
+    h->error = "Patch operations require the host owner thread and stopped audio";
+    return false;
+}
+template<class F> int operation(void* ptr, F fn) {
+    Host* h = checked(ptr);
+    if (!h || !owner(h)) return 0;
+    if (h->busy.test_and_set(std::memory_order_acquire)) { h->error = "Audio callback is busy; retry on the next frame"; return 0; }
+    struct Unlock { Host* h; ~Unlock() { h->busy.clear(std::memory_order_release); } } unlock{h};
+    try { Context scope(h); fn(h); h->error.clear(); return 1; }
+    catch (const std::exception& e) { h->error = e.what(); }
+    catch (...) { h->error = "Unknown Cardinal host error"; }
+    return 0;
+}
+}
+void* c3d_create(const char* bundle, const char* user, double rate, uint32_t block) {
+    if (live) { creation_error = "Only one embedded host is supported"; return nullptr; }
+    if (!bundle || !*bundle || !user || !*user || !std::isfinite(rate) || rate < 8000 || rate > 384000 || !block || block > 16384) {
+        creation_error = "Invalid resource path, sample rate or buffer size"; return nullptr;
+    }
+    try { live = new Host(bundle, user, rate, block); creation_error.clear(); return live; }
+    catch (const std::exception& e) { creation_error = e.what(); }
+    catch (...) { creation_error = "Unable to initialize Cardinal"; }
+    return nullptr;
+}
+int c3d_destroy(void* ptr) {
+    Host* h = checked(ptr);
+    if (!h || !owner(h) || h->busy.test_and_set(std::memory_order_acquire)) return 0;
+    delete h; live = nullptr; return 1;
+}
+const char* c3d_error(void* ptr) { Host* h = checked(ptr); return h ? h->error.c_str() : creation_error.c_str(); }
+int c3d_load(void* ptr, const char* path) {
+    if (!path || !*path) return 0;
+    return operation(ptr, [path](Host* h) {
+        if (!rack::system::isFile(path)) throw std::runtime_error("Patch file does not exist");
+        h->context->patch->load(path);
+    });
+}
+int c3d_save(void* ptr, const char* path) {
+    if (!path || !*path) return 0;
+    return operation(ptr, [path](Host* h) { h->context->patch->save(path); });
+}
+const char* c3d_patch_json(void* ptr) {
+    if (!operation(ptr, [](Host* h) {
+        json_t* root = h->context->patch->toJson();
+        char* text = json_dumps(root, JSON_COMPACT | JSON_SORT_KEYS);
+        json_decref(root);
+        if (!text) throw std::runtime_error("Unable to serialize patch");
+        h->patch = text;
+        free(text);
+    })) return nullptr;
+    return live->patch.c_str();
+}
+const char* c3d_messages_json(void* ptr, const char* command) {
+    if (!operation(ptr, [command](Host* h) {
+        h->patch = h->bridge->invokeLocal(command ? command : "");
+    })) return nullptr;
+    return live->patch.c_str();
+}
+int c3d_process(void* ptr, const float* in_l, const float* in_r, float* out_l, float* out_r, uint32_t frames) {
+    Host* h = checked(ptr);
+    if (!h || !out_l || !out_r || !frames || frames > h->block) return 0;
+    if (h->busy.test_and_set(std::memory_order_acquire)) {
+        std::fill(out_l, out_l + frames, 0.f); std::fill(out_r, out_r + frames, 0.f);
+        return 1; // Never wait for UI/file work on the audio thread.
+    }
+    const float* inputs[] = {in_l ? in_l : h->silence.data(), in_r ? in_r : h->silence.data()};
+    float* outputs[] = {out_l, out_r};
+    try { h->plugin->run(inputs, outputs, frames, nullptr, 0); }
+    catch (...) {
+        std::fill(out_l, out_l + frames, 0.f); std::fill(out_r, out_r + frames, 0.f);
+        h->busy.clear(std::memory_order_release); return 0;
+    }
+    h->busy.clear(std::memory_order_release);
+    return 1;
+}

@@ -58,6 +58,7 @@ inline std::string encode(json_t* value) {
 
 class Bridge {
     Transport transport;
+    json_t* localMessages = nullptr;
     bool enabled = false, authenticated = false, overlayRequested = false, compressSurfaces = false;
     std::string token;
     uint64_t generation = 1;
@@ -112,6 +113,7 @@ class Bridge {
         return APP->scene->rack->getModule(value);
     }
     void send(json_t* value, const std::string& key = "") {
+        if (localMessages) { json_array_append_new(localMessages, value); return; }
         transport.json(encode(value), key); json_decref(value);
     }
     void ack(json_t* command, const std::string& error = "") {
@@ -616,7 +618,8 @@ class Bridge {
     }
 public:
     ~Bridge() { cancelScan(); }
-    Bridge() {
+    Bridge(bool inProcess = false) {
+        if (inProcess) { authenticated = true; return; }
         const char* port = std::getenv("CARDINAL_3D_PORT");
         if (!port) return; // Existing Cardinal behaves normally unless explicitly enabled.
         int value = std::atoi(port);
@@ -632,6 +635,35 @@ public:
             }
         }
         enabled = transport.listenOn(value);
+    }
+    // Same native metadata, validation and history as TCP, without a socket.
+    // The caller supplies the Cardinal context on the UI/owner thread.
+    std::string invokeLocal(const std::string& request) {
+        if (enabled || localMessages) throw std::runtime_error("Bridge is not an idle local host");
+        json_error_t error;
+        json_t* cmd = request.empty() ? nullptr : json_loadb(request.data(), request.size(), JSON_REJECT_DUPLICATES, &error);
+        if (!request.empty() && !json_is_object(cmd)) {
+            if (cmd) json_decref(cmd);
+            throw std::runtime_error("Invalid local command JSON");
+        }
+        localMessages = json_array();
+        try {
+            refreshTopology();
+            if (cmd) {
+                try { command(cmd); refreshTopology(); ack(cmd); }
+                catch (const std::exception& e) { ack(cmd, e.what()); }
+            }
+            APP->scene->step();
+            snapshot();
+            const std::string result = encode(localMessages);
+            json_decref(localMessages); localMessages = nullptr;
+            if (cmd) json_decref(cmd);
+            return result;
+        } catch (...) {
+            json_decref(localMessages); localMessages = nullptr;
+            if (cmd) json_decref(cmd);
+            throw;
+        }
     }
     void release() {
         if (pressedButton >= 0 && APP && APP->event) {
@@ -683,6 +715,7 @@ public:
         if (authenticated && now - lastSnapshot > 1.0 / 60) { snapshot(); lastSnapshot = now; }
         transport.flush();
     }
+#ifndef HEADLESS
     void render() {
         if (!enabled || !authenticated || !APP->window->fbVg) return;
         const double now = system::getTime();
@@ -800,5 +833,9 @@ public:
         if (framebuffer) nvgluDeleteFramebuffer(framebuffer);
         framebuffer = nullptr; framebufferWidth = framebufferHeight = 0;
     }
+#else
+    void render() {}
+    void destroyGraphics() { clearPreviews(); }
+#endif
 };
 }
