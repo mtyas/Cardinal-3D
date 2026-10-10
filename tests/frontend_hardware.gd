@@ -63,8 +63,18 @@ func run() -> void:
 	alternate["visible"] = false
 	module["controls"].append(alternate)
 	var overlap = load("res://scripts/module_view.gd").new()
+	module["controls"].append({"id": 4, "kind": "light", "physical": false, "x": 30, "y": 200, "width": 6, "height": 6, "emission_r": 0.0, "emission_g": 0.8, "emission_b": 0.2})
 	view.rack.add_child(overlap)
 	overlap.setup(module)
+	var led_material: StandardMaterial3D = overlap.lights["4"].material_override
+	check(led_material.emission.is_equal_approx(Color(0, 0.8, 0.2)), "Composite and multicolor LEDs must follow direct native RGB values")
+	var dark: Dictionary = module.duplicate(true)
+	dark.controls[-1].emission_g = 0.0
+	dark.controls[-1].emission_b = 0.0
+	overlap.update_state(dark)
+	check(led_material.emission == Color.BLACK and led_material.albedo_color.r < 0.03, "An unlit sequencer LED must remain dark instead of showing an artificial minimum brightness")
+	overlap.update_state(module)
+	module["controls"].pop_back()
 	check(not overlap.control_nodes["knob/3/"].visible and overlap.control_nodes["knob/2/"].visible, "Hidden alternate controls must not draw duplicate markers")
 	module["controls"][0]["visible"] = false
 	alternate["visible"] = true

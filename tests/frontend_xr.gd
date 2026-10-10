@@ -142,6 +142,13 @@ func run() -> void:
 	session.interact("left", pose(false), hit)
 	check(host.bridge.commands[-1].command == "move_end", "Module movement must end its undo gesture")
 	check(host.bridge.commands[-2].command == "move_delta" and host.bridge.commands[-2].fields.dx == 15, "Release must commit the snapped ghost destination")
+	var occupied = load("res://scripts/module_view.gd").new()
+	occupied.descriptor = {"id": "2", "x": 90, "y": 0, "width": 90, "height": 380}
+	host.add_child(occupied)
+	host.modules["2"] = occupied
+	check(session._nearest_free_position(module, Vector2(90, 0)) == Vector2(180, 0), "The ghost must use Cardinal's grid search to avoid occupied positions")
+	host.modules.erase("2")
+	occupied.free()
 	hit.pixel.y = 100
 	hit.control = {}
 	before_move = host.bridge.commands.size()
