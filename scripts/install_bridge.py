@@ -29,7 +29,7 @@ def main():
     replace(dpf / "DistrhoPluginJACK.cpp", '   #ifndef STATIC_BUILD\n    // find plugin bundle', '   #if !defined(STATIC_BUILD) || defined(DISTRHO_OS_WINDOWS)\n    // find plugin bundle')
     target = CARDINAL / "src/cardinal3d"
     target.mkdir(exist_ok=True)
-    for filename in ("Transport.hpp", "Cardinal3DBridge.hpp"):
+    for filename in ("Transport.hpp", "Cardinal3DBridge.hpp", "SvgPalette.hpp"):
         shutil.copy2(ROOT / "bridge" / filename, target / filename)
     shutil.copy2(ROOT / "bridge/plugins-3d.cpp", CARDINAL / "plugins/plugins-3d.cpp")
     ui = CARDINAL / "src/CardinalUI.cpp"

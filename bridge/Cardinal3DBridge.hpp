@@ -5,6 +5,8 @@
 #include <app/Scene.hpp>
 #include <app/RackWidget.hpp>
 #include <app/SvgKnob.hpp>
+#include "SvgPalette.hpp"
+#include <map>
 #include <app/SvgSlider.hpp>
 #include <app/SvgSwitch.hpp>
 #include <app/SvgPort.hpp>
@@ -71,6 +73,7 @@ class Bridge {
     math::Vec movingPosition;
     std::unordered_map<std::string, double> surfaceTimes;
     std::unordered_map<std::string, uint64_t> surfaceHashes;
+    std::map<std::shared_ptr<window::Svg>, std::string> knobPalette;
     std::vector<std::pair<std::string, std::unique_ptr<app::ModuleWidget>>> previews;
     std::vector<plugin::Model*> scanModels;
     size_t scanIndex = 0;
@@ -221,6 +224,14 @@ class Bridge {
                 }
                 if (auto* knob = dynamic_cast<app::Knob*>(w)) {
                     real(control, "min_angle", knob->minAngle); real(control, "max_angle", knob->maxAngle);
+                }
+                if (auto* knob = dynamic_cast<app::SvgKnob*>(w)) {
+                    if (knob->sw && knob->sw->svg) {
+                        const auto svg = knob->sw->svg;
+                        auto cached = knobPalette.find(svg);
+                        if (cached == knobPalette.end()) cached = knobPalette.emplace(svg, knobFaceColor(svg->handle)).first;
+                        if (!cached->second.empty()) string(control, "body_color", cached->second);
+                    }
                 }
                 if (auto* sw = dynamic_cast<app::Switch*>(w))
                     json_object_set_new(control, "momentary", json_boolean(sw->momentary));

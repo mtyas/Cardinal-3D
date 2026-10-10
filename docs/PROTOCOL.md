@@ -1,6 +1,6 @@
 # Local bridge v1
 
-Enable with `CARDINAL_3D_PORT` (loopback TCP only, 1024–65535) and `CARDINAL_3D_TOKEN`. The launcher allocates a port and a random token; its local session file has mode 0600. The original application behaves normally without the port variable.
+Enable with `CARDINAL_3D_PORT` (loopback TCP only, 1024â€“65535) and `CARDINAL_3D_TOKEN`. The launcher allocates a port and a random token; its local session file has mode 0600. The original application behaves normally without the port variable.
 
 Every frame starts with a little-endian uint32 byte count, followed by a kind byte. Kind 1 contains UTF-8 JSON. Kind 2 contains uint32 JSON-header length, JSON header and top-down RGBA8 artwork. A client may request `surface_compression: "zstd"` in its hello. Compressed surfaces carry `encoding: "zstd"`; missing encoding means raw pixels. Decompressed size must equal width times height times four and is capped at 16 MiB. The frame count includes the kind byte. The maximum output frame and queue size is 24 MiB; commands are limited to 64 KiB.
 
@@ -24,6 +24,6 @@ Transport is nonblocking. Each UI poll reads at most 64 KiB and 64 commands; eac
 
 Surfaces use a separate NanoVG framebuffer and restore native viewport/framebuffer state and widget visibility. Recognized physical widgets are hidden only during texture capture; unsupported controls and illuminated composite switches keep their original surface. Unchanged pixel hashes avoid redundant transfers. `bridge/overrides.json` supports `plugin/model: "surface"` for a full fallback or `plugin/model/kind: "surface"` for a component-kind fallback. Unknown custom controls are never assigned invented semantics.
 
-Current limits: the surface covers the entire module rather than separate display rectangles; static artwork is cached by Cardinal and unchanged transfers are suppressed, but capture still samples the full surface. The POSIX transport is macOS/Linux code; Windows requires a socket backend. Native dialogs that are external OS windows remain in the original Cardinal window. Keeping the original window visible is currently necessary for live surface redraws.
+Current limits: the surface covers the entire module rather than separate display rectangles; static artwork is cached by Cardinal and unchanged transfers are suppressed, but capture still samples the full surface. The transport supports POSIX and Windows Winsock. Native dialogs that are external OS windows remain in the original Cardinal window. Keeping the original window visible is currently necessary for live surface redraws.
 
 Catalog entries expose native `module_name`, `manufacturer` (plugin brand) and human-readable `tags` for frontend sorting and filtering. Control descriptors carry `visible`, including ancestor visibility. Rendered hardware and magnetic picking mirror it so overlapping alternate controls, such as Plaits LPG/Timbre/Morph, remain mutually exclusive.

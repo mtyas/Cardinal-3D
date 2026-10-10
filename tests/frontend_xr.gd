@@ -162,6 +162,13 @@ func run() -> void:
 	check(host.bridge.commands.size() == before_move and module.position == Vector3.ZERO, "Insertion previews must never move live modules before release")
 	session.interact("left", controller_pose(false, Vector3(0.26, -0.02, 1)), hit)
 	check(host.bridge.commands[-2].fields.insert, "Release must commit native insertion instead of searching for empty space")
+	var angled := controller_pose(true, Vector3(-0.11, -0.115, 1))
+	angled.direction = Vector3(0.2, 0.1, -1).normalized()
+	session.interact("left", angled, hit)
+	session.interact("left", angled, hit)
+	check(not session.move_ghost.visible and session.snapped_position == Vector2.ZERO, "An angled press must retain its ray-plane grab offset without jumping the ghost")
+	angled.pressed = false
+	session.interact("left", angled, hit)
 	host.modules.erase("2")
 	occupied.free()
 	hit.pixel.y = 100

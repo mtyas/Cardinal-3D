@@ -32,6 +32,7 @@ func run() -> void:
 	view.bridge.set_process(false)
 	var module := {"id": "10", "plugin": "Test", "model": "Panel", "x": 0, "y": 0, "width": 90, "height": 380, "screens": [{"kind": "display", "x": 5, "y": 150, "width": 80, "height": 70}], "controls": [{"id": 2, "kind": "knob", "physical": true, "label": "Frequency", "display": "440 Hz", "x": 45, "y": 100, "width": 30, "height": 30, "normalized": 0.5}]}
 	var other: Dictionary = module.duplicate(true)
+	module.controls[0]["body_color"] = "#dd6622"
 	other["id"] = "11"
 	other["x"] = 90
 	var state := {"type": "snapshot", "generation": "1", "modules": [module, other], "cables": [], "overlay_mode": "none"}
@@ -63,6 +64,7 @@ func run() -> void:
 	panel.apply_surface(resized)
 	check(panel.texture == original_texture and panel.texture.get_width() == 90, "Changed panel dimensions must still resize the existing texture safely")
 	var knob: Node3D = panel.knobs["2"].node
+	check(knob.get_node("ColourCap").material_override.albedo_color.is_equal_approx(Color("#dd6622")), "Knob cap must preserve the colour supplied by the original native SVG")
 	var marker: MeshInstance3D = knob.get_node("ValueIndicator")
 	check(marker.material_override.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED and marker.position.z > 0.015, "The value marker must stay bright and in front of the knob cap")
 	var changed: Dictionary = module.duplicate(true)

@@ -79,13 +79,15 @@ func setup(data: Dictionary) -> void:
 			continue
 		var first_child := get_child_count()
 		if kind == "knob":
+			var face_color := Color(str(control.get("body_color", "#333c45")))
 			var pivot := Node3D.new()
 			pivot.position = at
 			add_child(pivot)
 			Hardware.cylinder(pivot, radius * 1.04, 0.004, Vector3(0, 0, -0.009), Hardware.finish(Color("161b20"), 0.15, 0.4))
-			Hardware.cylinder(pivot, radius, 0.023, Vector3.ZERO, Hardware.finish(Color("252c33"), 0.05, 0.38), 64, 0.9)
+			Hardware.cylinder(pivot, radius, 0.023, Vector3.ZERO, Hardware.finish(face_color.darkened(0.18), 0.05, 0.38), 64, 0.9)
 			Hardware.ring(pivot, radius * 0.86, radius * 0.94, Vector3(0, 0, 0.011), Hardware.finish(Color("424a51"), 0.65, 0.26))
-			cylinder(radius * 0.86, 0.003, Vector3(0, 0, 0.012), Hardware.finish(Color("333c45"), 0.18, 0.34), pivot)
+			var cap := cylinder(radius * 0.86, 0.003, Vector3(0, 0, 0.012), Hardware.finish(face_color, 0.18, 0.34), pivot)
+			cap.name = "ColourCap"
 			# Grip flutes use one instanced draw rather than dozens of separate nodes.
 			var ribs := MultiMesh.new()
 			ribs.transform_format = MultiMesh.TRANSFORM_3D

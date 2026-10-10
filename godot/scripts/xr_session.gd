@@ -551,6 +551,8 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 				if capture["move"]:
 					_select_module(hit)
 					_begin_move_preview(hit["view"])
+					var aim: Variant = _rack_pointer(hit.view, sample)
+					capture.move_grab_offset = aim - move_start if aim is Vector2 else capture.pixel
 				elif capture.get("control", {}).get("kind", "") == "port":
 					_begin_cable(hit)
 				elif not capture.get("control", {}).is_empty():
@@ -589,7 +591,7 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 				var delta: Vector3 = view.global_basis.inverse() * (sample["position"] - last_position)
 				if capture["move"]:
 					var aim: Variant = _rack_pointer(view, sample)
-					if aim is Vector2: _update_move_preview(view, aim - capture.pixel - proposed_position)
+					if aim is Vector2: _update_move_preview(view, aim - capture.move_grab_offset - proposed_position)
 					elif sample.source == "hand": _update_move_preview(view, Vector2(delta.x / SCALE, -delta.y / SCALE))
 				elif capture.get("control", {}).is_empty(): pass
 				elif capture.get("control", {}).get("kind", "") == "knob" and sample["source"] == "controller" and sample.has("basis"):
