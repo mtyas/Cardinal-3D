@@ -133,6 +133,7 @@ func _sample(side: String) -> Dictionary:
 	var mesh: ImmediateMesh = device["mesh"].mesh
 	mesh.clear_surfaces()
 	if not hand.is_empty():
+		device["armed"] = false
 		_draw_hand(mesh, hand["points"])
 		hand["origin"] = origin.to_global(hand["origin"])
 		hand["direction"] = origin.global_basis * hand["direction"]
@@ -216,6 +217,8 @@ func cancel() -> void:
 	capture.clear()
 	for device: Dictionary in devices.values():
 		if device.has("target"): device["target"].visible = false
+		for visual in ["ray", "mesh"]:
+			if device.has(visual): device[visual].mesh.clear_surfaces()
 		device["pressed"] = false
 		device["armed"] = false
 		device["hand"].reset()
@@ -303,11 +306,11 @@ func _context_menu() -> void:
 
 func _physics_process(_delta: float) -> void:
 	if not active: return
-	_sync_layout()
 	if interface.get_session_state() != OpenXRInterface.SESSION_STATE_FOCUSED or not host.bridge.connected:
 		if was_focused: cancel()
 		was_focused = false
 		return
+	_sync_layout()
 	was_focused = true
 	for side: String in devices:
 		var sample := _sample(side)

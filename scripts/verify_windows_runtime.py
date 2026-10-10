@@ -8,5 +8,10 @@ run_id = str(int(os.environ['SOURCE_RUN']))
 result = json.loads(subprocess.check_output(['gh', 'api', f'repos/{os.environ["GH_REPO"]}/actions/runs/{run_id}'], text=True))
 if result['conclusion'] != 'success' or result['path'] != '.github/workflows/windows-build.yml':
     raise RuntimeError('Choose a successful Windows desktop build run')
-subprocess.run(['git', 'diff', '--exit-code', result['head_sha'], 'HEAD', '--', 'bridge', 'upstream.lock.json', 'scripts/install_bridge.py', 'scripts/build_windows.sh'], check=True)
+paths = ['bridge', 'upstream.lock.json', 'scripts/install_bridge.py', 'scripts/build_windows.sh']
+def native_blobs(revision):
+    # Executable-mode changes on shell scripts do not change the compiled runtime.
+    return subprocess.check_output(['git', 'ls-tree', '-r', '--format=%(objectname) %(path)', revision, '--', *paths])
+if native_blobs(result['head_sha']) != native_blobs('HEAD'):
+    raise RuntimeError('Native sources differ; run a full Windows build instead')
 print('Verified identical pinned native sources; repackaging frontend only.')
