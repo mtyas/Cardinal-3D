@@ -150,8 +150,18 @@ func run() -> void:
 	host.modules["2"] = occupied
 	check(session._nearest_free_position(module, Vector2(90, 0)) == Vector2(180, 0), "The ghost must use Cardinal's grid search to avoid occupied positions")
 	check(session._insertion_positions(module, Vector2(90, 0))["2"] == Vector2(180, 0), "Inserting a module must preview its neighbor sliding aside")
+	check(session._insertion_positions(module, Vector2(120, 0))["2"] == Vector2(30, 0), "Insertion must also make room to the left of the chosen slot")
 	var aimed := pose(true, Vector3(0.25, -0.02, 1))
 	check(session._rack_pointer(module, aimed).is_equal_approx(Vector2(125, 10)), "Controller aiming must intersect the rack independently of controller translation")
+	hit.control = {}
+	before_move = host.bridge.commands.size()
+	session.interact("left", controller_pose(true, Vector3(0.08, -0.02, 1)), hit)
+	session.interact("left", controller_pose(true, Vector3(0.26, -0.02, 1)), hit)
+	check(session.snapped_position == Vector2(90, 0) and session.neighbor_ghosts["2"].visible, "A captured header must follow its ray and preview an occupied insertion slot")
+	check(session._visual_target("left", hit).world.x > 0.2, "The destination pointer must move with the ghost instead of staying on the original header")
+	check(host.bridge.commands.size() == before_move and module.position == Vector3.ZERO, "Insertion previews must never move live modules before release")
+	session.interact("left", controller_pose(false, Vector3(0.26, -0.02, 1)), hit)
+	check(host.bridge.commands[-2].fields.insert, "Release must commit native insertion instead of searching for empty space")
 	host.modules.erase("2")
 	occupied.free()
 	hit.pixel.y = 100

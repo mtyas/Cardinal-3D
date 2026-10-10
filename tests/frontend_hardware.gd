@@ -49,6 +49,19 @@ func run() -> void:
 	view.rack_case.sync([module])
 	check(view.rack_case.bounds.size.x < original_bounds.size.x, "Case must shrink after removal")
 	var panel = view.modules["10"]
+	var artwork := Image.create(180, 760, false, Image.FORMAT_RGBA8)
+	artwork.fill(Color.RED)
+	panel.apply_surface(artwork)
+	var original_texture: ImageTexture = panel.texture
+	artwork.fill(Color.BLUE)
+	panel.apply_surface(artwork)
+	check(panel.texture == original_texture, "Same-size panel frames must reuse the existing texture")
+	# The dummy headless renderer retains the initial image instead of uploading updates.
+	if DisplayServer.get_name() != "headless":
+		check(panel.texture.get_image().get_pixel(0, 0).is_equal_approx(Color.BLUE), "GPU texture updates must contain fresh panel pixels")
+	var resized := Image.create(90, 380, false, Image.FORMAT_RGBA8)
+	panel.apply_surface(resized)
+	check(panel.texture == original_texture and panel.texture.get_width() == 90, "Changed panel dimensions must still resize the existing texture safely")
 	var knob: Node3D = panel.knobs["2"].node
 	var marker: MeshInstance3D = knob.get_node("ValueIndicator")
 	check(marker.material_override.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED and marker.position.z > 0.015, "The value marker must stay bright and in front of the knob cap")

@@ -2,7 +2,7 @@
 
 Enable with `CARDINAL_3D_PORT` (loopback TCP only, 1024–65535) and `CARDINAL_3D_TOKEN`. The launcher allocates a port and a random token; its local session file has mode 0600. The original application behaves normally without the port variable.
 
-Every frame starts with a little-endian uint32 byte count, followed by a kind byte. Kind 1 contains UTF-8 JSON. Kind 2 contains uint32 JSON-header length, JSON header and tightly packed top-down RGBA8 pixels. The frame count includes the kind byte. The maximum output frame and queue size is 24 MiB; commands are limited to 64 KiB.
+Every frame starts with a little-endian uint32 byte count, followed by a kind byte. Kind 1 contains UTF-8 JSON. Kind 2 contains uint32 JSON-header length, JSON header and top-down RGBA8 artwork. A client may request `surface_compression: "zstd"` in its hello. Compressed surfaces carry `encoding: "zstd"`; missing encoding means raw pixels. Decompressed size must equal width times height times four and is capped at 16 MiB. The frame count includes the kind byte. The maximum output frame and queue size is 24 MiB; commands are limited to 64 KiB.
 
 The client sends `{op:"hello", version:1, token, request}`. The server replies with catalog, snapshot and acknowledgment messages. Commands carry a request number and the latest snapshot `generation`; acknowledgments report `ok` and an optional `error`. IDs and generations are strings to preserve integer precision. Module IDs are runtime identities; plugin/model slugs identify models. Parameter, light and input/output port IDs occupy separate namespaces.
 
@@ -16,7 +16,11 @@ Commands: `pointer` (module or scene, x/y in native pixels, down/motion/up, GLFW
 
 All commands execute in Cardinal's UI context. Original widgets remain alive and step normally. Interaction routes through Rack events and history actions. No bridge callback is installed in DSP or audio processing. Native parameter limits, switches, momentary controls, cable rules and menus remain authoritative.
 
-Transport is nonblocking. Each UI poll reads at most 64 KiB and 64 commands; each flush sends at most 512 KiB. The Godot client bounds incoming frames and outgoing commands. Obsolete unsent snapshots and textures are replaced, while acknowledgments are reliable. Overflow or a three-second missing heartbeat disconnects and releases active gestures. Godot reconnects automatically.
+Transport is nonblocking. Each UI poll reads at most 64 KiB and 64 commands; each flush sends at most 4 MiB. JSON state has priority over unsent artwork, without interrupting a partially transmitted frame. The Godot client bounds incoming frames and outgoing commands. Obsolete unsent snapshots and textures are replaced, while acknowledgments are reliable. Overflow or a three-second missing heartbeat disconnects and releases active gestures. Godot reconnects automatically.
+
+`patch_cable` takes `output_module`, `output_port`, `input_module`, `input_port`, and an optional `replace_cable` ID. It validates sockets, replaces a cable occupying the destination input, and records all removals/addition as one history action. Repatching an existing input keeps its original cable intact until a valid release; cancelling changes nothing. The XR client renders the pending cable locally instead of relying on native pointer hover events.
+
+`move_delta` accepts optional boolean `insert`. When true, native Rack insertion shifts intersecting neighbors; the move gesture records all affected positions in one undo action. The default retains nearest-free placement for older clients. XR previews the same row/left/right insertion algorithm locally while dragging the top strip, then commits only on release.
 
 Surfaces use a separate NanoVG framebuffer and restore native viewport/framebuffer state and widget visibility. Recognized physical widgets are hidden only during texture capture; unsupported controls and illuminated composite switches keep their original surface. Unchanged pixel hashes avoid redundant transfers. `bridge/overrides.json` supports `plugin/model: "surface"` for a full fallback or `plugin/model/kind: "surface"` for a component-kind fallback. Unknown custom controls are never assigned invented semantics.
 

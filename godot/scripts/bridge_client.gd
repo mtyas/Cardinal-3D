@@ -121,13 +121,14 @@ func _process(delta: float) -> void:
 			var height := int(header.get("height", 0))
 			var pixels := payload.slice(4 + header_length)
 			if width <= 0 or height <= 0 or width > 4096 or height > 4096: continue
-			if header.get("encoding", "raw") == "zstd":
-				pixels = pixels.decompress(width * height * 4, FileAccess.COMPRESSION_ZSTD)
-			elif header.get("encoding", "raw") != "raw": continue
-			if width > 0 and height > 0 and width <= 4096 and height <= 4096 and pixels.size() == width * height * 4:
+			if width * height * 4 > 16 * 1024 * 1024: continue
+			if header.get("encoding", "raw") == "zstd" or (header.get("encoding", "raw") == "raw" and pixels.size() == width * height * 4):
 				latest_surfaces[str(header["module"])] = {"header": header, "pixels": pixels, "width": width, "height": height}
 	# Apply live positions and control values before expensive texture uploads.
 	if not latest_snapshot.is_empty(): message_received.emit(latest_snapshot)
 	for surface: Dictionary in latest_surfaces.values():
 		if str(surface.header.get("generation")) == generation:
-			surface_received.emit(surface.header, Image.create_from_data(surface.width, surface.height, false, Image.FORMAT_RGBA8, surface.pixels))
+			var pixels: PackedByteArray = surface.pixels
+			if surface.header.get("encoding", "raw") == "zstd": pixels = pixels.decompress(surface.width * surface.height * 4, FileAccess.COMPRESSION_ZSTD)
+			if pixels.size() == surface.width * surface.height * 4:
+				surface_received.emit(surface.header, Image.create_from_data(surface.width, surface.height, false, Image.FORMAT_RGBA8, pixels))
