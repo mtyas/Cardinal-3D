@@ -1,0 +1,15 @@
+# Artwork and distribution
+
+No converted panel artwork is committed or separately distributed. The frontend receives rendered surfaces from the user's locally built, pinned Cardinal source. Procedural knob, socket, screw, cable and plug meshes in this repository are original and distributed under GPL-3.0-or-later with the bridge.
+
+The initial panels are Fundamental VCO, VCF, ADSR, VCA-1 and Scope, and DISTRHO Cardinal Host Audio. Their source artwork and notices remain under `vendor/Cardinal/plugins/Fundamental/res`, `vendor/Cardinal/plugins/Cardinal/res` and Rack's component/font resources. Fundamental is credited to VCV; Cardinal to DISTRHO/Filipe Coelho. Module/component paths and runtime C++ types are recorded in descriptors.
+
+The pinned `vendor/Cardinal/docs/LICENSES.md` records these initial asset licenses: Fundamental artwork GPL-3.0-or-later (same as its code); Cardinal artwork CC0-1.0 (the unused Miku image is a separate exception); Rack ComponentLibrary artwork CC-BY-NC-4.0; ShareTechMono font OFL-1.1 with Reserved Font Names. Preserve attribution and applicable notices, and retain the noncommercial restriction on component artwork that remains in live surfaces. Procedural meshes do not remove restrictions from the rendered panel/surface assets.
+
+Audible Instruments code is GPL-3.0-or-later and credited to Andrew Belt/VCV and contributors; its modules are based on Mutable Instruments designs. Its panel graphics are copyright © Emilie Gillet, used and distributed with permission under the notices in the pinned plugin's `LICENSE.md`, `LICENSE-dist.txt` and Cardinal's `docs/LICENSE-PERMISSIONS.md`. This prototype captures those locally installed panels at runtime and does not separately convert or redistribute them. Browser previews have the same artwork restrictions as the playing modules. The procedural walnut, metal finishes, glass treatments and hardware geometry are original project assets.
+
+Cardinal warns that some bundled artwork has separate licensing and use restrictions. See the pinned `vendor/Cardinal/README.md` module-restrictions section and each bundled plugin's `LICENSE`, manifests and resource notices. Before distributing binaries, screenshots or converted artwork, review those individual notices and record permitted reuse for every asset. A successful technical fallback does not establish artwork redistribution permission. This prototype does not claim a whole-library asset license clearance.
+
+Befaco code is GPL-3.0-or-later. The pinned Cardinal license table credits Befaco panel artwork to Befaco, used and distributed with permission; component artwork is CC-BY-NC-4.0 and Segment7Standard is OFL-1.1 with Reserved Font Names. The 31 added models use local runtime captures with the same restrictions; no panel assets are copied into this project.
+
+Bogaudio code is GPL-3.0-or-later; the pinned Cardinal license table lists Bogaudio artwork as CC-BY-SA-4.0. Audiowide is OFL-1.1 with Reserved Font Names; Inconsolata is OFL-1.1 without Reserved Font Names. The 111 added models use runtime captures of the local pinned resources, with their source attribution and notices retained.

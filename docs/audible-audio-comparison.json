@@ -1,0 +1,13 @@
+{
+  "sample_rate": 48000,
+  "frames": 192000,
+  "channels": 2,
+  "block_size": 256,
+  "random_seed": [
+    1234567,
+    7654321
+  ],
+  "byte_identical": true,
+  "sha256": "1d6e3046106eecb0e6a2c1cfa968e1483d8beb5dae9db551ab8bb2fd0e3f4ad4",
+  "patch": "build/audible-demo.vcv"
+}

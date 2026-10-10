@@ -1,0 +1,1265 @@
+[
+  {
+    "plugin": "Cardinal",
+    "model": "HostAudio2",
+    "custom_controls": 1,
+    "component_types": {
+      "NanoKnob<4, 2>": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Cardinal",
+    "model": "AIDA-X",
+    "custom_controls": 2,
+    "component_types": {
+      "AidaSwitch": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Fundamental",
+    "model": "VCA-1",
+    "custom_controls": 1,
+    "component_types": {
+      "VCA_1VUKnob": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Fundamental",
+    "model": "SequentialSwitch1",
+    "custom_controls": 1,
+    "component_types": {
+      "LightButtonTriSwitch": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Fundamental",
+    "model": "SequentialSwitch2",
+    "custom_controls": 1,
+    "component_types": {
+      "LightButtonTriSwitch": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Fundamental",
+    "model": "Octave",
+    "custom_controls": 1,
+    "component_types": {
+      "OctaveParam": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Splort",
+    "custom_controls": 1,
+    "component_types": {
+      "W::ReducedButton": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Smerge",
+    "custom_controls": 1,
+    "component_types": {
+      "W::ReducedButton": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Spleet",
+    "custom_controls": 1,
+    "component_types": {
+      "W::SmallButton": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Swerge",
+    "custom_controls": 1,
+    "component_types": {
+      "W::SmallButton": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Splirge",
+    "custom_controls": 1,
+    "component_types": {
+      "W::SmallButton": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Qqqq",
+    "custom_controls": 40,
+    "component_types": {
+      "Qqqq::QqqqWidgets::PianoC": 1,
+      "Qqqq::QqqqWidgets::PianoD": 1,
+      "Qqqq::QqqqWidgets::PianoE": 1,
+      "Qqqq::QqqqWidgets::PianoF": 1,
+      "Qqqq::QqqqWidgets::PianoG": 1,
+      "Qqqq::QqqqWidgets::PianoA": 1,
+      "Qqqq::QqqqWidgets::PianoB": 1,
+      "Qqqq::QqqqWidgets::PianoCSharp": 1,
+      "Qqqq::QqqqWidgets::PianoDSharp": 1,
+      "Qqqq::QqqqWidgets::PianoFSharp": 1,
+      "Qqqq::QqqqWidgets::PianoGSharp": 1,
+      "Qqqq::QqqqWidgets::PianoASharp": 1,
+      "Qqqq::QqqqWidgets::SceneButton01": 1,
+      "Qqqq::QqqqWidgets::SceneButton02": 1,
+      "Qqqq::QqqqWidgets::SceneButton03": 1,
+      "Qqqq::QqqqWidgets::SceneButton04": 1,
+      "Qqqq::QqqqWidgets::SceneButton05": 1,
+      "Qqqq::QqqqWidgets::SceneButton06": 1,
+      "Qqqq::QqqqWidgets::SceneButton07": 1,
+      "Qqqq::QqqqWidgets::SceneButton08": 1,
+      "Qqqq::QqqqWidgets::SceneButton09": 1,
+      "Qqqq::QqqqWidgets::SceneButton10": 1,
+      "Qqqq::QqqqWidgets::SceneButton11": 1,
+      "Qqqq::QqqqWidgets::SceneButton12": 1,
+      "Qqqq::QqqqWidgets::SceneButton13": 1,
+      "Qqqq::QqqqWidgets::SceneButton14": 1,
+      "Qqqq::QqqqWidgets::SceneButton15": 1,
+      "Qqqq::QqqqWidgets::SceneButton16": 1,
+      "Qqqq::QqqqWidgets::TransposeButton": 4,
+      "Qqqq::QqqqWidgets::ShButton": 4,
+      "Qqqq::QqqqWidgets::VisualizeButton": 4
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Quack",
+    "custom_controls": 14,
+    "component_types": {
+      "Qqqq::QqqqWidgets::PianoC": 1,
+      "Qqqq::QqqqWidgets::PianoD": 1,
+      "Qqqq::QqqqWidgets::PianoE": 1,
+      "Qqqq::QqqqWidgets::PianoF": 1,
+      "Qqqq::QqqqWidgets::PianoG": 1,
+      "Qqqq::QqqqWidgets::PianoA": 1,
+      "Qqqq::QqqqWidgets::PianoB": 1,
+      "Qqqq::QqqqWidgets::PianoCSharp": 1,
+      "Qqqq::QqqqWidgets::PianoDSharp": 1,
+      "Qqqq::QqqqWidgets::PianoFSharp": 1,
+      "Qqqq::QqqqWidgets::PianoGSharp": 1,
+      "Qqqq::QqqqWidgets::PianoASharp": 1,
+      "Qqqq::QqqqWidgets::TransposeButton": 1,
+      "Qqqq::QqqqWidgets::ShButton": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Q",
+    "custom_controls": 2,
+    "component_types": {
+      "Qqqq::QqqqWidgets::TransposeButton": 1,
+      "Qqqq::QqqqWidgets::ShButton": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Darius",
+    "custom_controls": 5,
+    "component_types": {
+      "W::ButtonMomentary": 4,
+      "W::Button": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Solomon4",
+    "custom_controls": 14,
+    "component_types": {
+      "W::ButtonMomentary": 14
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Solomon8",
+    "custom_controls": 26,
+    "component_types": {
+      "W::ButtonMomentary": 26
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Solomon16",
+    "custom_controls": 50,
+    "component_types": {
+      "W::ButtonMomentary": 50
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Psychopump",
+    "custom_controls": 242,
+    "component_types": {
+      "Psychopump::GateLabelButton": 8,
+      "Psychopump::MuteButton": 8,
+      "Psychopump::SoloButton": 8,
+      "Psychopump::Out0Button": 8,
+      "Psychopump::Out1Button": 8,
+      "Psychopump::PlusButton": 88,
+      "Psychopump::MinusButton": 88,
+      "Psychopump::FortuneButton": 8,
+      "Psychopump::OutputLabelButton": 8,
+      "Psychopump::QuantizeButton": 8,
+      "W::ButtonMomentary": 1,
+      "W::Button": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Pokies4",
+    "custom_controls": 4,
+    "component_types": {
+      "Pokies::Pokie": 4
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "AriaSalvatrice",
+    "model": "Undular",
+    "custom_controls": 2,
+    "component_types": {
+      "Undular::AriaPushButtonPadlock820": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "BaconMusic",
+    "model": "Glissinator",
+    "custom_controls": 1,
+    "component_types": {
+      "GraduatedFader<188>": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "BaconMusic",
+    "model": "ChipYourWave",
+    "custom_controls": 32,
+    "component_types": {
+      "NStepDraggableLEDWidget<16, RedGreenFromMiddleColorModel>": 32
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-LVCO",
+    "custom_controls": 1,
+    "component_types": {
+      "bogaudio::StatefulButton9": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Additator",
+    "custom_controls": 1,
+    "component_types": {
+      "bogaudio::StatefulButton9": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-LLFO",
+    "custom_controls": 1,
+    "component_types": {
+      "bogaudio::StatefulButton9": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-LVCF",
+    "custom_controls": 1,
+    "component_types": {
+      "bogaudio::StatefulButton9": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-MegaGate",
+    "custom_controls": 2,
+    "component_types": {
+      "bogaudio::StatefulButton9": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-PEQ6",
+    "custom_controls": 7,
+    "component_types": {
+      "bogaudio::StatefulButton9": 1,
+      "bogaudio::VUSlider151": 6
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-PEQ14",
+    "custom_controls": 15,
+    "component_types": {
+      "bogaudio::StatefulButton9": 1,
+      "bogaudio::VUSlider151": 14
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-DADSRH",
+    "custom_controls": 3,
+    "component_types": {
+      "bogaudio::StatefulButton9": 3
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-DADSRHPlus",
+    "custom_controls": 3,
+    "component_types": {
+      "bogaudio::StatefulButton9": 3
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Walk2",
+    "custom_controls": 1,
+    "component_types": {
+      "bogaudio::StatefulButton9": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Mix8",
+    "custom_controls": 17,
+    "component_types": {
+      "bogaudio::VUSlider151": 9,
+      "bogaudio::SoloMuteButton": 8
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Mix4",
+    "custom_controls": 9,
+    "component_types": {
+      "bogaudio::VUSlider151": 5,
+      "bogaudio::SoloMuteButton": 4
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Mix2",
+    "custom_controls": 1,
+    "component_types": {
+      "bogaudio::VUSlider151": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Mix1",
+    "custom_controls": 1,
+    "component_types": {
+      "bogaudio::VUSlider151": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Mute8",
+    "custom_controls": 8,
+    "component_types": {
+      "bogaudio::SoloMuteButton": 8
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-VCAmp",
+    "custom_controls": 1,
+    "component_types": {
+      "bogaudio::VUSlider": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Mumix",
+    "custom_controls": 8,
+    "component_types": {
+      "bogaudio::SoloMuteButton": 8
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Matrix81",
+    "custom_controls": 8,
+    "component_types": {
+      "bogaudio::IndicatorKnob19": 8
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Matrix18",
+    "custom_controls": 8,
+    "component_types": {
+      "bogaudio::IndicatorKnob19": 8
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Matrix44",
+    "custom_controls": 16,
+    "component_types": {
+      "bogaudio::IndicatorKnob19": 16
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Matrix44Cvm",
+    "custom_controls": 16,
+    "component_types": {
+      "bogaudio::SoloMuteButton": 16
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Matrix88",
+    "custom_controls": 64,
+    "component_types": {
+      "bogaudio::IndicatorKnob19": 64
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Matrix88M",
+    "custom_controls": 64,
+    "component_types": {
+      "bogaudio::SoloMuteButton": 64
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Switch81",
+    "custom_controls": 8,
+    "component_types": {
+      "bogaudio::InvertingIndicatorButton18": 8
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Switch18",
+    "custom_controls": 8,
+    "component_types": {
+      "bogaudio::InvertingIndicatorButton18": 8
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Switch44",
+    "custom_controls": 16,
+    "component_types": {
+      "bogaudio::InvertingIndicatorButton18": 16
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Switch88",
+    "custom_controls": 64,
+    "component_types": {
+      "bogaudio::InvertingIndicatorButton18": 64
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Switch1616",
+    "custom_controls": 256,
+    "component_types": {
+      "bogaudio::InvertingIndicatorButton9": 256
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Analyzer",
+    "custom_controls": 2,
+    "component_types": {
+      "bogaudio::StatefulButton9": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Arp",
+    "custom_controls": 1,
+    "component_types": {
+      "bogaudio::StatefulButton9": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Bogaudio",
+    "model": "Bogaudio-Lgsw",
+    "custom_controls": 1,
+    "component_types": {
+      "bogaudio::StatefulButton9": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "ImpromptuModular",
+    "model": "Cv-Pad",
+    "custom_controls": 16,
+    "component_types": {
+      "CvPadWidget::Pad": 16
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "ImpromptuModular",
+    "model": "Tact",
+    "custom_controls": 2,
+    "component_types": {
+      "TactWidget::TactPad2": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "ImpromptuModular",
+    "model": "Tact1",
+    "custom_controls": 1,
+    "component_types": {
+      "TactPad": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "ImpromptuModular",
+    "model": "TactG",
+    "custom_controls": 1,
+    "component_types": {
+      "TactPad": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "MindMeldModular",
+    "model": "ShapeMaster",
+    "custom_controls": 32,
+    "component_types": {
+      "PresetOrShapeArrowButton": 32
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "MindMeldModular",
+    "model": "MixMasterJr",
+    "custom_controls": 28,
+    "component_types": {
+      "FilterCutWidget": 20,
+      "GroupSelectDisplay": 8
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "MindMeldModular",
+    "model": "AuxExpanderJr",
+    "custom_controls": 4,
+    "component_types": {
+      "GroupSelectDisplay": 4
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "MindMeldModular",
+    "model": "MixMaster",
+    "custom_controls": 56,
+    "component_types": {
+      "FilterCutWidget": 40,
+      "GroupSelectDisplay": 16
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "MindMeldModular",
+    "model": "AuxExpander",
+    "custom_controls": 4,
+    "component_types": {
+      "GroupSelectDisplay": 4
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "mscHack",
+    "model": "MasterClockx4",
+    "custom_controls": 6,
+    "component_types": {
+      "MasterClockx4::MyBPM_Knob": 1,
+      "MasterClockx4::MyHumanize_Knob": 1,
+      "MasterClockx4::MyMult_Knob": 4
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "mscHack",
+    "model": "Dronez",
+    "custom_controls": 1,
+    "component_types": {
+      "Dronez::MySpeed_Knob": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "mscHack",
+    "model": "Alienz",
+    "custom_controls": 1,
+    "component_types": {
+      "Alienz::MySpeed_Knob": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "mscHack",
+    "model": "Windz",
+    "custom_controls": 1,
+    "component_types": {
+      "Windz::MySpeed_Knob": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "mscHack",
+    "model": "Lorenz",
+    "custom_controls": 19,
+    "component_types": {
+      "Lorenz_AMT_Knob": 8,
+      "Lorenz_Knob": 11
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Prism",
+    "model": "RainbowScaleExpander",
+    "custom_controls": 10,
+    "component_types": {
+      "prism::gui::FloatReadout": 10
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Stoermelder-P1",
+    "model": "Arena",
+    "custom_controls": 24,
+    "component_types": {
+      "StoermelderPackOne::Arena::DummyMapButton": 24
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "Stoermelder-P1",
+    "model": "Intermix",
+    "custom_controls": 16,
+    "component_types": {
+      "StoermelderPackOne::Intermix::IntermixWidget::IntermixWidget(StoermelderPackOne::Intermix::IntermixModule<8>*)::DummyMapButton": 16
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTVCF",
+    "custom_controls": 22,
+    "component_types": {
+      "sst::surgext_rack::vcf::ui::VCFSelector": 1,
+      "sst::surgext_rack::vcf::ui::VCFSubtypeSelector": 1,
+      "sst::surgext_rack::widgets::ModRingKnob": 20
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTWaveshaper",
+    "custom_controls": 23,
+    "component_types": {
+      "sst::surgext_rack::waveshaper::ui::WaveshaperSelector": 1,
+      "sst::surgext_rack::widgets::ModRingKnob": 20,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCModern",
+    "custom_controls": 31,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 2,
+      "sst::surgext_rack::widgets::ModRingKnob": 28,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCClassic",
+    "custom_controls": 31,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 2,
+      "sst::surgext_rack::widgets::ModRingKnob": 28,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCWavetable",
+    "custom_controls": 31,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 2,
+      "sst::surgext_rack::widgets::ModRingKnob": 28,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCWindow",
+    "custom_controls": 30,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 2,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1,
+      "sst::surgext_rack::widgets::ModRingKnob": 24,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 3
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCSine",
+    "custom_controls": 31,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 2,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1,
+      "sst::surgext_rack::widgets::ModRingKnob": 24,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 4
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCFM2",
+    "custom_controls": 35,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 1,
+      "sst::surgext_rack::widgets::ModRingKnob": 32,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCFM3",
+    "custom_controls": 35,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 1,
+      "sst::surgext_rack::widgets::ModRingKnob": 32,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCSHNoise",
+    "custom_controls": 33,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 2,
+      "sst::surgext_rack::widgets::ModRingKnob": 28,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 3
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCAlias",
+    "custom_controls": 28,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 2,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1,
+      "sst::surgext_rack::widgets::ModRingKnob": 24,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCString",
+    "custom_controls": 31,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 1,
+      "sst::surgext_rack::widgets::PlotAreaSwitch": 1,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1,
+      "sst::surgext_rack::widgets::ModRingKnob": 28
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTOSCTwist",
+    "custom_controls": 31,
+    "component_types": {
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 1,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1,
+      "sst::surgext_rack::widgets::ModRingKnob": 28,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXReverb",
+    "custom_controls": 43,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 40,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 2,
+      "sst::surgext_rack::widgets::ThereAreFourLights<4>": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXPhaser",
+    "custom_controls": 43,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 40,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 1,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXRotarySpeaker",
+    "custom_controls": 30,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 28,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 1,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXDistortion",
+    "custom_controls": 43,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 40,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 2,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXFrequencyShifter",
+    "custom_controls": 21,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 20,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXChorus",
+    "custom_controls": 34,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 32,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXVocoder",
+    "custom_controls": 37,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 36,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXReverb2",
+    "custom_controls": 40,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 40
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXFlanger",
+    "custom_controls": 38,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 36,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXRingMod",
+    "custom_controls": 32,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 28,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 2,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXNeuron",
+    "custom_controls": 45,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 44,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXResonator",
+    "custom_controls": 48,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 44,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 3,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXChow",
+    "custom_controls": 13,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 12,
+      "sst::surgext_rack::widgets::ToggleParamButton": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXExciter",
+    "custom_controls": 20,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 20
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXEnsemble",
+    "custom_controls": 41,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 40,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXCombulator",
+    "custom_controls": 49,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 48,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXSpringReverb",
+    "custom_controls": 29,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 28,
+      "sst::surgext_rack::widgets::MomentaryParamButton": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXTreeMonster",
+    "custom_controls": 34,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 32,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXBonsai",
+    "custom_controls": 38,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 36,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTFXNimbus",
+    "custom_controls": 39,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 36,
+      "sst::surgext_rack::widgets::MomentaryParamButton": 1,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTLFO",
+    "custom_controls": 66,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 16,
+      "sst::surgext_rack::widgets::VerticalSlider": 6,
+      "sst::surgext_rack::widgets::VerticalSliderModulator": 24,
+      "sst::surgext_rack::lfo::ui::LFOTypeWidget": 1,
+      "sst::surgext_rack::lfo::ui::LFOStepWidget::TriggerSwitch": 16,
+      "sst::surgext_rack::widgets::PlotAreaSwitch": 1,
+      "sst::surgext_rack::widgets::LabeledPlotAreaControl": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTDelay",
+    "custom_controls": 40,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 40
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTDelayLineByFreqExpanded",
+    "custom_controls": 31,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 28,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 3
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTEGxVCA",
+    "custom_controls": 38,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 12,
+      "sst::surgext_rack::widgets::VerticalSlider": 4,
+      "sst::surgext_rack::widgets::VerticalSliderModulator": 16,
+      "sst::surgext_rack::widgets::PlotAreaToggleClick": 3,
+      "sst::surgext_rack::widgets::CurveSwitch": 3
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTQuadAD",
+    "custom_controls": 55,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 32,
+      "sst::surgext_rack::quadad::ui::ThreeStateTriggerSwitch": 4,
+      "sst::surgext_rack::widgets::PlotAreaToggleClick": 8,
+      "sst::surgext_rack::widgets::CurveSwitch": 8,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 3
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTQuadLFO",
+    "custom_controls": 33,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 32,
+      "sst::surgext_rack::widgets::SteppedParamAsPresetJog": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTMixer",
+    "custom_controls": 44,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 32,
+      "sst::surgext_rack::widgets::PlotAreaSwitch": 12
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTMixerSlider",
+    "custom_controls": 52,
+    "component_types": {
+      "sst::surgext_rack::widgets::VerticalSlider": 8,
+      "sst::surgext_rack::widgets::VerticalSliderModulator": 32,
+      "sst::surgext_rack::widgets::PlotAreaSwitch": 12
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTDigitalRingMod",
+    "custom_controls": 3,
+    "component_types": {
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 2,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTModMatrix",
+    "custom_controls": 32,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 32
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "SurgeXTRack",
+    "model": "SurgeXTUnisonHelper",
+    "custom_controls": 20,
+    "component_types": {
+      "sst::surgext_rack::widgets::ModRingKnob": 16,
+      "sst::surgext_rack::widgets::ActivateKnobSwitch": 3,
+      "sst::surgext_rack::widgets::PlotAreaMenuItem": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "unless_modules",
+    "model": "atoms",
+    "custom_controls": 2,
+    "component_types": {
+      "_less::Knob<unless::InputKnob>": 1,
+      "_less::Knob<unless::OutputKnob>": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "unless_modules",
+    "model": "cantor",
+    "custom_controls": 67,
+    "component_types": {
+      "CellButton<DrawCellButton>": 62,
+      "_less::Slider<DrawSlider>": 5
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "unless_modules",
+    "model": "snake",
+    "custom_controls": 7,
+    "component_types": {
+      "_less::Button<SnakeWallsButton>": 1,
+      "_less::Knob<HCVSKnob>": 2,
+      "_less::Button<SnakeDirectionButton>": 4
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "unless_modules",
+    "model": "towers",
+    "custom_controls": 40,
+    "component_types": {
+      "TowersSlider": 32,
+      "_less::Button<PolarityButton>": 2,
+      "_less::Knob<TooKnob>": 2,
+      "_less::Button<SampleButton>": 2,
+      "_less::FixedIntSelectButton<unless::ChannelsButton>": 2
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "unless_modules",
+    "model": "pianoid",
+    "custom_controls": 4,
+    "component_types": {
+      "_less::XSlider": 1,
+      "_less::XYSlider<PianoidSlider>": 1,
+      "_less::Button<SustainButton>": 1,
+      "_less::FixedIntSelectButton<unless::ChannelsButton>": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "unless_modules",
+    "model": "premuter",
+    "custom_controls": 1,
+    "component_types": {
+      "_less::Knob<unless::InputKnob>": 1
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "unless_modules",
+    "model": "avoider",
+    "custom_controls": 9,
+    "component_types": {
+      "_less::Knob<AvoidKnob>": 2,
+      "_less::Button<ChordNoteButton>": 1,
+      "_less::Button<IntervalButton>": 6
+    },
+    "current_fallback": "interactive original surface"
+  },
+  {
+    "plugin": "ZZC",
+    "model": "Phaseque",
+    "custom_controls": 8,
+    "component_types": {
+      "ZZC_PhasequeXYDisplayWidget": 8
+    },
+    "current_fallback": "interactive original surface"
+  }
+]

@@ -1,0 +1,18 @@
+config_version=5
+
+[application]
+config/name="Cardinal 3D"
+run/main_scene="res://main.tscn"
+
+[display]
+window/size/viewport_width=1440
+window/size/viewport_height=900
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+
+[debug]
+file_logging/enable_file_logging=false

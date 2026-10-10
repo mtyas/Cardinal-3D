@@ -1,0 +1,56 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include "../bridge/Transport.hpp"
+#include <cassert>
+#include <iostream>
+#include <thread>
+
+using cardinal3d::Transport;
+static std::vector<uint8_t> frame(const std::string& text) {
+    std::vector<uint8_t> result;
+    uint32_t length = text.size()+1;
+    for (int i=0; i<4; ++i) result.push_back((length >> (8*i)) & 255);
+    result.push_back(1); result.insert(result.end(), text.begin(), text.end()); return result;
+}
+int main() {
+    Transport server;
+    uint16_t port = 41000 + std::chrono::steady_clock::now().time_since_epoch().count()%10000;
+    assert(server.listenOn(port));
+    auto peer = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in address{}; address.sin_family = AF_INET; address.sin_port = htons(port);
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    assert(connect(peer, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == 0);
+    bool accepted = false;
+    for (int i=0; i<1000 && !accepted; ++i) {
+        accepted = server.acceptClient();
+        if (!accepted) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    assert(accepted);
+    auto a = frame("{\"op\":\"hello\"}");
+    assert(send(peer, reinterpret_cast<const char*>(a.data()), 3, 0) == 3);
+    assert(server.receive().empty());
+    auto b = frame("{\"op\":\"release\"}");
+    a.insert(a.end(), b.begin(), b.end());
+    assert(send(peer, reinterpret_cast<const char*>(a.data()+3), static_cast<int>(a.size()-3), 0) == static_cast<int>(a.size()-3));
+    std::vector<std::string> commands;
+    for (int i=0; i<1000 && commands.size()<2; ++i) {
+        auto next = server.receive(); commands.insert(commands.end(), next.begin(), next.end());
+        if (commands.size()<2) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    assert(commands.size() == 2 && commands[1] == "{\"op\":\"release\"}");
+    assert(server.json("old", "snapshot"));
+    assert(server.json("ack"));
+    assert(server.json("new", "snapshot"));
+    server.flush();
+    uint8_t output[64]; auto count = recv(peer, reinterpret_cast<char*>(output), 16, MSG_WAITALL);
+    assert(count == 16); // two 3-byte messages, each with a 5-byte frame header
+    assert(std::string(reinterpret_cast<char*>(output+5), 3) == "ack");
+    assert(std::string(reinterpret_cast<char*>(output+13), 3) == "new");
+    uint8_t invalid[] = {0xff,0xff,0xff,0x7f};
+    send(peer, reinterpret_cast<const char*>(invalid), sizeof(invalid), 0);
+    for (int i=0; i<1000 && server.connected(); ++i) {
+        server.receive(); std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    assert(!server.connected() && server.disconnected);
+    cardinal3d::net::close(peer);
+    std::cout << "PASS: fragmented and coalesced frames, latest snapshots, reliable replies, malformed length disconnect\n";
+}

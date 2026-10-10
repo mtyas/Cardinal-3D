@@ -1,0 +1,26 @@
+name: Windows desktop build
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    env:
+      CARDINAL_3D_INSTALL_BUILD_DEPS: '1'
+      CARDINAL_3D_BUILD_JOBS: '4'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build pinned Windows x64 runtime and package frontend
+        run: bash scripts/build_windows.sh
+      - name: Preserve private development artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cardinal-3D-Windows
+          path: dist/Cardinal-3D-Windows.zip
+          if-no-files-found: error
+          retention-days: 7

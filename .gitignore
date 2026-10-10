@@ -1,0 +1,16 @@
+.tools/
+.godot/
+godot/.godot/
+build/
+reports/
+*.log
+__pycache__/
+vendor/Cardinal/
+
+# Personal patches and local editor state
+godot/tests/*.vcv
+*.vcv
+*.autosave
+.idea/
+.vscode/
+dist/

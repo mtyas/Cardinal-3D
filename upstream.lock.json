@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/DISTRHO/Cardinal.git",
+  "commit": "0a530b73273afc914ec71a78e9165cd28c53b599",
+  "godot": "4.5.1-stable",
+  "cmake": "3.31.8",
+  "submodules": "recursive gitlinks at the pinned Cardinal commit"
+}

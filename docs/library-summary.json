@@ -1,0 +1,19 @@
+{
+  "models": 1412,
+  "plugins": 84,
+  "factory_errors": 0,
+  "controls": 48712,
+  "physical_components": 42531,
+  "surface_components": 6181,
+  "custom_controls": 2939,
+  "models_requiring_custom_overrides": 123,
+  "recognized_types": {
+    "screw": 3379,
+    "port": 16072,
+    "custom": 2939,
+    "light": 10146,
+    "knob": 9510,
+    "switch": 6191,
+    "slider": 475
+  }
+}

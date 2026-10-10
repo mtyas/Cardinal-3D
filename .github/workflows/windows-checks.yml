@@ -1,0 +1,20 @@
+name: Windows bridge checks
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  transport:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build and exercise Winsock transport
+        shell: cmd
+        run: |
+          mkdir build
+          cl /nologo /std:c++17 /EHsc /W4 tests\transport_test.cpp ws2_32.lib /Fe:build\transport-test.exe
+          build\transport-test.exe
+      - name: Validate Python scripts
+        run: python -m compileall -q scripts tests
