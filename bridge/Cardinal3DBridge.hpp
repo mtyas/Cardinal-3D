@@ -226,12 +226,18 @@ class Bridge {
                     real(control, "min_angle", knob->minAngle); real(control, "max_angle", knob->maxAngle);
                 }
                 if (auto* knob = dynamic_cast<app::SvgKnob*>(w)) {
-                    if (knob->sw && knob->sw->svg) {
-                        const auto svg = knob->sw->svg;
+                    std::string faceColor;
+                    // RoundKnob and Davies knobs split body/background and pointer
+                    // across SVG widgets. Read visible layers in native paint order.
+                    visit(knob, [&](widget::Widget* child) {
+                        auto* svgWidget = dynamic_cast<widget::SvgWidget*>(child);
+                        if (!svgWidget || !svgWidget->svg || !child->isVisible()) return;
+                        const auto svg = svgWidget->svg;
                         auto cached = knobPalette.find(svg);
                         if (cached == knobPalette.end()) cached = knobPalette.emplace(svg, knobFaceColor(svg->handle)).first;
-                        if (!cached->second.empty()) string(control, "body_color", cached->second);
-                    }
+                        if (!cached->second.empty()) faceColor = cached->second;
+                    });
+                    if (!faceColor.empty()) string(control, "body_color", faceColor);
                 }
                 if (auto* sw = dynamic_cast<app::Switch*>(w))
                     json_object_set_new(control, "momentary", json_boolean(sw->momentary));
