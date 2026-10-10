@@ -14,6 +14,16 @@ A successful manual build automatically triggers one frontend refresh against cu
 
 The bundle carries dependency artwork and license notices for private development. It is not cleared for public distribution. Personal patches, session tokens, downloaded tools, local build directories and imported Godot state are excluded from the repository.
 
+## PC test on 10 October 2026
+
+Build [38048874513](https://github.com/mtyas/Cardinal-3D/actions/runs/38048874513) starts the native runtime with its portable resources, including core fonts and component artwork. A six-module Fundamental patch with five cables was saved and loaded from a Windows path containing spaces. The user confirmed its tone through Quest 2 headphones with the Quest selected as the Windows default output. Godot connects to the native bridge and renders this rack through Meta OpenXR in the desktop mirror. Physical stereo perception, controller operation, sustained performance and latency still require headset testing. The Meta runtime did not advertise optical hand tracking in the initial preflight.
+
+Godot crashed while opening its application log folder from a restricted automation session. Relaunching with normal Windows application-folder access succeeded. No administrator elevation is required by the launchers themselves.
+
+## Local compilation
+
+The Windows native runtime can be cross-compiled locally in Linux through WSL or Docker using `scripts/build_windows.sh`. Keep the checkout at a Linux path without spaces, install the upstream bootstrap dependencies, and preserve the PawPaw toolchain and build objects between runs. The script currently defaults to four jobs; `CARDINAL_3D_BUILD_JOBS` can change that. This PC's local builder has not yet been provisioned. Frontend-only changes can reuse the existing native runtime instead of rebuilding Cardinal.
+
 ## Cloud execution
 
 Codex Cloud can work on the private GitHub source and prepare/review changes. The repository and build scripts can also run in a Linux build environment; upstream cross-compilation produces Windows binaries. This local Mac chat has not automatically moved to a cloud task. Cloud builders cannot certify the connected Quest, physical hand tracking, audio-device configuration or motion-to-sound latency on the user's PC.

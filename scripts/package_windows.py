@@ -81,4 +81,3 @@ def main():
     print(shutil.make_archive(str(destination), 'zip', destination.parent, destination.name))
 
 if __name__ == '__main__': main()
-
