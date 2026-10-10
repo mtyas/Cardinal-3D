@@ -8,7 +8,7 @@ The UI transport supports Winsock and POSIX with the same authenticated loopback
 
 `Windows bridge checks` compiles and runs the transport regression on a real GitHub Windows runner. `Windows desktop build` is a manually triggered Linux cross-build following Cardinal's pinned PawPaw/MinGW approach. It builds the 190-module runtime and packages Godot 4.5.1 plus a launcher into a private seven-day Actions artifact. These workflows are build infrastructure, not a claim that the full application has passed Windows or VR testing.
 
-In GitHub Actions, select **Windows desktop build → Run workflow**. Download `Cardinal-3D-Windows`, extract both archive layers, install Python 3 from its official distribution, and double-click **Launch Cardinal 3D.bat**. The original Cardinal window is available for choosing the native audio device. Closing Godot leaves synthesis running; close Cardinal normally to save native state.
+In GitHub Actions, select **Windows desktop build → Run workflow**. Download `Cardinal-3D-Windows`, extract both archive layers, install Python 3 from its official distribution, select the Windows default sound output, and double-click **Launch Cardinal 3D.bat**. The native WASAPI engine uses that default output when it starts. Closing Godot leaves synthesis running; close Cardinal normally to save native state.
 
 A successful manual build automatically triggers one frontend refresh against current `main`. Download that refresh's artifact to get the latest VR interface. It reuses the native executable only after verifying identical bridge sources, build instructions and dependency pins. A later UI-only update can also specify a successful run ID in the workflow's optional reuse field.
 
