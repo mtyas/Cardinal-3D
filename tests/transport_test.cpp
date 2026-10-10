@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iostream>
 #include <thread>
+#include <atomic>
 
 using cardinal3d::Transport;
 static std::vector<uint8_t> frame(const std::string& text) {
@@ -51,6 +52,29 @@ int main() {
     count = recv(peer, reinterpret_cast<char*>(output), 16, MSG_WAITALL);
     assert(count == 16 && output[4] == 1 && output[12] == 2);
     assert(std::string(reinterpret_cast<char*>(output+5), 3) == "hot");
+    // Priority may reorder unsent frames, but must never splice metadata into
+    // a surface already on the wire, even when the flush budget splits it.
+    std::vector<uint8_t> pixels(5 * 1024 * 1024, 0x5a);
+    assert(server.queue(2, pixels, "surface/large"));
+    server.flush();
+    assert(server.json("now", "snapshot"));
+    std::vector<uint8_t> burst(pixels.size() + 5 + 8);
+    std::atomic<bool> received{false};
+    std::thread reader([&] {
+        size_t offset = 0;
+        while (offset < burst.size()) {
+            auto n = recv(peer, reinterpret_cast<char*>(burst.data() + offset), static_cast<int>(burst.size() - offset), 0);
+            assert(n > 0); offset += n;
+        }
+        received = true;
+    });
+    for (int i = 0; i < 2500 && !received; ++i) {
+        server.flush(); std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    assert(received); reader.join();
+    assert(burst[4] == 2 && std::equal(pixels.begin(), pixels.end(), burst.begin() + 5));
+    assert(burst[pixels.size() + 9] == 1);
+    assert(std::string(reinterpret_cast<char*>(burst.data() + pixels.size() + 10), 3) == "now");
     uint8_t invalid[] = {0xff,0xff,0xff,0x7f};
     send(peer, reinterpret_cast<const char*>(invalid), sizeof(invalid), 0);
     for (int i=0; i<1000 && server.connected(); ++i) {
