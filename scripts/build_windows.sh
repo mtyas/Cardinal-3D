@@ -21,7 +21,9 @@ fi
 set +u
 source deps/PawPaw/local.env win64
 set -u
-build_args=(-j"${CARDINAL_3D_BUILD_JOBS:-4}" STATIC_BUILD=true NOPLUGINS=true CARDINAL_3D_PROTOTYPE=true CARDINAL_3D_BRIDGE=true NOOPT=true)
+# Match the prototype's macOS build: optional pkg-config libraries (notably
+# FFTW/aubio) are outside this registry and must not become link prerequisites.
+build_args=(-j"${CARDINAL_3D_BUILD_JOBS:-4}" STATIC_BUILD=true PKG_CONFIG=false NOPLUGINS=true CARDINAL_3D_PROTOTYPE=true CARDINAL_3D_BRIDGE=true NOOPT=true)
 make -C deps all "${build_args[@]}"
 make dgl "${build_args[@]}"
 make -C plugins plugins.a "${build_args[@]}"
