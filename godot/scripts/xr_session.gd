@@ -31,6 +31,42 @@ var move_ghost: MeshInstance3D
 var proposed_position := Vector2.ZERO
 var snapped_position := Vector2.ZERO
 var move_start := Vector2.ZERO
+var neighbor_ghosts := {}
+
+func _insertion_positions(view: CardinalModuleView, wanted: Vector2) -> Dictionary:
+	var position := (wanted / Vector2(15, 380)).round() * Vector2(15, 380)
+	var left := []
+	var right := []
+	for other in host.modules.values():
+		if other == view or not is_equal_approx(float(other.descriptor.y), position.y): continue
+		if float(other.descriptor.x) < position.x: left.append(other)
+		else: right.append(other)
+	left.sort_custom(func(a, b): return float(a.descriptor.x) < float(b.descriptor.x))
+	right.sort_custom(func(a, b): return float(a.descriptor.x) < float(b.descriptor.x))
+	left.reverse()
+	var result := {str(view.descriptor.id): position}
+	var cursor := position.x
+	for other in left:
+		if float(other.descriptor.x) + float(other.descriptor.width) <= cursor: break
+		cursor -= float(other.descriptor.width)
+		result[str(other.descriptor.id)] = Vector2(cursor, position.y)
+	cursor = position.x + float(view.descriptor.width)
+	for other in right:
+		if float(other.descriptor.x) >= cursor: break
+		result[str(other.descriptor.id)] = Vector2(cursor, position.y)
+		cursor += float(other.descriptor.width)
+	return result
+
+func _rack_pointer(view: CardinalModuleView, sample: Dictionary) -> Variant:
+	var parent := view.get_parent() as Node3D
+	var normal := parent.global_basis.z.normalized()
+	var direction: Vector3 = sample.direction
+	var divisor := normal.dot(direction)
+	if absf(divisor) < 0.001: return null
+	var distance := normal.dot(parent.to_global(Vector3(0, 0, 0.04)) - sample.origin) / divisor
+	if distance < 0 or distance > 5: return null
+	var point := parent.to_local(sample.origin + direction * distance)
+	return Vector2(point.x / SCALE, -point.y / SCALE)
 var cable_target := {}
 var cable_target_time := 0
 
@@ -39,8 +75,7 @@ func _cable_active() -> bool:
 
 func _compatible_socket(hit: Dictionary) -> bool:
 	if hit.get("kind", "") != "module" or hit.get("control", {}).get("kind", "") != "port": return false
-	var source: Dictionary = host.snapshot.get("pending_cable", {})
-	if source.is_empty(): source = capture.get("control", {})
+	var source: Dictionary = capture.get("cable", capture.get("control", {}))
 	return hit.control.get("direction", "") != source.get("direction", "")
 
 func _cable_drop_hit(hit: Dictionary) -> Dictionary:
@@ -52,6 +87,30 @@ func _cable_drop_hit(hit: Dictionary) -> Dictionary:
 	if Time.get_ticks_msec() - cable_target_time <= 150 and is_instance_valid(cable_target.get("view")) and _compatible_socket(cable_target):
 		return cable_target
 	return {}
+
+func _begin_cable(hit: Dictionary) -> void:
+	var control: Dictionary = hit.control
+	var fixed := {"module": str(hit.view.descriptor.id), "port": control.id, "direction": control.direction}
+	if control.direction == "input":
+		for cable: Dictionary in host.snapshot.get("cables", []):
+			if str(cable.input_module) == fixed.module and int(cable.input_port) == int(fixed.port):
+				capture.replace_cable = str(cable.id)
+				fixed = {"module": str(cable.output_module), "port": cable.output_port, "direction": "output"}
+				break
+	capture.cable = fixed
+	host.local_pending_cable = fixed
+	host.wire_cursor = hit.world
+	host.dragging = true
+	host._pending_wire()
+
+func _commit_cable(drop: Dictionary) -> void:
+	var fixed: Dictionary = capture.cable
+	var fields := {"replace_cable": capture.get("replace_cable", "")}
+	var destination := {"module": str(drop.view.descriptor.id), "port": drop.control.id}
+	var output: Dictionary = fixed if fixed.direction == "output" else destination
+	var input: Dictionary = destination if fixed.direction == "output" else fixed
+	fields.merge({"output_module": output.module, "output_port": output.port, "input_module": input.module, "input_port": input.port})
+	host.bridge.send_command("patch_cable", fields)
 
 func _nearest_free_position(view: CardinalModuleView, wanted: Vector2) -> Vector2:
 	var grid := Vector2(15, 380)
@@ -89,12 +148,34 @@ func _begin_move_preview(view: CardinalModuleView) -> void:
 
 func _update_move_preview(view: CardinalModuleView, delta: Vector2) -> void:
 	proposed_position += delta
-	snapped_position = _nearest_free_position(view, proposed_position)
+	var slots := _insertion_positions(view, proposed_position)
+	snapped_position = slots[str(view.descriptor.id)]
 	var size: Vector2 = (move_ghost.mesh as QuadMesh).size
 	move_ghost.position = Vector3(snapped_position.x * SCALE + size.x / 2, -snapped_position.y * SCALE - size.y / 2, 0.045)
 	move_ghost.visible = proposed_position.distance_to(move_start) > 3
+	for id in neighbor_ghosts: neighbor_ghosts[id].hide()
+	if not move_ghost.visible: return
+	for id in slots:
+		if id == str(view.descriptor.id): continue
+		var other: CardinalModuleView = host.modules[id]
+		if not neighbor_ghosts.has(id):
+			var ghost := MeshInstance3D.new()
+			var panel := QuadMesh.new()
+			panel.size = Vector2(float(other.descriptor.width), float(other.descriptor.height)) * SCALE
+			ghost.mesh = panel
+			var mat := move_ghost.material_override.duplicate() as StandardMaterial3D
+			mat.albedo_texture = other.texture
+			ghost.material_override = mat
+			view.get_parent().add_child(ghost)
+			neighbor_ghosts[id] = ghost
+		var ghost: MeshInstance3D = neighbor_ghosts[id]
+		var panel: QuadMesh = ghost.mesh
+		ghost.position = Vector3(slots[id].x * SCALE + panel.size.x / 2, -slots[id].y * SCALE - panel.size.y / 2, 0.035)
+		ghost.show()
 
 func _clear_move_preview() -> void:
+	for ghost in neighbor_ghosts.values(): ghost.queue_free()
+	neighbor_ghosts.clear()
 	if is_instance_valid(move_ghost): move_ghost.queue_free()
 	move_ghost = null
 var was_focused := false
@@ -413,6 +494,7 @@ func cancel() -> void:
 	_clear_move_preview()
 	if capture.get("kind", "") == "ui" and ui_viewport != null: _ui_button(ui_position, false)
 	if host != null:
+		host.local_pending_cable = {}
 		host.bridge.send_command("release")
 		host.dragging = false
 		host._pending_wire()
@@ -469,6 +551,8 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 				if capture["move"]:
 					_select_module(hit)
 					_begin_move_preview(hit["view"])
+				elif capture.get("control", {}).get("kind", "") == "port":
+					_begin_cable(hit)
 				elif not capture.get("control", {}).is_empty():
 					host.dragging = true
 					_pointer(hit, "down")
@@ -479,20 +563,20 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 				if capture["move"]:
 					if is_instance_valid(move_ghost) and move_ghost.visible and snapped_position != move_start:
 						host.bridge.send_command("move_begin", {"module": capture["module"]})
-						host.bridge.send_command("move_delta", {"dx": snapped_position.x - move_start.x, "dy": snapped_position.y - move_start.y})
+						host.bridge.send_command("move_delta", {"dx": snapped_position.x - move_start.x, "dy": snapped_position.y - move_start.y, "insert": true})
 						host.bridge.send_command("move_end")
 					_clear_move_preview()
 				elif capture.get("control", {}).is_empty(): pass
 				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"]: host.bridge.send_command("release")
 				elif _cable_active():
 					var drop := _cable_drop_hit(hit)
-					if not drop.is_empty(): _pointer(drop, "up")
-					else: host.bridge.send_command("release")
+					if not drop.is_empty(): _commit_cable(drop)
 				elif hit.get("kind") == "module": _pointer(hit, "up")
 				else: host.bridge.send_command("release")
 		gesture_owner = ""
 		capture.clear()
 		cable_target.clear()
+		host.local_pending_cable = {}
 		host.dragging = false
 		host._pending_wire()
 	elif pressed and gesture_owner == side:
@@ -503,7 +587,10 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 			"module":
 				var view: CardinalModuleView = capture["view"]
 				var delta: Vector3 = view.global_basis.inverse() * (sample["position"] - last_position)
-				if capture["move"]: _update_move_preview(view, Vector2(delta.x / SCALE, -delta.y / SCALE))
+				if capture["move"]:
+					var aim: Variant = _rack_pointer(view, sample)
+					if aim is Vector2: _update_move_preview(view, aim - capture.pixel - proposed_position)
+					elif sample.source == "hand": _update_move_preview(view, Vector2(delta.x / SCALE, -delta.y / SCALE))
 				elif capture.get("control", {}).is_empty(): pass
 				elif capture.get("control", {}).get("kind", "") == "knob" and sample["source"] == "controller" and sample.has("basis"):
 					host.bridge.send_command("drag_delta", {"dx": 0.0, "dy": _controller_knob_delta(sample), "mods": 0})
@@ -512,7 +599,6 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 				elif _cable_active():
 					var socket := _cable_drop_hit(hit)
 					if not socket.is_empty():
-						_pointer(socket, "motion")
 						hit = socket
 				elif hit.get("kind") == "module":
 					_pointer(hit, "motion")
@@ -554,6 +640,9 @@ func _visual_target(side: String, hit: Dictionary) -> Dictionary:
 	if not capture.get("move", false) and not capture.get("control", {}).get("kind", "") in ["knob", "slider"]:
 		return hit
 	var target := capture.duplicate()
+	if capture.get("move", false) and is_instance_valid(move_ghost) and move_ghost.visible:
+		target.world = move_ghost.get_parent().to_global(Vector3((snapped_position.x + capture.pixel.x) * SCALE, -(snapped_position.y + capture.pixel.y) * SCALE, 0.05))
+		return target
 	var pixel: Vector2 = capture["pixel"]
 	target["world"] = capture["view"].to_global(Vector3(pixel.x * SCALE, -pixel.y * SCALE, 0.04))
 	return target

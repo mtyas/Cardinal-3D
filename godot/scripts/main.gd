@@ -68,6 +68,7 @@ var snapshot: Dictionary = {}
 var status_timer := 0.0
 var cable_signature := ""
 var pending_mesh: MeshInstance3D
+var local_pending_cable := {}
 var pending_signature := ""
 var performance_elapsed := 0.0
 var performance_frames := 0
@@ -493,7 +494,7 @@ func _draw_wire(start: Vector3, end: Vector3, color: Color, parent_node: Node3D)
 			Hardware.ring(parent_node, 0.0048, 0.0068 - index * 0.0004, endpoint + Vector3(0, 0, 0.02 + index * 0.006), Hardware.finish(color.darkened(0.18), 0, 0.5))
 
 func _pending_wire() -> void:
-	var pending: Dictionary = snapshot.get("pending_cable", {})
+	var pending: Dictionary = local_pending_cable if not local_pending_cable.is_empty() else snapshot.get("pending_cable", {})
 	var id := str(pending.get("module", ""))
 	if not dragging or not modules.has(id):
 		if is_instance_valid(pending_mesh): pending_mesh.hide()
@@ -515,13 +516,26 @@ func _pending_wire() -> void:
 	pending_mesh.material_override.albedo_color = Color(str(pending.get("color", "#e39756")))
 	var mesh: ImmediateMesh = pending_mesh.mesh
 	mesh.clear_surfaces()
-	mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	var a := pending_wire.to_local(start)
 	var b := pending_wire.to_local(wire_cursor)
 	var sag := minf(a.distance_to(b) * 0.3, 0.2)
+	var rings := []
 	for index in range(25):
 		var t := float(index) / 24
-		mesh.surface_add_vertex(a.lerp(b, t) + Vector3(0, -4 * sag * t * (1 - t), 0.04))
+		var point := a.lerp(b, t) + Vector3(0, -4 * sag * t * (1 - t), 0.04)
+		var tangent := (b - a + Vector3(0, -4 * sag * (1 - 2 * t), 0)).normalized()
+		var reference := Vector3.FORWARD if absf(tangent.dot(Vector3.FORWARD)) < 0.95 else Vector3.RIGHT
+		var normal := tangent.cross(reference).normalized()
+		var binormal := tangent.cross(normal).normalized()
+		var ring := []
+		for side in range(8): ring.append(point + (normal * cos(TAU * side / 8) + binormal * sin(TAU * side / 8)) * 0.0036)
+		rings.append(ring)
+	for index in range(24):
+		for side in range(8):
+			var next := (side + 1) % 8
+			for pair in [Vector2i(index, side), Vector2i(index + 1, next), Vector2i(index + 1, side), Vector2i(index, side), Vector2i(index, next), Vector2i(index + 1, next)]:
+				mesh.surface_add_vertex(rings[pair.x][pair.y])
 	mesh.surface_end()
 
 func _frame_rack() -> void:

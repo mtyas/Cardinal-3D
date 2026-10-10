@@ -17,6 +17,7 @@ class Host:
 	var modules := {}
 	var generation := "first"
 	var snapshot := {}
+	var local_pending_cable := {}
 	var dragging := false
 	var wire_cursor := Vector3.ZERO
 	var pending_updates := 0
@@ -148,6 +149,9 @@ func run() -> void:
 	host.add_child(occupied)
 	host.modules["2"] = occupied
 	check(session._nearest_free_position(module, Vector2(90, 0)) == Vector2(180, 0), "The ghost must use Cardinal's grid search to avoid occupied positions")
+	check(session._insertion_positions(module, Vector2(90, 0))["2"] == Vector2(180, 0), "Inserting a module must preview its neighbor sliding aside")
+	var aimed := pose(true, Vector3(0.25, -0.02, 1))
+	check(session._rack_pointer(module, aimed).is_equal_approx(Vector2(125, 10)), "Controller aiming must intersect the rack independently of controller translation")
 	host.modules.erase("2")
 	occupied.free()
 	hit.pixel.y = 100
@@ -158,23 +162,24 @@ func run() -> void:
 	session.interact("left", pose(false), hit)
 	check(host.bridge.commands.size() == before_move, "Blank panel space must never reach Cardinal's panel drag handler")
 	hit.pixel.y = 100
-	hit.control = {"kind": "port", "direction": "output"}
+	hit.control = {"kind": "port", "direction": "output", "id": 0}
 	session.interact("left", pose(true), hit)
 	hit.pixel.x = 80
-	hit.control = {"kind": "port", "direction": "input"}
+	hit.control = {"kind": "port", "direction": "input", "id": 1}
 	session.interact("left", pose(true, Vector3(0.01, 0, 0)), hit)
-	check(host.bridge.commands[-1].fields.phase == "motion" and host.pending_updates > 0, "Cable pinch must forward socket motion and update its visual")
+	check(host.local_pending_cable.direction == "output" and host.pending_updates > 0, "Cable preview must start locally without native pointer dragging")
 	session.interact("left", pose(false), {})
-	check(host.bridge.commands[-1].fields.phase == "up" and host.bridge.commands[-1].fields.x == 80, "A brief release tremor must keep the last compatible socket")
+	check(host.bridge.commands[-1].command == "patch_cable" and host.bridge.commands[-1].fields.input_port == 1, "A brief release tremor must directly patch the last compatible socket")
 	hit.control.direction = "output"
 	session.interact("left", pose(true), hit)
 	check(not session._compatible_socket(hit), "A cable must not snap to a socket with the same direction")
-	host.snapshot.pending_cable = {"direction": "input"}
+	session.capture.cable.direction = "input"
 	check(session._compatible_socket(hit), "Repatching an existing cable must follow its actual fixed endpoint")
-	host.snapshot.clear()
+	session.capture.cable.direction = "output"
 	session.cable_target_time = Time.get_ticks_msec() - 200
+	var before_cancel: int = host.bridge.commands.size()
 	session.interact("left", pose(false), {})
-	check(host.bridge.commands[-1].command == "release", "An expired or incompatible socket must cancel the cable drop")
+	check(host.bridge.commands.size() == before_cancel, "An expired or incompatible socket must cancel the cable drop without patch changes")
 	var count := host.bridge.commands.size()
 	session.interact("left", pose(true), {"kind": "case", "world": Vector3.ZERO})
 	session.interact("left", pose(true, Vector3(0.1, 0, 0)), {})
@@ -248,7 +253,7 @@ func run() -> void:
 	view._pending_wire()
 	var preview: MeshInstance3D = view.pending_mesh
 	var vertices: PackedVector3Array = preview.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	check(preview.to_global(vertices[-1]).is_equal_approx(view.wire_cursor + rack_space.basis * Vector3(0, 0, 0.04)), "Pending cable tips must follow the world-space hand ray")
+	check(preview.to_global(vertices[-1]).distance_to(view.wire_cursor + rack_space.basis * Vector3(0, 0, 0.04)) < 0.004, "Pending cable tips must follow the world-space hand ray")
 	view.wire_cursor += Vector3(0.01, 0, 0)
 	view._pending_wire()
 	check(view.pending_mesh == preview and view.pending_wire.get_child_count() == 1, "Cable motion must reuse a single lightweight preview mesh")

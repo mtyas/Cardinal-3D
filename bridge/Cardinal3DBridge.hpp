@@ -332,12 +332,13 @@ class Bridge {
         auto* action = new history::ModuleAdd; action->setModule(mw); APP->history->push(action);
         return mw;
     }
-    void connect(app::ModuleWidget* output, int outputId, app::ModuleWidget* input, int inputId) {
+    void connect(app::ModuleWidget* output, int outputId, app::ModuleWidget* input, int inputId, history::ComplexAction* group = nullptr) {
         auto* cw = new app::CableWidget;
         cw->color = APP->scene->rack->getNextCableColor();
         cw->outputPort = output->getOutput(outputId); cw->inputPort = input->getInput(inputId);
         cw->updateCable(); APP->scene->rack->addCable(cw);
-        auto* action = new history::CableAdd; action->setCable(cw); APP->history->push(action);
+        auto* action = new history::CableAdd; action->setCable(cw);
+        if (group) group->push(action); else APP->history->push(action);
     }
     void starter(bool audible = false) {
         release();
@@ -454,6 +455,38 @@ class Bridge {
             release(); auto* mw = module(text(cmd, "module"));
             if (!mw) throw std::runtime_error("Module was removed");
             mw->removeAction();
+        } else if (op == "patch_cable") {
+            release();
+            auto* output = module(text(cmd, "output_module"));
+            auto* input = module(text(cmd, "input_module"));
+            const int outputId = number(cmd, "output_port"), inputId = number(cmd, "input_port");
+            if (!output || !input || !output->getOutput(outputId) || !input->getInput(inputId))
+                throw std::runtime_error("Socket was removed");
+            const std::string replaceId = text(cmd, "replace_cable");
+            auto cables = APP->scene->rack->getCompleteCables();
+            bool foundReplacement = replaceId.empty();
+            for (auto* cw : cables) {
+                auto* c = cw->getCable();
+                if (std::to_string(c->id) == replaceId) {
+                    if (c->outputModule != output->module || c->outputId != outputId)
+                        throw std::runtime_error("Cable endpoint changed; try again");
+                    foundReplacement = true;
+                }
+                if (c->outputModule == output->module && c->outputId == outputId && c->inputModule == input->module && c->inputId == inputId)
+                    return;
+            }
+            if (!foundReplacement) throw std::runtime_error("Cable was removed; try again");
+            auto* group = new history::ComplexAction;
+            group->name = "patch cable";
+            for (auto* cw : cables) {
+                auto* c = cw->getCable();
+                if ((c->inputModule == input->module && c->inputId == inputId) || std::to_string(c->id) == replaceId) {
+                    auto* action = new history::CableRemove; action->setCable(cw); group->push(action);
+                    APP->scene->rack->removeCable(cw); delete cw;
+                }
+            }
+            connect(output, outputId, input, inputId, group);
+            APP->history->push(group);
         } else if (op == "disconnect_port") {
             release(); auto* mw = module(text(cmd, "module"));
             if (!mw) throw std::runtime_error("Module was removed");
@@ -469,7 +502,8 @@ class Bridge {
         } else if (op == "move_delta") {
             auto* mw = module(movingModule); if (!mw) throw std::runtime_error("Module was removed");
             movingPosition = movingPosition.plus(math::Vec(number(cmd, "dx"), number(cmd, "dy")));
-            APP->scene->rack->setModulePosNearest(mw, movingPosition);
+            if (json_is_true(json_object_get(cmd, "insert"))) APP->scene->rack->setModulePosForce(mw, movingPosition);
+            else APP->scene->rack->setModulePosNearest(mw, movingPosition);
         } else if (op == "move_end") finishMove();
         else if (op == "save" || op == "load") {
             release(); const std::string path = text(cmd, "path");
