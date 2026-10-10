@@ -6,22 +6,16 @@ on:
         description: 'Optional successful build run ID: reuse its unchanged native runtime and package current frontend'
         required: false
         default: ''
-  workflow_run:
-    workflows: ['Windows desktop build']
-    types: [completed]
 permissions:
   contents: read
   actions: read
 jobs:
   build:
-    # Refresh a manually completed build once; never recursively refresh a refresh.
-    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'workflow_dispatch')
     runs-on: ubuntu-22.04
     timeout-minutes: 180
     env:
       CARDINAL_3D_INSTALL_BUILD_DEPS: '1'
       CARDINAL_3D_BUILD_JOBS: '4'
-      SOURCE_RUNTIME_RUN: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || inputs.reuse_run }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,25 +24,25 @@ jobs:
         with:
           python-version: '3.11'
       - name: Build pinned Windows x64 runtime and package frontend
-        if: env.SOURCE_RUNTIME_RUN == ''
+        if: inputs.reuse_run == ''
         run: bash scripts/build_windows.sh
       - name: Verify the previous runtime has identical native sources
-        if: env.SOURCE_RUNTIME_RUN != ''
+        if: inputs.reuse_run != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          SOURCE_RUN: ${{ env.SOURCE_RUNTIME_RUN }}
+          SOURCE_RUN: ${{ inputs.reuse_run }}
           GH_REPO: ${{ github.repository }}
         run: python scripts/verify_windows_runtime.py
       - name: Download the previous private runtime
-        if: env.SOURCE_RUNTIME_RUN != ''
+        if: inputs.reuse_run != ''
         uses: actions/download-artifact@v4
         with:
           name: Cardinal-3D-Windows
-          run-id: ${{ env.SOURCE_RUNTIME_RUN }}
+          run-id: ${{ inputs.reuse_run }}
           github-token: ${{ github.token }}
           path: build/previous-artifact
       - name: Package current frontend with the verified runtime
-        if: env.SOURCE_RUNTIME_RUN != ''
+        if: inputs.reuse_run != ''
         run: |
           python -m zipfile -e build/previous-artifact/Cardinal-3D-Windows.zip build/previous
           python scripts/package_windows.py --reuse-runtime build/previous/Cardinal-3D-Windows
