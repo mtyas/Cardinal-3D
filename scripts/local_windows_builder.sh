@@ -11,6 +11,7 @@ cd /root/cardinal3d
 sed -i 's/\r$//' scripts/*.sh
 if [[ "${3:-False}" == True ]]; then exit 0; fi
 CARDINAL_3D_BUILD_JOBS="$jobs" CARDINAL_3D_INSTALL_BUILD_DEPS=1 bash scripts/build_windows.sh
+python3 tests/source_audit.py
 mkdir -p "$source_path/dist"
 # Windows merges Godot/ and godot/ names; copy the zip instead of the Linux tree.
 cp dist/Cardinal-3D-Windows.zip "$source_path/dist/"
