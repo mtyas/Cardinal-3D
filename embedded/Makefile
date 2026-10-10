@@ -2,6 +2,9 @@ NAME = CardinalEmbedded
 CARDINAL_VARIANT = native
 HEADLESS = true
 include ../Makefile.cardinal.mk
+# Retain the exact module widget factories/DSP used by the working VR build.
+# Upstream's headless HostAudio widget omits panel size, knobs and jack layout.
+RACK_EXTRA_LIBS := $(subst plugins-headless.a,plugins.a,$(RACK_EXTRA_LIBS))
 
 .PHONY: embedded
 embedded: ../../bin/Cardinal3DEngine.dll

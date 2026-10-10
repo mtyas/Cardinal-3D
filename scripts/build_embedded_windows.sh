@@ -18,7 +18,7 @@ set +u
 source deps/PawPaw/local.env win64
 set -u
 args=(-j"${CARDINAL_3D_BUILD_JOBS:-4}" STATIC_BUILD=true PKG_CONFIG=false NOPLUGINS=true CARDINAL_3D_PROTOTYPE=true HEADLESS=true NOOPT=true)
-make -C plugins plugins-headless.a "${args[@]}"
+make -C plugins plugins.a "${args[@]}" HEADLESS=false
 make -C src rack-headless.a "${args[@]}"
 make -C src/CardinalEmbedded embedded "${args[@]}"
 mkdir -p "$root/dist/embedded"
@@ -39,3 +39,8 @@ for tool in ar ranlib gcc-ar gcc-ranlib windres strip; do ln -sf "/usr/bin/x86_6
 scons -C embedded -j"${CARDINAL_3D_BUILD_JOBS:-4}" platform=windows target=template_release arch=x86_64 mingw_prefix="$compiler" build_profile="$root/embedded/build_profile.json"
 cp -r embedded/godot/. dist/embedded/godot/
 cp dist/embedded/Cardinal3DEngine.dll dist/embedded/godot/bin/
+mkdir -p dist/embedded/rack/bin
+rsync -a --exclude=.godot --exclude=tests --exclude='*.vcv' godot/ dist/embedded/rack/
+cp embedded/godot/cardinal_embedded.gdextension dist/embedded/rack/
+cp dist/embedded/godot/bin/*.dll dist/embedded/rack/bin/
+cp embedded/godot/test_rack.gd dist/embedded/rack/

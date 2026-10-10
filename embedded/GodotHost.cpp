@@ -8,6 +8,7 @@
 #include <godot_cpp/classes/audio_stream.hpp>
 #include <godot_cpp/classes/audio_stream_playback.hpp>
 #include <godot_cpp/classes/audio_frame.hpp>
+#include <godot_cpp/classes/image.hpp>
 #include <atomic>
 #include <vector>
 
@@ -30,6 +31,7 @@ protected:
         ClassDB::bind_method(D_METHOD("last_error"), &CardinalEmbeddedHost::last_error);
         ClassDB::bind_method(D_METHOD("render_block", "frames"), &CardinalEmbeddedHost::render_block);
         ClassDB::bind_method(D_METHOD("create_audio_stream"), &CardinalEmbeddedHost::create_audio_stream);
+        ClassDB::bind_method(D_METHOD("panel_image", "module_id"), &CardinalEmbeddedHost::panel_image);
     }
 public:
     ~CardinalEmbeddedHost() { close(); }
@@ -70,6 +72,15 @@ public:
         return result;
     }
     Ref<AudioStream> create_audio_stream();
+    Ref<Image> panel_image(const String& module_id) {
+        uint32_t width = 0, height = 0;
+        const uint8_t* pixels = host ? c3d_panel_rgba(host, module_id.utf8().get_data(), &width, &height) : nullptr;
+        if (!pixels) return Ref<Image>();
+        PackedByteArray bytes;
+        bytes.resize(int64_t(width) * height * 4);
+        memcpy(bytes.ptrw(), pixels, bytes.size());
+        return Image::create_from_data(width, height, false, Image::FORMAT_RGBA8, bytes);
+    }
     bool claim_audio(void* playback) {
         void* empty = nullptr;
         return host && audio_owner.compare_exchange_strong(empty, playback, std::memory_order_acq_rel);

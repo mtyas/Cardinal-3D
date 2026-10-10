@@ -32,6 +32,20 @@ it never waits for the UI gate. A busy UI operation currently produces silence
 for that block. Before release this must be replaced with a command queue and
 immutable control snapshots so UI work cannot interrupt the audio stream.
 
+The optional `CARDINAL_3D_EMBEDDED=1` frontend selects a direct backend. The
+builder stages it in `dist/embedded/rack` and keeps the normal launcher unchanged.
+Six starter modules, their five connections and original SVG panel images are
+verified in a clean-cache Godot project with native audio and no TCP connection.
+The original non-headless module library is reused; upstream's headless-only
+audio widget has no usable panel geometry. Static artwork comes from the actual
+parsed native SVG, including Cardinal's colour transforms, rather than guessed
+filenames or recreated labels. Custom drawing is still incomplete.
+
+Cold editor imports use a frame delay before shutdown to avoid the confirmed
+[Godot extension documentation race](https://github.com/godotengine/godot/issues/111048).
+Checks require success markers and reject native assertions/script errors;
+timeouts terminate only the test's own process tree.
+
 Still required for a playable replacement: offscreen custom artwork rendering,
 live VR input integration (including pointer modifiers), immutable state/command
 queue, complete audio/MIDI and host settings UI, all module menus, full Windows

@@ -21,6 +21,9 @@ func _run():
 	assert(host.load_patch(path), host.last_error())
 	var before = JSON.parse_string(host.patch_json())
 	assert(before.modules.size() == 2 and before.cables.size() == 1)
+	var panel: Image = host.panel_image("1")
+	assert(panel != null and panel.get_width() > 100 and panel.get_height() > 500)
+	assert(panel.get_pixel(panel.get_width() / 2, panel.get_height() / 2).a > 0.9)
 	var messages = JSON.parse_string(host.messages_json(JSON.stringify({"op": "hello", "version": 1, "request": 1})))
 	var models = 0
 	for message in messages:

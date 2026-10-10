@@ -21,6 +21,8 @@
 #include <vector>
 #include <atomic>
 #include "cardinal3d/Cardinal3DBridge.hpp"
+#define NANOSVGRAST_IMPLEMENTATION
+#include <nanosvgrast.h>
 
 // RemoteWindow has no physical cursor. Pointer modifiers will be carried by the
 // embedded input adapter when live VR input is introduced.
@@ -33,6 +35,7 @@ struct Host {
     std::thread::id owner = std::this_thread::get_id();
     uint32_t block;
     std::vector<float> silence;
+    std::vector<uint8_t> panel;
     std::unique_ptr<PluginExporter> plugin;
     std::unique_ptr<cardinal3d::Bridge> bridge;
     CardinalPluginContext* context = nullptr;
@@ -118,6 +121,32 @@ const char* c3d_messages_json(void* ptr, const char* command) {
         h->patch = h->bridge->invokeLocal(command ? command : "");
     })) return nullptr;
     return live->patch.c_str();
+}
+const uint8_t* c3d_panel_rgba(void* ptr, const char* id, uint32_t* width, uint32_t* height) {
+    if (!id || !width || !height) return nullptr;
+    *width = *height = 0;
+    if (!operation(ptr, [id, width, height](Host* h) {
+        rack::app::SvgPanel* panel = nullptr;
+        if (auto* module = h->bridge->findLocalModule(id)) {
+            for (auto* child : module->children) {
+                panel = dynamic_cast<rack::app::SvgPanel*>(child);
+                if (panel && panel->svg && panel->svg->handle) break;
+            }
+        }
+        if (!panel || !panel->svg || !panel->svg->handle) throw std::runtime_error("Module has no static SVG panel");
+        NSVGimage* image = panel->svg->handle;
+        if (image->width <= 0 || image->height <= 0) throw std::runtime_error("Invalid panel dimensions");
+        const float scale = std::min(2.f, 4096.f / std::max(image->width, image->height));
+        const uint32_t w = uint32_t(std::ceil(image->width * scale));
+        const uint32_t y = uint32_t(std::ceil(image->height * scale));
+        if (!w || !y || uint64_t(w) * y > 4 * 1024 * 1024) throw std::runtime_error("Panel exceeds image budget");
+        h->panel.assign(size_t(w) * y * 4, 0);
+        std::unique_ptr<NSVGrasterizer, decltype(&nsvgDeleteRasterizer)> raster(nsvgCreateRasterizer(), nsvgDeleteRasterizer);
+        if (!raster) throw std::runtime_error("Cannot create panel rasterizer");
+        nsvgRasterize(raster.get(), image, 0, 0, scale, h->panel.data(), w, y, w * 4);
+        *width = w; *height = y;
+    })) return nullptr;
+    return live->panel.data();
 }
 int c3d_process(void* ptr, const float* in_l, const float* in_r, float* out_l, float* out_r, uint32_t frames) {
     Host* h = checked(ptr);

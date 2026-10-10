@@ -665,6 +665,13 @@ public:
             throw;
         }
     }
+    app::ModuleWidget* findLocalModule(const std::string& id) const {
+        if (id.compare(0, 8, "preview/") == 0) {
+            for (const auto& item : previews) if (item.first == id) return item.second.get();
+            return nullptr;
+        }
+        return module(id);
+    }
     void release() {
         if (pressedButton >= 0 && APP && APP->event) {
             // Release away from ports so a dropped connection cannot accidentally patch a cable.

@@ -2,6 +2,7 @@ extends Node3D
 
 const ModuleView := preload("res://scripts/module_view.gd")
 const BridgeClient := preload("res://scripts/bridge_client.gd")
+const EmbeddedClient := preload("res://scripts/embedded_client.gd")
 const Hardware := preload("res://scripts/hardware.gd")
 const RackCase := preload("res://scripts/rack_case.gd")
 const ControlFocus := preload("res://scripts/control_focus.gd")
@@ -76,7 +77,7 @@ var performance_worst := 0.0
 var performance_previous_usec := 0
 
 func _ready() -> void:
-	bridge = BridgeClient.new()
+	bridge = EmbeddedClient.new() if OS.get_environment("CARDINAL_3D_EMBEDDED") == "1" else BridgeClient.new()
 	add_child(bridge)
 	bridge.message_received.connect(_on_message)
 	bridge.surface_received.connect(_on_surface)
