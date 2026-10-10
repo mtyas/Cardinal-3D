@@ -673,7 +673,9 @@ public:
         std::vector<std::pair<widget::FramebufferWidget*, bool>> caching;
         visit(root, [&](widget::Widget* w) {
             if (auto* fb = dynamic_cast<widget::FramebufferWidget*>(w)) { caching.emplace_back(fb, fb->bypassed); fb->bypassed = true; }
-            if (mw && physical(mw, w)) { visibility.emplace_back(w, w->visible); w->visible = false; }
+            // All LEDs now have live RGB overlays, including lights nested in
+            // buttons. Do not leave a stale baked glow underneath those overlays.
+            if (mw && (physical(mw, w) || dynamic_cast<app::ModuleLightWidget*>(w))) { visibility.emplace_back(w, w->visible); w->visible = false; }
         });
         nvgBeginFrame(vg, width, height, 1);
         nvgScale(vg, scale, scale);
