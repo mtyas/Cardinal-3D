@@ -30,3 +30,4 @@ jobs:
           & $godot --headless --editor --path godot --quit
           python scripts/check_frontend.py $godot ../tests/frontend_xr.gd
           python scripts/check_frontend.py $godot ../tests/frontend_stream.gd
+          python scripts/check_frontend.py $godot ../tests/frontend_hardware.gd

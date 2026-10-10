@@ -38,3 +38,5 @@ Expose the native menu tree and host settings through the extension rather than 
 Run `scripts/build_local_windows.ps1` with the dedicated `Cardinal3DBuild` WSL distribution. It builds Windows executables locally using the pinned upstream cross compiler. Sources and compiler caches remain in Linux storage at `/root/cardinal3d` and `/root/PawPawBuilds`; the resulting bundle is copied to the checkout's `dist` folder. Docker is not required. The first toolchain build is long; subsequent builds reuse compiled dependencies.
 
 Status: the existing two-process build remains the runnable version. The embedded host is not implemented yet, and the full registry is not yet available in the Windows prototype.
+
+The initial asset audit found 423 named knob SVGs across the full pinned source tree. The palette extractor supplies colours for 377; 46 retain artwork fallback for review. This count describes assets, not converted module models. See `docs/knob-palette-summary.json`; the full local report is `reports/knob-palettes.json`. Re-run with `scripts/audit_knob_palettes.py` and the native `tests/svg_palette_assets.cpp` probe compiled against Rack's pinned NanoSVG headers.
