@@ -675,7 +675,11 @@ public:
         for (const auto& entry : caching) entry.first->bypassed = entry.second;
         std::vector<uint8_t> pixels(width * height * 4);
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-        glBindFramebuffer(GL_FRAMEBUFFER, previousFramebuffer); glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        // DGL resolves framebuffer extensions on Windows; opengl32 only exports
+        // OpenGL 1.1. Use its NanoVG helper to restore the exact previous FBO.
+        NVGLUframebuffer previousTarget = {};
+        previousTarget.fbo = static_cast<GLuint>(previousFramebuffer);
+        nvgluBindFramebuffer(&previousTarget); glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
         surfaceTimes[id] = now; lastSurface = now;
         uint64_t hash = 1469598103934665603ull;
         for (uint8_t byte : pixels) { hash ^= byte; hash *= 1099511628211ull; }
