@@ -68,6 +68,12 @@ func run() -> void:
 	check(host.modules["2"].position == Vector3.ZERO, "The first module must anchor the new case instead of retaining a distant native offset")
 	var previous: Vector3 = layout.cases[1].root.global_position
 	layout.begin_grab(1, {"basis": Basis.IDENTITY})
+	var delta := Vector3(0.2, 0.3, -0.4)
+	layout.drag({"position": delta, "basis": Basis.IDENTITY}, Vector3.ZERO)
+	check(layout.cases[1].root.global_position.is_equal_approx(previous + delta), "Rack translation must follow all three axes without flattening height or depth")
+	var before_turn: Vector3 = layout.cases[1].root.global_position
+	layout.drag({"position": delta, "basis": Basis(Vector3.UP, 0.3)}, delta)
+	check(layout.cases[1].root.global_position.is_equal_approx(before_turn), "Turning a case in place must not orbit it around the controller")
 	layout.drag({"position": Vector3(0.2, 0, 0), "basis": Basis(Vector3.UP, 0.3) * Basis(Vector3.RIGHT, 0.6)}, Vector3.ZERO)
 	check(layout.cases[1].root.global_basis.y.is_equal_approx(Vector3.UP), "Case movement must reject pitch/roll and keep the rack upright")
 	layout.end_grab()
@@ -79,15 +85,26 @@ func run() -> void:
 	layout.drag({"position": Vector3(1, 0, 0)}, Vector3.ZERO)
 	check(layout.cases[1].root.global_position == previous, "Performance mode must reject case translation")
 	session._make_ui()
+	session.main_menu.show()
+	session._refresh_ui()
+	await screenshot(session.ui_viewport, "main-menu")
 	session._open_settings("racks")
 	await screenshot(session.ui_viewport, "rack-menu")
 	check(host.racks_column.visible and not host.audio_column.visible and not host.environment_column.visible and host.settings_scroll.scroll_vertical == 0, "Rack controls must have a separate top-level page")
 	session._open_settings("environment")
+	await screenshot(session.ui_viewport, "environment-menu")
 	check(host.environment_column.visible and not host.audio_column.visible and not host.racks_column.visible, "Environment controls must be separate from devices and rack management")
 	session._open_settings("audio")
 	check(host.audio_column.visible and not host.environment_column.visible and not host.racks_column.visible, "Audio and MIDI must have their own page")
 	session.tutorial.start()
 	await screenshot(session.ui_viewport, "tutorial")
+	for index in range(1, session.tutorial.PAGES.size()):
+		session.tutorial.page = index
+		session.tutorial._page()
+		await screenshot(session.ui_viewport, "tutorial-%d" % (index + 1))
+		check(session.tutorial.get_global_rect().end.y < 900, "Every illustrated tutorial page must fit inside the floating viewport")
+	session.tutorial.page = 0
+	session.tutorial._page()
 	check(session.tutorial.visible and session.ui_panel.visible and not session.main_menu.visible and not host.settings_panel.visible, "Tutorial must open alone in the floating panel")
 	session.tutorial.remember.button_pressed = false
 	session.tutorial.finish()

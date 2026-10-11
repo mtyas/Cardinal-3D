@@ -56,7 +56,9 @@ func setup(client: CardinalBridgeClient) -> void:
 	var header := HBoxContainer.new()
 	column.add_child(header)
 	var title := Label.new()
-	title.text = "3D module browser"
+	title.text = "Modules"
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color("62e4ca"))
 	header.add_child(title)
 	search = LineEdit.new()
 	search.placeholder_text = "Search modules or plugin…"
@@ -165,11 +167,14 @@ func setup(client: CardinalBridgeClient) -> void:
 	footer.add_child(selection)
 	count = Label.new(); footer.add_child(count)
 	add_button = Button.new(); add_button.text = "Add selected module"; add_button.disabled = true
+	add_button.theme_type_variation = "PrimaryButton"
+	add_button.icon = preload("res://scripts/ui_theme.gd").icon("modules")
+	add_button.add_theme_constant_override("icon_max_width", 28)
 	add_button.pressed.connect(_insert)
 	footer.add_child(add_button)
 	var hint := Label.new()
 	hint.text = "Stick up/down to scroll · Click to select · Drag to rotate · Add selected module · Escape to close"
-	hint.add_theme_font_size_override("font_size", 12)
+	hint.add_theme_font_size_override("font_size", 18)
 	column.add_child(hint)
 	visible = false
 

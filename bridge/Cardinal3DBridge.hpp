@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
+#include <app/LedDisplay.hpp>
+#include <ui/TextField.hpp>
 #include <tag.hpp>
 #include "Transport.hpp"
 #include <app/Scene.hpp>
@@ -157,6 +159,10 @@ class Bridge {
         if (dynamic_cast<app::ModuleLightWidget*>(widget)) return "light";
         if (dynamic_cast<app::ParamWidget*>(widget)) return "custom";
         if (dynamic_cast<app::PortWidget*>(widget)) return "port";
+        if (dynamic_cast<app::LedDisplayChoice*>(widget) || dynamic_cast<ui::TextField*>(widget)) return "custom";
+        // MindMeld's group arrows are native momentary widgets without ParamWidget IDs.
+        const std::string name = typeid(*widget).name();
+        if (name.find("MmGroupPlusButton") != std::string::npos || name.find("MmGroupMinusButton") != std::string::npos) return "custom";
         return "";
     }
     bool physical(app::ModuleWidget* mw, widget::Widget* w) const {
@@ -295,7 +301,7 @@ class Bridge {
                     b += light->baseColors[i].b * brightness;
                 }
                 real(control, "emission_r", r); real(control, "emission_g", g); real(control, "emission_b", b);
-            } else string(control, "id", "screw-" + std::to_string(screw++));
+            } else string(control, "id", (type == "custom" ? "surface-" : "screw-") + std::to_string(screw++));
             json_array_append_new(controls, control);
         });
         json_object_set_new(result, "controls", controls);
@@ -477,7 +483,43 @@ class Bridge {
                 pressedButton = -1; activeModule.clear();
             }
             APP->event->rootWidget = previousRoot;
+            // A raw surface click may hit decorative panel space. Never let
+            // native module dragging bypass the VR title-strip placement ghost.
+            if (dynamic_cast<app::ModuleWidget*>(APP->event->draggedWidget)) release();
             if (dynamic_cast<app::Knob*>(APP->event->draggedWidget)) APP->window->cursorUnlock();
+        } else if (op == "parameter_choices") {
+            release();
+            const std::string id = text(cmd, "module");
+            auto* mw = module(id);
+            const int paramId = number(cmd, "param");
+            if (!mw || !mw->module) throw std::runtime_error("Module was removed");
+            if (paramId < 0 || paramId >= (int)mw->module->params.size()) throw std::runtime_error("Parameter does not exist");
+            auto* quantity = mw->module->getParamQuantity(paramId);
+            auto* widget = mw->getParam(paramId);
+            // GroupSelectDisplay rounds its quantity in the upstream widget,
+            // rather than setting ParamQuantity::snapEnabled.
+            if (!quantity || !widget || std::string(typeid(*widget).name()).find("GroupSelectDisplay") == std::string::npos || !std::isfinite(quantity->minValue) || !std::isfinite(quantity->maxValue) || quantity->maxValue - quantity->minValue > 32)
+                throw std::runtime_error("Parameter has no discrete choices");
+            APP->scene->mousePos = mw->getAbsoluteOffset(math::Vec(number(cmd, "x"), number(cmd, "y")));
+            auto* menu = createMenu();
+            menu->addChild(createMenuLabel(quantity->getLabel()));
+            for (int value = (int)std::ceil(quantity->minValue); value <= (int)std::floor(quantity->maxValue); ++value) {
+                const std::string label = value == 0 ? "Main output" : "Group " + std::to_string(value);
+                menu->addChild(createCheckMenuItem(label, "", [this, id, paramId, value]() {
+                    auto* target = module(id);
+                    auto* quantity = target && target->module && paramId < (int)target->module->params.size() ? target->module->getParamQuantity(paramId) : nullptr;
+                    return quantity && quantity->getValue() == value;
+                }, [this, id, paramId, value]() {
+                    auto* target = module(id);
+                    if (!target || !target->module || paramId >= (int)target->module->params.size()) return;
+                    auto* quantity = target->module->getParamQuantity(paramId);
+                    if (!quantity || quantity->getValue() == value) return;
+                    auto* change = new history::ParamChange;
+                    change->moduleId = target->module->id; change->paramId = paramId;
+                    change->oldValue = quantity->getValue(); quantity->setValue(value);
+                    change->newValue = quantity->getValue(); APP->history->push(change);
+                }));
+            }
         } else if (op == "drag_delta") {
             math::Vec delta(number(cmd, "dx"), number(cmd, "dy"));
             mouseMods = number(cmd, "mods"); rack::window::WindowSetMods(APP->window, mouseMods);

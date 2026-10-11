@@ -1,5 +1,15 @@
 # Embedded Windows host
 
+## Rack placement and illustrated controls
+
+In Layout mode, holding a case edge follows controller translation on all three axes: left/right, up/down and closer/farther. Turning the controller rotates the case in place around the vertical axis only; pitch and roll are discarded. Layout mode still protects cases during performance. Cable previews remain batched lightweight lines while a case moves.
+
+The B menu uses illustrated action cards, separate settings pages have icons and guidance, and the skippable startup tutorial includes seven vector diagrams and a progress indicator. Shared themes also style browser filters, device lists and dialogs. Native module menus retain their original module options.
+
+MixMaster channel group arrows now expose native click targets. Clicking the group number opens a direct Main output / Group chooser with native undo. Custom surface widgets keep the actual ray coordinates and releases stay attached to the captured control. Raw decorative panel clicks cannot trigger native module movement.
+
+Local checks exercise all-axis translation, rotation without orbit or tilt, custom surface capture, group-arrow changes and chooser opening, blocked decorative panel movement, long-list scrolling and all seven tutorial pages on the GPU. Physical Quest readability and feel remain user validation.
+
 The target is one Windows application using Quest Link/OpenXR. Cardinal is a library inside that process, not a second executable. This is not an Android port.
 
 ## Current evidence

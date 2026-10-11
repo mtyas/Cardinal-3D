@@ -56,6 +56,8 @@ var audio_column: VBoxContainer
 var environment_column: VBoxContainer
 var racks_column: VBoxContainer
 var settings_title: Label
+var settings_icon: TextureRect
+var settings_hint: Label
 var settings_section := "audio"
 var rack_layout
 var immersive_environment
@@ -204,10 +206,22 @@ func _build_ui() -> void:
 	settings_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var settings_shell := VBoxContainer.new()
 	settings_panel.add_child(settings_shell)
+	var settings_heading := HBoxContainer.new()
+	settings_shell.add_child(settings_heading)
+	settings_icon = TextureRect.new()
+	settings_icon.custom_minimum_size = Vector2(40, 40)
+	settings_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	settings_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	settings_heading.add_child(settings_icon)
 	settings_title = Label.new()
 	settings_title.text = "Audio & MIDI"
 	settings_title.add_theme_font_size_override("font_size", 26)
-	settings_shell.add_child(settings_title)
+	settings_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_title.add_theme_color_override("font_color", Color("62e4ca"))
+	settings_heading.add_child(settings_title)
+	settings_hint = Label.new()
+	settings_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	settings_shell.add_child(settings_hint)
 	settings_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	settings_shell.add_child(settings_scroll)
 	settings_column = VBoxContainer.new()
@@ -358,6 +372,8 @@ func show_settings(section: String) -> void:
 	environment_column.visible = section == "environment"
 	racks_column.visible = section == "racks"
 	settings_title.text = {"audio": "Audio & MIDI", "environment": "Environment & graphics", "racks": "Rack management"}.get(section, "Settings")
+	settings_icon.texture = preload("res://scripts/ui_theme.gd").icon(section)
+	settings_hint.text = {"audio": "Your sound and instruments · Use the stick to scroll long lists.", "environment": "Find your place · Choose scenery, daylight and picture quality.", "racks": "Arrange your space · Unlock Layout mode to move, turn or add cases."}.get(section, "")
 	settings_scroll.scroll_vertical = 0
 	settings_panel.show()
 

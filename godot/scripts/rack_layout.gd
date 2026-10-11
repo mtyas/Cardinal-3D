@@ -85,7 +85,7 @@ func _build_controls() -> void:
 		for button in layout_buttons: button.disabled = not enabled)
 	column.add_child(mode_button)
 	var help := Label.new()
-	help.text = "Hold a case edge to move it; turn your hand left/right to rotate it upright.\nSelect a module title, then choose its destination rack below."
+	help.text = "Hold a case edge: move up/down, left/right or closer/farther. Turn your hand left/right to rotate the case upright in place.\nSelect a module title, then choose its destination rack below."
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.custom_minimum_size.x = 500
 	column.add_child(help)
@@ -251,7 +251,7 @@ func drag(sample: Dictionary, previous: Vector3) -> void:
 	if not layout_mode or grabbed < 0: return
 	var root: Node3D = cases[grabbed].root
 	# Godot's vertical axis is Y (the user's requested vertical/Z-only turn).
-	# Restrict movement to yaw, keeping every case upright.
+		# Restrict rotation only; translation below remains free on all three axes.
 	if sample.has("basis"):
 		var old_forward: Vector3 = -grab_basis.z
 		var new_forward: Vector3 = -sample.basis.z
@@ -259,7 +259,7 @@ func drag(sample: Dictionary, previous: Vector3) -> void:
 		if Vector2(old_forward.x, old_forward.z).length() > 0.15 and Vector2(new_forward.x, new_forward.z).length() > 0.15:
 			yaw = wrapf(atan2(new_forward.x, new_forward.z) - atan2(old_forward.x, old_forward.z), -PI, PI)
 		var rotation := Basis(Vector3.UP, yaw)
-		root.global_transform = Transform3D(rotation * root.global_basis, previous + rotation * (root.global_position - previous))
+		root.global_basis = rotation * root.global_basis
 		grab_basis = sample.basis
 	root.global_position += sample.position - previous
 	_update_cable_preview()

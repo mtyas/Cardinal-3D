@@ -419,14 +419,19 @@ func _make_ui() -> void:
 	for node in host.header_panel.get_parent().get_children():
 		if node is Label: node.hide()
 	main_menu = PanelContainer.new()
-	main_menu.position = Vector2(510, 180)
-	main_menu.custom_minimum_size = Vector2(420, 0)
+	main_menu.position = Vector2(380, 95)
+	main_menu.custom_minimum_size = Vector2(680, 0)
 	host.header_panel.get_parent().add_child(main_menu)
 	var column := VBoxContainer.new()
 	main_menu.add_child(column)
 	var title := Label.new()
 	title.text = "Cardinal 3D"
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", Color("62e4ca"))
 	column.add_child(title)
+	var subtitle := Label.new()
+	subtitle.text = "Your instruments. Your space."
+	column.add_child(subtitle)
 	_load_interaction_settings()
 	wrist_label = Label.new()
 	wrist_label.text = "Wrist speed · %.1f×" % wrist_speed
@@ -440,25 +445,33 @@ func _make_ui() -> void:
 	wrist_slider.tooltip_text = "Slow for precise turns; fast for a full-range sweep with one wrist turn. Push/pull fine tuning keeps its own sensitivity."
 	column.add_child(wrist_slider)
 	wrist_slider.value_changed.connect(_set_wrist_speed)
+	var actions := GridContainer.new()
+	actions.columns = 2
+	column.add_child(actions)
 	for entry in [
-		["Rack management", func(): _open_settings("racks")],
-		["Environment & graphics", func(): _open_settings("environment")],
-		["Audio & MIDI devices", func(): _open_settings("audio")],
-		["Browse modules (A)", _toggle_browser],
-		["Open patch…", func(): host._patch_action(0)],
-		["Save patch as…", func(): host._patch_action(1)],
-		["Undo", func(): host.bridge.send_command("undo")],
-		["Redo", func(): host.bridge.send_command("redo")],
-		["Tutorial", func(): tutorial.start()],
-		["Close (B)", _close_ui]]:
+		["Rack management\nArrange your cases", func(): _open_settings("racks"), "racks"],
+		["Environment & graphics\nChoose a place & light", func(): _open_settings("environment"), "environment"],
+		["Audio & MIDI devices\nConnect your instruments", func(): _open_settings("audio"), "audio"],
+		["Browse modules (A)\nBuild your instrument", _toggle_browser, "modules"],
+		["Open patch…", func(): host._patch_action(0), "open"],
+		["Save patch as…", func(): host._patch_action(1), "save"],
+		["Undo", func(): host.bridge.send_command("undo"), "undo"],
+		["Redo", func(): host.bridge.send_command("redo"), "redo"],
+		["Tutorial", func(): tutorial.start(), "tutorial"],
+		["Close (B)", _close_ui, "close"]]:
 		var button := Button.new()
 		button.text = entry[0]
-		button.custom_minimum_size.y = 42
+		button.icon = preload("res://scripts/ui_theme.gd").icon(entry[2])
+		button.add_theme_constant_override("icon_max_width", 32)
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.custom_minimum_size = Vector2(318, 64)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.add_theme_font_size_override("font_size", 19)
 		button.pressed.connect(entry[1])
-		column.add_child(button)
+		actions.add_child(button)
 	main_menu.hide()
 	var back := Button.new()
-	back.text = "Back to main menu"
+	back.text = "Back"
 	back.custom_minimum_size.y = 44
 	host.settings_title.get_parent().add_child(back)
 	host.settings_title.get_parent().move_child(back, 1)
@@ -694,6 +707,13 @@ func _hit(from: Vector3, direction: Vector3) -> Dictionary:
 		if patching and not _compatible_socket({"kind": "module", "control": control}): continue
 		var candidate := Vector2(float(control["x"]), float(control["y"]))
 		var distance := pixel.distance_to(candidate)
+		# Native custom widgets often contain tiny arrows or editable subregions.
+		# Preserve the actual pointer coordinate instead of snapping to their centre.
+		if not patching and control.kind == "custom":
+			var bounds := Rect2(candidate - Vector2(float(control.width), float(control.height)) / 2, Vector2(float(control.width), float(control.height)))
+			if bounds.has_point(pixel):
+				closest = control
+				break
 		if control.kind == "slider":
 			var start_point := Vector2(float(control.get("start_x", candidate.x)), float(control.get("start_y", candidate.y)))
 			var end_point := Vector2(float(control.get("end_x", candidate.x)), float(control.get("end_y", candidate.y)))
@@ -702,7 +722,7 @@ func _hit(from: Vector3, direction: Vector3) -> Dictionary:
 		if distance < separation:
 			separation = distance
 			closest = control
-	if not closest.is_empty(): pixel = Vector2(float(closest["x"]), float(closest["y"]))
+	if not closest.is_empty() and closest.kind != "custom": pixel = Vector2(float(closest["x"]), float(closest["y"]))
 	var target := view.to_global(Vector3(pixel.x * SCALE, -pixel.y * SCALE, 0.04))
 	return {"kind": "module", "view": view, "pixel": pixel, "control": closest, "world": target}
 
@@ -816,7 +836,9 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 					capture.move_grab_offset = aim - move_start if aim is Vector2 else capture.pixel
 				elif capture.get("control", {}).get("kind", "") == "port":
 					_begin_cable(hit)
-				elif not capture.get("control", {}).is_empty():
+				elif capture.get("control", {}).get("component_type", "") == "GroupSelectDisplay":
+					host.bridge.send_command("parameter_choices", {"module": capture.module, "param": capture.control.id, "x": capture.pixel.x, "y": capture.pixel.y})
+				else:
 					host.dragging = true
 					_pointer(hit, "down")
 	elif finish and gesture_owner == side:
@@ -832,14 +854,14 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 						host.bridge.send_command("move_delta", {"dx": snapped_position.x - move_start.x, "dy": snapped_position.y - move_start.y, "insert": true})
 						host.bridge.send_command("move_end")
 					_clear_move_preview()
-				elif capture.get("control", {}).is_empty(): pass
+				elif capture.get("control", {}).is_empty(): _pointer(capture, "up")
 				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"]: host.bridge.send_command("release")
 				elif _cable_active():
 					var drop := _cable_drop_hit(hit)
 					if not drop.is_empty(): _commit_cable(drop)
 					elif capture.get("cable_pulled", false) and not capture.get("replace_cable", "").is_empty():
 						host.bridge.send_command("disconnect_cable", {"cable_id": capture.replace_cable, "input_module": capture.module, "input_port": capture.control.id})
-				elif hit.get("kind") == "module": _pointer(hit, "up")
+				elif hit.get("kind") == "module": _pointer(capture, "up")
 				else: host.bridge.send_command("release")
 		gesture_owner = ""
 		capture.clear()
@@ -860,7 +882,8 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 					var aim: Variant = _rack_pointer(view, sample)
 					if aim is Vector2: _update_move_preview(view, aim - capture.move_grab_offset - proposed_position)
 					elif sample.source == "hand": _update_move_preview(view, Vector2(delta.x / SCALE, -delta.y / SCALE))
-				elif capture.get("control", {}).is_empty(): pass
+				elif capture.get("control", {}).is_empty():
+					if hit.get("view") == view: _pointer(hit, "motion")
 				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"] and sample["source"] == "controller" and sample.has("basis"):
 					host.bridge.send_command("drag_delta", {"dx": 0.0, "dy": _controller_knob_delta(sample), "mods": 0})
 				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"]:
@@ -869,7 +892,7 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 					var socket := _cable_drop_hit(hit)
 					if not socket.is_empty():
 						hit = socket
-				elif hit.get("kind") == "module":
+				elif hit.get("view") == view:
 					_pointer(hit, "motion")
 				else: host.bridge.send_command("drag_delta", {"dx": delta.x / SCALE, "dy": -delta.y / SCALE, "mods": 0})
 				host.wire_cursor = hit.get("world", sample["origin"] + sample["direction"] * 0.8)

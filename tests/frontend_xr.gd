@@ -107,6 +107,13 @@ func run() -> void:
 	check(is_equal_approx(session.fine_distance, 0.1) and not session.fine_meter.visible, "Fine meter must follow push/pull distance and hide on release")
 	session.wrist_speed = 1.0
 	check(host.bridge.commands[-1].command == "release", "Controller knob release must not jump to the current ray target")
+	var surface := hit.duplicate()
+	surface.control = {}
+	surface.pixel = Vector2(57, 320)
+	session.interact("left", controller_pose(true, Vector3(0, 0, 1)), surface)
+	check(host.bridge.commands[-1].command == "pointer" and host.bridge.commands[-1].fields.phase == "down", "Unknown native surface controls must receive trigger clicks")
+	session.interact("left", controller_pose(false, Vector3(0, 0, 1)), other_hit)
+	check(host.bridge.commands[-1].fields.phase == "up" and host.bridge.commands[-1].fields.x == 57, "Surface release must stay on the captured target when aim drifts")
 	hit.control = {"kind": "slider", "id": 1}
 	session.interact("left", controller_pose(true, Vector3(0, 0, 1)), hit)
 	session.interact("left", controller_pose(true, Vector3(0, 0, 1), Basis(Vector3.FORWARD, 0.2)), {})
@@ -195,7 +202,7 @@ func run() -> void:
 	session.interact("left", pose(true), hit)
 	session.interact("left", pose(true, Vector3(0.02, 0, 0)), hit)
 	session.interact("left", pose(false), hit)
-	check(host.bridge.commands.size() == before_move, "Blank panel space must never reach Cardinal's panel drag handler")
+	check(host.bridge.commands.size() == before_move + 3 and host.bridge.commands[-1].fields.phase == "up", "Surface clicks must remain captured through press, motion and release")
 	hit.pixel.y = 100
 	hit.control = {"kind": "port", "direction": "output", "id": 0}
 	session.interact("left", pose(true), hit)
@@ -274,7 +281,7 @@ func run() -> void:
 	ui_session._toggle_menu()
 	await process_frame
 	var undo: Button
-	for button in ui_session.main_menu.get_child(0).get_children():
+	for button in ui_session.main_menu.find_children("*", "Button", true, false):
 		if button is Button and button.text == "Undo": undo = button
 	var requests: int = view.bridge.next_id
 	var pixel := undo.get_global_rect().get_center()

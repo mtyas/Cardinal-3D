@@ -160,6 +160,26 @@ def main():
                 command('hello', version=1)
                 sliders = [control for control in state['modules'][0]['controls'] if control['kind'] == 'slider']
                 assert len(sliders) >= 16, 'MixMaster faders must retain native slider semantics'
+                arrows = [control for control in state['modules'][0]['controls'] if 'MmGroupPlusButton' in control.get('component_type', '')]
+                assert len(arrows) >= 16, 'MixMaster non-parameter bus arrows must be exposed as interactive native surfaces'
+                groups = [control for control in state['modules'][0]['controls'] if control.get('component_type') == 'GroupSelectDisplay']
+                assert groups, 'MixMaster bus selection values must be visible in metadata'
+                group = min(groups, key=lambda control: abs(control['x'] - arrows[0]['x']) + abs(control['y'] - arrows[0]['y']))
+                initial_group = group['value']
+                arrow = arrows[0]
+                command('pointer', module='1', x=arrow['x'], y=arrow['y'], phase='down', button=0, mods=0)
+                command('hello', version=1)
+                command('pointer', module='1', x=arrow['x'], y=arrow['y'], phase='up', button=0, mods=0)
+                changed_group = next(control for control in state['modules'][0]['controls'] if control['id'] == group['id'] and control.get('component_type') == 'GroupSelectDisplay')
+                assert changed_group['value'] != initial_group, 'A native bus arrow click must change its linked channel routing parameter'
+                command('parameter_choices', module='1', param=group['id'], x=group['x'], y=group['y'])
+                assert state['overlay_mode'] == 'menu', 'Clicking the bus display must open native routing choices'
+                command('escape')
+                module_position = (state['modules'][0]['x'], state['modules'][0]['y'])
+                command('pointer', module='1', x=1, y=140, phase='down', button=0, mods=0)
+                command('drag_delta', dx=70, dy=35, mods=0)
+                command('release')
+                assert (state['modules'][0]['x'], state['modules'][0]['y']) == module_position, 'Decorative surface clicks must never move modules outside title-strip placement'
                 for slider in sliders[:2]:
                     initial = slider['normalized']
                     assert abs(slider['y'] - (slider['start_y'] + initial * (slider['end_y'] - slider['start_y']))) < .1, 'Aiming must follow the live fader handle'
