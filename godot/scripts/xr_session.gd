@@ -315,7 +315,7 @@ func _make_ui() -> void:
 	_refresh_ui()
 
 func _refresh_ui() -> void:
-	var visible_ui: bool = main_menu.visible or host.module_browser.visible or host.dialog.visible or host.overlay.visible
+	var visible_ui: bool = main_menu.visible or host.module_browser.visible or host.dialog.visible or host.overlay.visible or host.settings_panel.visible
 	ui_panel.visible = visible_ui
 	ui_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if visible_ui else SubViewport.UPDATE_DISABLED
 	ui_collision.disabled = not visible_ui
@@ -323,6 +323,10 @@ func _refresh_ui() -> void:
 	if main_menu.visible and not host.module_browser.visible and not host.dialog.visible and not host.overlay.visible and not host.settings_panel.visible:
 		var menu_rect := main_menu.get_global_rect().grow(8)
 		if menu_rect.has_area(): ui_rect = menu_rect
+	elif host.overlay.visible and host.overlay_mode == "menu" and not host.module_browser.visible and not host.dialog.visible and not host.settings_panel.visible:
+		ui_rect = host.overlay.get_global_rect().grow(8)
+	elif host.settings_panel.visible and not main_menu.visible and not host.module_browser.visible and not host.dialog.visible and not host.overlay.visible:
+		ui_rect = host.settings_panel.get_global_rect().grow(8)
 	var size := ui_rect.size * (1.2 / 1440.0)
 	(ui_panel.mesh as QuadMesh).size = size
 	(ui_collision.shape as BoxShape3D).size = Vector3(size.x, size.y, 0.005)
@@ -426,7 +430,7 @@ func _controller_knob_delta(sample: Dictionary) -> float:
 	last_knob_distance = distance
 	return pixels
 
-func _move_player(stick: Vector2, _unused_turn: float, delta: float) -> void:
+func _move_player(stick: Vector2, _unused_turn: float, delta: float, vertical := false) -> void:
 	# Do not move the player under a held knob, cable, module or floating menu.
 	if not gesture_owner.is_empty():
 		move_velocity = Vector3.ZERO
@@ -443,7 +447,10 @@ func _move_player(stick: Vector2, _unused_turn: float, delta: float) -> void:
 	if amount > STICK_DEADZONE:
 		var input := stick.normalized() * minf((amount - STICK_DEADZONE) / (1.0 - STICK_DEADZONE), 1.0)
 		var facing := Basis(Vector3.UP, headset.global_rotation.y)
-		desired = facing * Vector3(input.x, 0, -input.y) * MOVE_SPEED
+		desired = facing * (Vector3(input.x, input.y, 0) if vertical else Vector3(input.x, 0, -input.y)) * MOVE_SPEED
+	# Changing grip mode must not keep drifting along the previous axis.
+	if vertical: move_velocity.z = 0
+	else: move_velocity.y = 0
 	var blend := 1.0 - exp(-12.0 * delta)
 	move_velocity = move_velocity.lerp(desired, blend)
 	origin.global_position += move_velocity * delta
@@ -705,4 +712,5 @@ func _physics_process(delta: float) -> void:
 	var right: XRController3D = devices["right"]["controller"]
 	var left_stick := left.get_vector2("primary") if left.get_has_tracking_data() else Vector2.ZERO
 	var right_stick := right.get_vector2("primary") if right.get_has_tracking_data() else Vector2.ZERO
-	_move_player((left_stick + right_stick).limit_length(1.0), 0.0, delta)
+	var vertical := (left.get_has_tracking_data() and (left.get_float("grip") > 0.5 or left.is_button_pressed("grip_click"))) or (right.get_has_tracking_data() and (right.get_float("grip") > 0.5 or right.is_button_pressed("grip_click")))
+	_move_player((left_stick + right_stick).limit_length(1.0), 0.0, delta, vertical)

@@ -21,6 +21,29 @@ func _run():
 		assert(scene.bridge.native_surface_count >= 2, "Native drawing must update multiple modules")
 	var audio_settings = scene.settings_panel.find_child("EmbeddedAudioSettings", true, false)
 	assert(audio_settings != null and audio_settings.output_picker.item_count >= 1, "Embedded audio routing must be available")
+	var session = load("res://scripts/xr_session.gd").new()
+	scene.add_child(session)
+	session.host = scene
+	session.headset = XRCamera3D.new()
+	session.add_child(session.headset)
+	session._make_ui()
+	await process_frame
+	session._menu_buttons("right", false, true)
+	assert(session.main_menu.visible and session.ui_panel.visible, "B must show the embedded main menu")
+	session._close_ui()
+	var selected = scene.modules.values()[0]
+	session._select_module({"view": selected, "pixel": Vector2(20, 8), "world": selected.global_position, "kind": "module"})
+	session._toggle_menu()
+	for _attempt in range(40):
+		if scene.overlay.visible: break
+		await create_timer(0.05).timeout
+	assert(scene.overlay.visible and scene.overlay_mode == "menu", "B on a selected module must display its native menu in the embedded frontend")
+	session._refresh_ui()
+	assert(session.ui_panel.visible)
+	assert(session.ui_rect == scene.overlay.get_global_rect().grow(8), "Module menus must crop the floating panel to their actual clickable rectangle")
+	session._close_ui()
+	await process_frame
+	print("PASS: embedded B main menu and selected-module menu through floating VR UI")
 	scene.bridge.send_command("add", {"plugin": "Fundamental", "model": "VCA-1"})
 	for _attempt in range(40):
 		if scene.modules.size() == 7: break

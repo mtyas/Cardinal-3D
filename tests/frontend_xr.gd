@@ -113,6 +113,11 @@ func run() -> void:
 	check(session.origin.position == Vector3.ZERO, "Thumbstick drift must stay inside the deadzone")
 	session._move_player(Vector2(0, 1), 0, 1.0)
 	check(is_equal_approx(session.origin.position.z, -session.MOVE_SPEED), "Forward movement must follow headset yaw at the configured speed")
+	var before_vertical: Vector3 = session.origin.position
+	session._move_player(Vector2(0, 1), 0, 1.0, true)
+	check(is_equal_approx(session.origin.position.y - before_vertical.y, session.MOVE_SPEED) and is_equal_approx(session.origin.position.z, before_vertical.z), "Grip plus stick up must raise the view without continuing zoom")
+	session._move_player(Vector2(0, -1), 0, 1.0, true)
+	check(is_equal_approx(session.origin.position.y, before_vertical.y), "Grip plus stick down must lower the view")
 	session.move_velocity = Vector3.ZERO
 	var head_position: Vector3 = session.headset.global_position
 	session._move_player(Vector2.ZERO, 1.0, 0.1)
@@ -245,6 +250,11 @@ func run() -> void:
 	check(ui_session.main_menu.visible and ui_session.ui_panel.visible, "B must open the contextual main menu")
 	ui_session._menu_buttons("right", false, true)
 	check(ui_session.main_menu.visible, "Holding B must not repeatedly toggle the menu")
+	view.settings_panel.show()
+	ui_session.main_menu.hide()
+	ui_session._refresh_ui()
+	check(ui_session.ui_panel.visible, "Audio/view settings must retain the floating panel when the main menu closes")
+	view.settings_panel.hide()
 	ui_session._menu_buttons("right", false, false)
 	ui_session._menu_buttons("right", true, false)
 	check(view.module_browser.visible and not ui_session.main_menu.visible, "A must open the module browser instead of the main menu")

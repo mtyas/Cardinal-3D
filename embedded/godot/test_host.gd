@@ -47,11 +47,14 @@ func _run():
 		var generation := ""
 		for message in messages:
 			if message.type == "snapshot": generation = str(message.generation)
+		var menu_batch := [{"op": "release", "request": 2}, {"op": "escape", "request": 3, "generation": generation}]
 		for phase in ["down", "up"]:
-			var response = JSON.parse_string(host.messages_json(JSON.stringify({"op": "pointer", "request": 2,
-				"generation": generation, "module": "1", "x": 20, "y": 8, "button": 1, "phase": phase})))
-			for message in response:
-				if message.type == "ack": assert(message.ok, str(message))
+			menu_batch.append({"op": "pointer", "request": 4,
+				"generation": generation, "module": "1", "x": 20, "y": 8, "button": 1, "phase": phase})
+		var response = JSON.parse_string(host.messages_json(JSON.stringify(menu_batch)))
+		for message in response:
+			if message.type == "ack": assert(message.ok, str(message))
+			if message.type == "snapshot": assert(message.overlay_mode == "menu", "B-style batched right click must retain its menu")
 		var menu_found := false
 		for _attempt in range(30):
 			var menu_text: String = host.render_surface()

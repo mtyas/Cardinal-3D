@@ -89,4 +89,11 @@ the user-confirmed two-process version, and `Launch tested Quest version.bat`
 opens its explicit restore point. Full host feature parity and physical Quest
 responsiveness remain acceptance work.
 
+Navigation: either joystick pans left/right and moves closer/farther. Hold a
+controller grip while moving the joystick up/down to raise/lower the viewpoint;
+left/right panning stays available. Navigation pauses during captured gestures
+and floating menus, and the browser continues to use the stick for scrolling.
+Native module menus crop the floating panel to their actual clickable bounds.
+Audio/view settings keep the panel visible independently of the main menu.
+
 The initial asset audit found 423 named knob SVGs across the full pinned source tree. The palette extractor supplies colours for 377; 46 retain artwork fallback for review. This count describes assets, not converted module models. See `docs/knob-palette-summary.json`; the full local report is `reports/knob-palettes.json`. Re-run with `scripts/audit_knob_palettes.py` and the native `tests/svg_palette_assets.cpp` probe compiled against Rack's pinned NanoSVG headers.
