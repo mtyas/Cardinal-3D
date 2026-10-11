@@ -11,6 +11,9 @@ var layout_mode := false
 var active_case := 0
 var grabbed := -1
 var grab_basis := Basis.IDENTITY
+var grab_distance := 1.0
+var grab_offset := Vector3.ZERO
+var pointer_grab := false
 var picker: OptionButton
 var mode_button: CheckButton
 var path := ""
@@ -85,7 +88,7 @@ func _build_controls() -> void:
 		for button in layout_buttons: button.disabled = not enabled)
 	column.add_child(mode_button)
 	var help := Label.new()
-	help.text = "Hold a case edge: move up/down, left/right or closer/farther. Turn your hand left/right to rotate the case upright in place.\nSelect a module title, then choose its destination rack below."
+	help.text = "Hold a case edge and aim the pointer to position it. Stick up/down pushes/pulls the rack. Twist your wrist to turn it upright.\nSelect a module title, then choose its destination rack below."
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.custom_minimum_size.x = 500
 	column.add_child(help)
@@ -243,6 +246,10 @@ func begin_grab(index: int, sample: Dictionary) -> void:
 	picker.select(active_case)
 	grab_basis = sample.get("basis", Basis.IDENTITY)
 	var root: Node3D = cases[grabbed].root
+	pointer_grab = sample.has("origin") and sample.has("direction") and sample.has("grab_point")
+	if pointer_grab:
+		grab_distance = clampf(sample.origin.distance_to(sample.grab_point), 0.25, 5.0)
+		grab_offset = root.global_position - (sample.origin + sample.direction.normalized() * grab_distance)
 	root.global_basis = Basis(Vector3.UP, root.global_rotation.y)
 	host.cables.hide()
 	_update_cable_preview()
@@ -253,15 +260,17 @@ func drag(sample: Dictionary, previous: Vector3) -> void:
 	# Godot's vertical axis is Y (the user's requested vertical/Z-only turn).
 		# Restrict rotation only; translation below remains free on all three axes.
 	if sample.has("basis"):
-		var old_forward: Vector3 = -grab_basis.z
-		var new_forward: Vector3 = -sample.basis.z
-		var yaw := 0.0
-		if Vector2(old_forward.x, old_forward.z).length() > 0.15 and Vector2(new_forward.x, new_forward.z).length() > 0.15:
-			yaw = wrapf(atan2(new_forward.x, new_forward.z) - atan2(old_forward.x, old_forward.z), -PI, PI)
+		var relative: Quaternion = (grab_basis.inverse() * sample.basis).get_rotation_quaternion()
+		var yaw := wrapf(2.0 * atan2(relative.z, relative.w), -PI, PI)
 		var rotation := Basis(Vector3.UP, yaw)
 		root.global_basis = rotation * root.global_basis
 		grab_basis = sample.basis
-	root.global_position += sample.position - previous
+	if pointer_grab:
+		var stick: Vector2 = sample.get("stick", Vector2.ZERO)
+		if absf(stick.y) > 0.2:
+			grab_distance = clampf(grab_distance + stick.y * get_physics_process_delta_time() * 1.5, 0.25, 5.0)
+		root.global_position = sample.origin + sample.direction.normalized() * grab_distance + grab_offset
+	else: root.global_position += sample.position - previous
 	_update_cable_preview()
 
 func end_grab() -> void:

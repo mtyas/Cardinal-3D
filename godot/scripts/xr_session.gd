@@ -308,13 +308,13 @@ func _update_fine_meter() -> void:
 		fine_meter.add_child(fine_label)
 	var facing := headset.global_basis if is_instance_valid(headset) else Basis.IDENTITY
 	fine_meter.global_transform = Transform3D(facing, capture["world"] + facing * Vector3(0.15, 0.02, 0.06))
-	fine_marker.position.x = clampf(fine_distance / 0.2, -1.0, 1.0) * 0.09
+	fine_marker.position.x = clampf(fine_distance / PI, -1.0, 1.0) * 0.09
 	var display := ""
 	for control: Dictionary in capture.view.descriptor.get("controls", []):
 		if str(control.get("id")) == str(capture.control.get("id")) and control.get("kind") in ["knob", "slider"]:
 			display = str(control.get("display", ""))
 			break
-	fine_label.text = "Push ← Fine → Pull\n%+.1f cm%s" % [fine_distance * 100.0, " · " + display if not display.is_empty() else ""]
+	fine_label.text = "%s%s" % ["FINE · 10× precision" if capture.get("fine", false) else "WRIST · Hold grip for fine", "\n" + display if not display.is_empty() else ""]
 	fine_meter.show()
 
 func setup(view) -> bool:
@@ -442,7 +442,7 @@ func _make_ui() -> void:
 	wrist_slider.step = 0.1
 	wrist_slider.value = wrist_speed
 	wrist_slider.custom_minimum_size = Vector2(380, 42)
-	wrist_slider.tooltip_text = "Slow for precise turns; fast for a full-range sweep with one wrist turn. Push/pull fine tuning keeps its own sensitivity."
+	wrist_slider.tooltip_text = "Slow for precise turns; fast for full-range sweeps. Hold trigger + grip for ten times finer wrist adjustment."
 	column.add_child(wrist_slider)
 	wrist_slider.value_changed.connect(_set_wrist_speed)
 	var actions := GridContainer.new()
@@ -458,6 +458,7 @@ func _make_ui() -> void:
 		["Undo", func(): host.bridge.send_command("undo"), "undo"],
 		["Redo", func(): host.bridge.send_command("redo"), "redo"],
 		["Tutorial", func(): tutorial.start(), "tutorial"],
+		["About & licences\nLinks, credits & legal", func(): _open_settings("about"), "tutorial"],
 		["Close (B)", _close_ui, "close"]]:
 		var button := Button.new()
 		button.text = entry[0]
@@ -622,18 +623,18 @@ func _sample(side: String) -> Dictionary:
 	if not device["armed"]:
 		if not pressed: device["armed"] = true
 		pressed = false
-	return {"origin": controller.global_position, "direction": -controller.global_basis.z, "position": controller.global_position, "basis": controller.global_basis, "pressed": pressed, "source": "controller", "context": controller.is_button_pressed("ax_button")}
+	return {"origin": controller.global_position, "direction": -controller.global_basis.z, "position": controller.global_position, "basis": controller.global_basis, "pressed": pressed, "source": "controller", "grip": controller.get_float("grip") > 0.5 or controller.is_button_pressed("grip_click"), "stick": controller.get_vector2("primary"), "context": controller.is_button_pressed("ax_button")}
 
 func _controller_knob_delta(sample: Dictionary) -> float:
 	var current_basis: Basis = sample["basis"]
 	var rotation := (last_controller_basis.inverse() * current_basis).get_rotation_quaternion()
 	# Extract wrist roll around the pointing axis, independent of aiming yaw/pitch.
 	var roll := wrapf(2.0 * atan2(rotation.z, rotation.w), -PI, PI)
-	var distance: float = sample["position"].distance_to(capture["world"])
-	var pixels := roll * WRIST_PIXELS_PER_RADIAN * wrist_speed - (distance - last_knob_distance) * DISTANCE_PIXELS_PER_METRE
+	var fine: bool = sample.get("grip", false)
+	var pixels := roll * WRIST_PIXELS_PER_RADIAN * wrist_speed * (0.1 if fine else 1.0)
 	last_controller_basis = current_basis
-	last_knob_distance = distance
-	fine_distance = distance - fine_start_distance
+	fine_distance += roll
+	capture["fine"] = fine
 	_update_fine_meter()
 	return pixels
 
@@ -824,7 +825,9 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 				if is_instance_valid(selected_module.get("view")): selected_module.view.set_selected(false)
 				selected_module.clear()
 				if rack_layout != null and rack_layout.layout_mode:
-					rack_layout.begin_grab(hit.get("rack_id", 0), sample)
+					var grab_sample := sample.duplicate()
+					grab_sample["grab_point"] = hit.world
+					rack_layout.begin_grab(hit.get("rack_id", 0), grab_sample)
 			"module":
 				capture["generation"] = host.generation
 				capture["module"] = str(hit["view"].descriptor["id"])

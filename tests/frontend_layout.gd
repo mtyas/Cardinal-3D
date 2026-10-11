@@ -72,13 +72,18 @@ func run() -> void:
 	layout.drag({"position": delta, "basis": Basis.IDENTITY}, Vector3.ZERO)
 	check(layout.cases[1].root.global_position.is_equal_approx(previous + delta), "Rack translation must follow all three axes without flattening height or depth")
 	var before_turn: Vector3 = layout.cases[1].root.global_position
-	layout.drag({"position": delta, "basis": Basis(Vector3.UP, 0.3)}, delta)
+	layout.drag({"position": delta, "basis": Basis(Vector3.FORWARD, 0.3)}, delta)
 	check(layout.cases[1].root.global_position.is_equal_approx(before_turn), "Turning a case in place must not orbit it around the controller")
 	layout.drag({"position": Vector3(0.2, 0, 0), "basis": Basis(Vector3.UP, 0.3) * Basis(Vector3.RIGHT, 0.6)}, Vector3.ZERO)
 	check(layout.cases[1].root.global_basis.y.is_equal_approx(Vector3.UP), "Case movement must reject pitch/roll and keep the rack upright")
 	layout.end_grab()
 	check(not layout.cases[1].root.global_position.is_equal_approx(previous), "Captured case must move and rotate")
 	check(not layout.cases[1].root.global_basis.is_equal_approx(Basis.IDENTITY), "Case rotation must follow controller orientation")
+	var at: Vector3 = layout.cases[1].root.global_position
+	layout.begin_grab(1, {"basis": Basis.IDENTITY, "origin": Vector3.ZERO, "direction": Vector3.FORWARD, "grab_point": Vector3(0, 0, -2)})
+	layout.drag({"position": Vector3.ZERO, "origin": Vector3.ZERO, "direction": Vector3(0, 0.4, -1).normalized(), "basis": Basis.IDENTITY}, Vector3.ZERO)
+	check(layout.cases[1].root.global_position.y > at.y + 0.6, "Pointer aiming upward must lift a rack without physically lifting the hand")
+	layout.end_grab()
 	layout.mode_button.button_pressed = false
 	previous = layout.cases[1].root.global_position
 	layout.begin_grab(1, {"basis": Basis.IDENTITY})

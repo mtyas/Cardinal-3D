@@ -3,6 +3,7 @@
 from pathlib import Path
 import json
 import subprocess
+import hashlib
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -10,6 +11,16 @@ def main():
     pin = json.loads((ROOT / 'upstream.lock.json').read_text())
     source = ROOT / 'vendor/Cardinal'
     source.parent.mkdir(exist_ok=True)
+    archive_manifest = source / '.source-snapshot.json'
+    if archive_manifest.is_file() and not (source / '.git').exists():
+        manifest = json.loads(archive_manifest.read_text())
+        if manifest['commit'] != pin['commit']: raise RuntimeError('Source archive pin mismatch')
+        for filename, digest in manifest['sha256'].items():
+            path = source / filename
+            if not path.resolve().is_relative_to(source.resolve()): raise RuntimeError('Unsafe source path')
+            if hashlib.sha256(path.read_bytes()).hexdigest() != digest: raise RuntimeError('Source archive changed: ' + filename)
+        print('Verified complete pinned Cardinal source archive.')
+        return
     fresh = not source.exists()
     if fresh:
         subprocess.run(['git', 'clone', '--no-checkout', pin['repository'], str(source)], check=True)

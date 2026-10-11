@@ -156,7 +156,7 @@ func setup(client: CardinalBridgeClient) -> void:
 	light.light_energy = 1.4
 	viewport.add_child(light)
 	camera = Camera3D.new()
-	camera.position = Vector3(0, -0.10, 2.0)
+	camera.position = Vector3(0, 0.04, 2.0)
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 1.15
 	viewport.add_child(camera)
@@ -311,7 +311,7 @@ func _reset_scroll() -> void:
 
 func _scroll_changed(value: float) -> void:
 	rotating = false
-	camera.position.y = -0.10 - value / SCROLL_ROW * ROW_HEIGHT
+	camera.position.y = 0.04 - value / SCROLL_ROW * ROW_HEIGHT
 	_refresh_window()
 
 func _refresh_window() -> void:

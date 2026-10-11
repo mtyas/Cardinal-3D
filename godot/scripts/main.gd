@@ -55,6 +55,7 @@ var settings_column: VBoxContainer
 var audio_column: VBoxContainer
 var environment_column: VBoxContainer
 var racks_column: VBoxContainer
+var about_page: VBoxContainer
 var settings_title: Label
 var settings_icon: TextureRect
 var settings_hint: Label
@@ -231,6 +232,10 @@ func _build_ui() -> void:
 	environment_column = VBoxContainer.new()
 	racks_column = VBoxContainer.new()
 	for section in [audio_column, environment_column, racks_column]: settings_column.add_child(section)
+	about_page = preload("res://scripts/about_page.gd").new()
+	settings_column.add_child(about_page)
+	about_page.setup(self)
+	about_page.hide()
 	environment_column.hide()
 	racks_column.hide()
 	if OS.get_environment("CARDINAL_3D_EMBEDDED") == "1":
@@ -371,7 +376,8 @@ func show_settings(section: String) -> void:
 	audio_column.visible = section == "audio"
 	environment_column.visible = section == "environment"
 	racks_column.visible = section == "racks"
-	settings_title.text = {"audio": "Audio & MIDI", "environment": "Environment & graphics", "racks": "Rack management"}.get(section, "Settings")
+	about_page.visible = section == "about"
+	settings_title.text = {"audio": "Audio & MIDI", "environment": "Environment & graphics", "racks": "Rack management", "about": "About & licences"}.get(section, "Settings")
 	settings_icon.texture = preload("res://scripts/ui_theme.gd").icon(section)
 	settings_hint.text = {"audio": "Your sound and instruments · Use the stick to scroll long lists.", "environment": "Find your place · Choose scenery, daylight and picture quality.", "racks": "Arrange your space · Unlock Layout mode to move, turn or add cases."}.get(section, "")
 	settings_scroll.scroll_vertical = 0

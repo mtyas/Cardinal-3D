@@ -8,7 +8,7 @@ const INK := Color("d9e9f3")
 const ACCENT := Color("62e4ca")
 const GOLD := Color("ffcd83")
 func _ready() -> void:
-	custom_minimum_size = Vector2(560, 125)
+	custom_minimum_size = Vector2(560, 175)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 func line(a: Vector2, b: Vector2, color := ACCENT) -> void: draw_line(a, b, color, 3, true)
 func words(at: Vector2, text: String, color := INK) -> void:
@@ -27,10 +27,7 @@ func _draw() -> void:
 	draw_style_box(preload("res://scripts/ui_theme.gd").box("102d39", "285669", 12), Rect2(Vector2.ZERO, size))
 	match page:
 		0:
-			rack(Vector2(360, 25))
-			draw_circle(Vector2(80, 60), 22, INK, false, 3, true)
-			arrow(Vector2(106, 60), Vector2(350, 60))
-			words(Vector2(135, 98), "POINT  +  TRIGGER", ACCENT)
+			controller()
 		1:
 			draw_circle(Vector2(110, 52), 30, INK, false, 3, true)
 			line(Vector2(110, 52), Vector2(126, 31), GOLD)
@@ -38,11 +35,9 @@ func _draw() -> void:
 			words(Vector2(66, 110), "TWIST")
 			arrow(Vector2(275, 55), Vector2(465, 55))
 			arrow(Vector2(465, 55), Vector2(275, 55))
-			words(Vector2(283, 110), "PUSH / PULL · FINE")
+			words(Vector2(283, 110), "GRIP + TWIST · FINE")
 		2:
-			for x in [95, 345]: draw_circle(Vector2(x, 48), 29, ACCENT if x == 95 else GOLD)
-			words(Vector2(88, 56), "A", Color("10202d")); words(Vector2(338, 56), "B", Color("10202d"))
-			words(Vector2(55, 107), "BROWSER"); words(Vector2(315, 107), "MENUS")
+			controller()
 		3:
 			arrow(Vector2(190, 60), Vector2(95, 60)); arrow(Vector2(190, 60), Vector2(285, 60))
 			arrow(Vector2(190, 60), Vector2(190, 15)); arrow(Vector2(190, 60), Vector2(190, 105))
@@ -62,6 +57,15 @@ func _draw() -> void:
 			line(Vector2(30, 92), Vector2(130, 22)); line(Vector2(130, 22), Vector2(215, 92))
 			rack(Vector2(370, 24))
 			words(Vector2(240, 65), "YOUR SPACE", ACCENT)
+func controller() -> void:
+	var image := preload("res://assets/quest2-controller.png")
+	draw_texture_rect(image, Rect2(185, 0, 165, 175), false)
+	words(Vector2(20, 35), "RIGHT TOUCH", GOLD)
+	line(Vector2(264, 67), Vector2(150, 67)); words(Vector2(20, 63), "STICK · Move")
+	line(Vector2(291, 79), Vector2(370, 44)); words(Vector2(380, 48), "B · Menu")
+	line(Vector2(281, 92), Vector2(370, 80)); words(Vector2(380, 84), "A · Browser")
+	line(Vector2(279, 119), Vector2(370, 123)); words(Vector2(380, 127), "GRIP · Fine", GOLD)
+	line(Vector2(238, 107), Vector2(150, 145)); words(Vector2(20, 163), "TRIGGER · Hold")
 func draw_bezier_curve(a: Vector2, b: Vector2, c: Vector2, d: Vector2, color: Color, width: float) -> void:
 	var points := PackedVector2Array()
 	for i in range(33): points.append(a.bezier_interpolate(b, c, d, float(i) / 32))

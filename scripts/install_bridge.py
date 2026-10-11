@@ -18,7 +18,8 @@ def replace(path, old, new):
 
 def main():
     pin = json.loads((ROOT / "upstream.lock.json").read_text())["commit"]
-    revision = subprocess.check_output(["git", "-C", str(CARDINAL), "rev-parse", "HEAD"], text=True).strip()
+    archive_manifest = CARDINAL / '.source-snapshot.json'
+    revision = json.loads(archive_manifest.read_text())['commit'] if archive_manifest.is_file() and not (CARDINAL / '.git').exists() else subprocess.check_output(["git", "-C", str(CARDINAL), "rev-parse", "HEAD"], text=True).strip()
     if revision != pin:
         raise RuntimeError(f"Expected Cardinal {pin}, found {revision}")
     # DPF's STATIC_BUILD also disables standalone bundle discovery. Keep its
@@ -72,7 +73,8 @@ void WindowSetMods(Window* const window, const int mods)''')
     replace(plugins, '$(BUILD_DIR)/plugins.cpp.o: plugins.cpp', '$(BUILD_DIR)/plugins-3d.cpp.o: plugins-3d.cpp\n\t@mkdir -p $(dir $@)\n\t$(CXX) $< $(BUILD_CXX_FLAGS) -c -o $@\n\n$(BUILD_DIR)/plugins.cpp.o: plugins.cpp')
     # Reuse the pinned upstream source list and its existing per-plugin compiler
     # flags. No Audible Instruments DSP source or implementation is copied/edited.
-    upstream_make = subprocess.check_output(["git", "-C", str(CARDINAL), "show", "HEAD:plugins/Makefile"], text=True)
+    archived_make = CARDINAL / '.source-original-plugins-Makefile'
+    upstream_make = archived_make.read_text() if archived_make.is_file() and not (CARDINAL / '.git').exists() else subprocess.check_output(["git", "-C", str(CARDINAL), "show", "HEAD:plugins/Makefile"], text=True)
     audible_block = upstream_make.split("# AudibleInstruments\n", 1)[1].split("# Autinn\n", 1)[0]
     audible_sources = "\n".join(line for line in audible_block.splitlines() if line.startswith("PLUGIN_FILES +=")) + "\n"
     fundamental_block = upstream_make.split("# Fundamental (always enabled)\n", 1)[1].split("# ZamAudio", 1)[0]

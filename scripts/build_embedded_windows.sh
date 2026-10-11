@@ -35,10 +35,11 @@ cp bin/Cardinal3DEngine.dll "$root/dist/embedded/"
 cd "$root"
 bindings="$root/.tools/godot-cpp"
 pin=e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77
-if [[ ! -d "$bindings/.git" ]]; then
+if [[ ! -d "$bindings/.git" && ! -f "$bindings/.source-pin" ]]; then
     git clone --depth 1 --branch godot-4.5-stable https://github.com/godotengine/godot-cpp.git "$bindings"
 fi
-[[ "$(git -C "$bindings" rev-parse HEAD)" == "$pin" ]] || { echo 'Godot binding pin mismatch' >&2; exit 1; }
+if [[ -f "$bindings/.source-pin" ]]; then actual=$(cat "$bindings/.source-pin"); else actual=$(git -C "$bindings" rev-parse HEAD); fi
+[[ "$actual" == "$pin" ]] || { echo 'Godot binding pin mismatch' >&2; exit 1; }
 # Godot's bindings use std::mutex: select the POSIX MinGW compiler explicitly,
 # without changing the distro's compiler alternatives or Cardinal's cached build.
 compiler="$root/.tools/mingw-posix"

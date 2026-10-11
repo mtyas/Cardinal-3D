@@ -3,6 +3,14 @@ extends SceneTree
 func _initialize():
 	_run.call_deferred()
 
+func capture_manual(viewport: Viewport, name: String) -> void:
+	var directory := OS.get_environment("CARDINAL_MANUAL_DIR")
+	if directory.is_empty() or DisplayServer.get_name() == "headless": return
+	await process_frame
+	await process_frame
+	await RenderingServer.frame_post_draw
+	viewport.get_texture().get_image().save_png(directory.path_join(name + ".png"))
+
 func _run():
 	var scene = load("res://main.tscn").instantiate()
 	get_root().add_child(scene)
@@ -21,6 +29,7 @@ func _run():
 		assert(scene.bridge.native_surface_count >= 2, "Native drawing must update multiple modules")
 	var audio_settings = scene.settings_panel.find_child("EmbeddedAudioSettings", true, false)
 	assert(audio_settings != null and audio_settings.output_picker.item_count >= 1, "Embedded audio routing must be available")
+	await capture_manual(root, "rack")
 	var session = load("res://scripts/xr_session.gd").new()
 	scene.add_child(session)
 	session.host = scene
@@ -30,6 +39,22 @@ func _run():
 	await process_frame
 	session._menu_buttons("right", false, true)
 	assert(session.main_menu.visible and session.ui_panel.visible, "B must show the embedded main menu")
+	await capture_manual(session.ui_viewport, "main-menu")
+	if not OS.get_environment("CARDINAL_MANUAL_DIR").is_empty():
+		session._open_settings("audio")
+		await capture_manual(session.ui_viewport, "audio-menu")
+		session._open_settings("about")
+		assert(scene.about_page.entries.size() > 100, "All release notices must be available in-app")
+		await capture_manual(session.ui_viewport, "about-menu")
+		session._close_ui()
+		session._toggle_browser()
+		scene.module_browser.search.text = "Fundamental"
+		scene.module_browser._filter()
+		scene.module_browser._reset_scroll()
+		await create_timer(1.0).timeout
+		await capture_manual(session.ui_viewport, "browser")
+		session._close_ui()
+		session._toggle_menu()
 	if DisplayServer.get_name() != "headless" and not OS.get_environment("CARDINAL_MENU_TEST_IMAGE").is_empty():
 		await process_frame
 		await RenderingServer.frame_post_draw

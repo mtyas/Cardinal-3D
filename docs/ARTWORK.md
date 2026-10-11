@@ -1,6 +1,8 @@
 # Artwork and distribution
 
-No converted panel artwork is committed or separately distributed. The frontend receives rendered surfaces from the user's locally built, pinned Cardinal source. Procedural knob, socket, screw, cable and plug meshes in this repository are original and distributed under GPL-3.0-or-later with the bridge.
+The 0.77 Windows candidate includes original pinned Cardinal resources so it runs without a separate Cardinal installation. They remain under their original terms; the software GPL does not replace artwork, sample or font licences. `legal/` preserves the complete pinned Cardinal licence table, permission records, individual notices, dependency notices and Godot attribution. The matching source archive contains the recursive source and resources. Procedural knob, socket, screw, cable and plug meshes are project-original GPL-3.0-or-later assets.
+
+The illustrated manual uses screenshots of the app, predominantly the GPL Fundamental starter rack plus the original Rack components. Screenshots retain applicable third-party artwork terms. The controller teaching image is an original AI-assisted illustration of Quest 2 hardware, with project-authored callouts; supplied reference screenshots are not included in the public package. This is an independent project, with no Meta/VCV/DISTRHO endorsement.
 
 The initial panels are Fundamental VCO, VCF, ADSR, VCA-1 and Scope, and DISTRHO Cardinal Host Audio. Their source artwork and notices remain under `vendor/Cardinal/plugins/Fundamental/res`, `vendor/Cardinal/plugins/Cardinal/res` and Rack's component/font resources. Fundamental is credited to VCV; Cardinal to DISTRHO/Filipe Coelho. Module/component paths and runtime C++ types are recorded in descriptors.
 

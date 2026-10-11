@@ -102,9 +102,13 @@ func run() -> void:
 	check(session._visual_target("right", other_hit).pixel == other_hit.pixel, "The other controller must retain its own aiming dot")
 	session.interact("left", controller_pose(true, Vector3(0, 0, 1.1), Basis(Vector3.FORWARD, PI / 2)), other_hit)
 	var fine: float = host.bridge.commands[-1].fields.dy
-	check(is_equal_approx(fine, -6.0) and absf(fine) < absf(coarse) / 10, "Pulling away must provide a finer adjustment without changing the captured knob")
+	check(is_equal_approx(fine, 0.0), "Controller distance must never interfere with wrist tuning")
+	var fine_pose := controller_pose(true, Vector3(0, 0, 1.1), Basis(Vector3.FORWARD, PI / 2 + 0.2))
+	fine_pose.grip = true
+	session.interact("left", fine_pose, other_hit)
+	check(is_equal_approx(host.bridge.commands[-1].fields.dy, -3.6), "Trigger plus grip must provide ten times finer wrist tuning")
 	session.interact("left", controller_pose(false, Vector3(0, 0, 1.1)), other_hit)
-	check(is_equal_approx(session.fine_distance, 0.1) and not session.fine_meter.visible, "Fine meter must follow push/pull distance and hide on release")
+	check(not session.fine_meter.visible, "Adjustment meter must hide on release")
 	session.wrist_speed = 1.0
 	check(host.bridge.commands[-1].command == "release", "Controller knob release must not jump to the current ray target")
 	var surface := hit.duplicate()
