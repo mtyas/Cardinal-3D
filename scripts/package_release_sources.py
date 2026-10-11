@@ -13,10 +13,10 @@ version = (root / 'VERSION').read_text().strip()
 prefix = 'Cardinal-3D-' + version + '-source'
 def git(directory, *arguments):
     return subprocess.check_output(['git', '-c', 'safe.directory=' + str(directory), '-C', str(directory), *arguments])
-def tracked(directory):
+def tracked(directory, recursive=True):
     files = set()
     repositories = [directory]
-    for current, directories, filenames in os.walk(directory):
+    for current, directories, filenames in os.walk(directory) if recursive else []:
         if Path(current) != directory and '.git' in filenames: repositories.append(Path(current))
         directories[:] = [d for d in directories if d not in ('.git', 'build', 'bin', 'node_modules')]
     for repository in repositories:
@@ -32,7 +32,7 @@ with tarfile.open(args.output, 'w:gz', compresslevel=5, dereference=True) as arc
         archive.addfile(info, io.BytesIO(data))
     for directory, destination in [(root, ''), (args.cardinal, 'vendor/Cardinal/'), (args.bindings, '.tools/godot-cpp/')]:
         hashes = {}
-        for path in tracked(directory):
+        for path in tracked(directory, recursive=directory != root):
             relative = path.relative_to(directory).as_posix()
             if directory == root and relative.startswith(('setup/', 'vendor/')): continue
             archive.add(path, arcname=prefix + '/' + destination + relative, recursive=False)
