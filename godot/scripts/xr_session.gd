@@ -199,6 +199,66 @@ var main_menu: PanelContainer
 var ui_collision: CollisionShape3D
 var button_states := {}
 var ui_rect := Rect2(0, 0, 1440, 900)
+var wrist_speed := 1.0
+var wrist_slider: HSlider
+var wrist_label: Label
+var interaction_settings := ConfigFile.new()
+var interaction_path := ""
+var fine_start_distance := 0.0
+var fine_distance := 0.0
+var fine_meter: Node3D
+var fine_marker: MeshInstance3D
+var fine_label: Label3D
+
+func _load_interaction_settings() -> void:
+	var directory := OS.get_environment("CARDINAL_EMBEDDED_USER_DIR")
+	interaction_path = directory.path_join("interaction.cfg") if not directory.is_empty() else "user://xr-interaction.cfg"
+	interaction_settings.load(interaction_path)
+	wrist_speed = clampf(float(interaction_settings.get_value("knobs", "wrist_speed", 1.0)), 0.1, 12.0)
+
+func _set_wrist_speed(value: float) -> void:
+	wrist_speed = clampf(value, 0.1, 12.0)
+	wrist_label.text = "Wrist speed · %.1f×" % wrist_speed
+	interaction_settings.set_value("knobs", "wrist_speed", wrist_speed)
+	if interaction_settings.save(interaction_path) != OK: push_error("Could not save knob wrist speed")
+
+func _meter_quad(size: Vector2, color: Color, position: Vector3) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	var mesh := QuadMesh.new()
+	mesh.size = size
+	node.mesh = mesh
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.no_depth_test = true
+	material.albedo_color = color
+	node.material_override = material
+	node.position = position
+	fine_meter.add_child(node)
+	return node
+
+func _update_fine_meter() -> void:
+	if fine_meter == null:
+		fine_meter = Node3D.new()
+		add_child(fine_meter)
+		_meter_quad(Vector2(0.18, 0.014), Color("183449"), Vector3.ZERO)
+		for x in [-0.09, 0.0, 0.09]: _meter_quad(Vector2(0.001, 0.021), Color("d0dce5"), Vector3(x, 0, 0.001))
+		fine_marker = _meter_quad(Vector2(0.004, 0.024), Color("83e7ed"), Vector3(0, 0, 0.002))
+		fine_label = Label3D.new()
+		fine_label.font_size = 30
+		fine_label.pixel_size = 0.0006
+		fine_label.no_depth_test = true
+		fine_label.position = Vector3(0, 0.035, 0.003)
+		fine_meter.add_child(fine_label)
+	var facing := headset.global_basis if is_instance_valid(headset) else Basis.IDENTITY
+	fine_meter.global_transform = Transform3D(facing, capture["world"] + facing * Vector3(0.15, 0.02, 0.06))
+	fine_marker.position.x = clampf(fine_distance / 0.2, -1.0, 1.0) * 0.09
+	var display := ""
+	for control: Dictionary in capture.view.descriptor.get("controls", []):
+		if str(control.get("id")) == str(capture.control.get("id")) and control.get("kind") == "knob":
+			display = str(control.get("display", ""))
+			break
+	fine_label.text = "Push ← Fine → Pull\n%+.1f cm%s" % [fine_distance * 100.0, " · " + display if not display.is_empty() else ""]
+	fine_meter.show()
 
 func setup(view) -> bool:
 	host = view
@@ -227,6 +287,8 @@ func setup(view) -> bool:
 		var controller := XRController3D.new()
 		controller.tracker = side + "_hand"
 		controller.pose = "aim"
+		controller.button_pressed.connect(func(action: String):
+			if action in ["ax_button", "by_button"]: print("XR button event: ", side, " ", action))
 		origin.add_child(controller)
 		var ray := MeshInstance3D.new()
 		ray.mesh = ImmediateMesh.new()
@@ -263,7 +325,11 @@ func _make_ui() -> void:
 	ui_viewport.gui_embed_subwindows = true
 	add_child(ui_viewport)
 	for node in host.get_children():
-		if node is CanvasLayer: node.reparent(ui_viewport)
+		if node is CanvasLayer:
+			# The floating viewport owns its UI directly; no inherited main-window
+			# canvas attachment may keep menus out of this rendered texture.
+			for content in node.get_children(): content.reparent(ui_viewport)
+			node.queue_free()
 	ui_panel = MeshInstance3D.new()
 	var quad := QuadMesh.new()
 	quad.size = Vector2(1.2, 0.75)
@@ -296,6 +362,19 @@ func _make_ui() -> void:
 	var title := Label.new()
 	title.text = "Cardinal 3D"
 	column.add_child(title)
+	_load_interaction_settings()
+	wrist_label = Label.new()
+	wrist_label.text = "Wrist speed · %.1f×" % wrist_speed
+	column.add_child(wrist_label)
+	wrist_slider = HSlider.new()
+	wrist_slider.min_value = 0.1
+	wrist_slider.max_value = 12.0
+	wrist_slider.step = 0.1
+	wrist_slider.value = wrist_speed
+	wrist_slider.custom_minimum_size = Vector2(380, 42)
+	wrist_slider.tooltip_text = "Slow for precise turns; fast for a full-range sweep with one wrist turn. Push/pull fine tuning keeps its own sensitivity."
+	column.add_child(wrist_slider)
+	wrist_slider.value_changed.connect(_set_wrist_speed)
 	for entry in [
 		["Browse modules (A)", _toggle_browser],
 		["Open patch…", func(): host._patch_action(0)],
@@ -373,9 +452,30 @@ func _toggle_browser() -> void:
 
 func _menu_buttons(side: String, browse: bool, menu: bool) -> void:
 	var previous: Dictionary = button_states.get(side, {"browse": false, "menu": false})
-	if browse and not previous.browse: _toggle_browser()
-	if menu and not previous.menu: _toggle_menu()
+	if browse and not previous.browse:
+		_toggle_browser()
+		print("XR browser button received: ", side)
+	if menu and not previous.menu:
+		_toggle_menu()
+		print("XR menu button received: ", side, "; main=", main_menu.visible, "; module=", host.overlay.visible, "; selected=", _valid_selection())
+		_record_menu_frame()
 	button_states[side] = {"browse": browse, "menu": menu}
+
+func _record_menu_frame() -> void:
+	if OS.get_environment("CARDINAL_3D_MENU_DIAGNOSTICS") != "1": return
+	var directory := OS.get_environment("CARDINAL_EMBEDDED_USER_DIR")
+	if directory.is_empty() or DisplayServer.get_name() == "headless": return
+	# Capture only this app's floating UI, after its layout and texture update.
+	await RenderingServer.frame_post_draw
+	if not is_instance_valid(ui_viewport): return
+	_refresh_ui()
+	var record := {"main_visible": main_menu.is_visible_in_tree(), "module_visible": host.overlay.is_visible_in_tree(),
+		"panel_visible": ui_panel.is_visible_in_tree(), "rect": str(ui_rect), "panel_position": str(ui_panel.global_position),
+		"head_position": str(headset.global_position), "overlay_mode": host.overlay_mode}
+	var file := FileAccess.open(directory.path_join("last-menu.json"), FileAccess.WRITE)
+	if file != null: file.store_string(JSON.stringify(record, "\t"))
+	var image := ui_viewport.get_texture().get_image()
+	if image != null and not image.is_empty(): image.save_png(directory.path_join("last-menu.png"))
 
 func _sync_layout() -> void:
 	if not selected_module.is_empty() and not _valid_selection():
@@ -425,9 +525,11 @@ func _controller_knob_delta(sample: Dictionary) -> float:
 	# Extract wrist roll around the pointing axis, independent of aiming yaw/pitch.
 	var roll := wrapf(2.0 * atan2(rotation.z, rotation.w), -PI, PI)
 	var distance: float = sample["position"].distance_to(capture["world"])
-	var pixels := roll * WRIST_PIXELS_PER_RADIAN - (distance - last_knob_distance) * DISTANCE_PIXELS_PER_METRE
+	var pixels := roll * WRIST_PIXELS_PER_RADIAN * wrist_speed - (distance - last_knob_distance) * DISTANCE_PIXELS_PER_METRE
 	last_controller_basis = current_basis
 	last_knob_distance = distance
+	fine_distance = distance - fine_start_distance
+	_update_fine_meter()
 	return pixels
 
 func _move_player(stick: Vector2, _unused_turn: float, delta: float, vertical := false) -> void:
@@ -517,6 +619,7 @@ func _ui_button(pixel: Vector2, pressed: bool) -> void:
 	ui_viewport.push_input(event, true)
 
 func cancel() -> void:
+	if fine_meter != null: fine_meter.hide()
 	cable_target.clear()
 	_clear_move_preview()
 	if capture.get("kind", "") == "ui" and ui_viewport != null: _ui_button(ui_position, false)
@@ -565,6 +668,9 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 		if sample["source"] == "controller" and sample.has("basis"):
 			last_controller_basis = sample["basis"]
 			last_knob_distance = sample["position"].distance_to(hit["world"])
+			fine_start_distance = last_knob_distance
+			fine_distance = 0.0
+			if hit.get("control", {}).get("kind") == "knob": _update_fine_meter()
 		match hit["kind"]:
 			"ui":
 				_ui_motion(hit["pixel"], false)
@@ -587,6 +693,7 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 					host.dragging = true
 					_pointer(hit, "down")
 	elif finish and gesture_owner == side:
+		if fine_meter != null: fine_meter.hide()
 		match capture.get("kind", ""):
 			"ui": _ui_button(hit.get("pixel", ui_position) if hit.get("kind") == "ui" else ui_position, false)
 			"module":

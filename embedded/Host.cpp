@@ -78,6 +78,12 @@ struct Host {
         d_nextBundlePath = bundle.c_str();
         plugin.reset(new PluginExporter(nullptr, nullptr, nullptr, nullptr));
         context = static_cast<CardinalBasePlugin*>(plugin->getInstancePointer())->context;
+#ifndef HEADLESS
+        // No desktop Window::step() resizes the scene in an embedded host.
+        // Native menu layout and clipping still need a real virtual canvas.
+        context->scene->box.size = rack::math::Vec(1440, 900);
+        context->window->pixelRatio = 1.f;
+#endif
         bridge.reset(new cardinal3d::Bridge(true));
 #ifndef HEADLESS
         bridge->setLocalSurfaceCallback([this](json_t* header, const std::vector<uint8_t>& pixels) {

@@ -93,16 +93,19 @@ func run() -> void:
 	check(host.bridge.commands[-1].command == "release" and not host.dragging, "Releasing a knob over another control must not synthesize a final pointer jump")
 	session.interact("left", controller_pose(false, Vector3(0, 0, 1)), hit)
 	session.interact("left", controller_pose(true, Vector3(0, 0, 1)), hit)
+	session.wrist_speed = 2.0
 	check(not session.capture.move, "Holding a knob must never move the module")
 	session.interact("left", controller_pose(true, Vector3(0, 0, 1), Basis(Vector3.FORWARD, PI / 2)), {})
 	var coarse: float = host.bridge.commands[-1].fields.dy
-	check(is_equal_approx(coarse, -PI / 2 * session.WRIST_PIXELS_PER_RADIAN), "Clockwise wrist roll must increase a captured knob even when the ray misses")
+	check(is_equal_approx(coarse, -PI / 2 * session.WRIST_PIXELS_PER_RADIAN * 2.0), "Wrist speed must scale coarse tuning even when the ray misses")
 	check(session._visual_target("left", other_hit).pixel == hit.pixel, "The owning ray dot must stay on the captured knob")
 	check(session._visual_target("right", other_hit).pixel == other_hit.pixel, "The other controller must retain its own aiming dot")
 	session.interact("left", controller_pose(true, Vector3(0, 0, 1.1), Basis(Vector3.FORWARD, PI / 2)), other_hit)
 	var fine: float = host.bridge.commands[-1].fields.dy
 	check(is_equal_approx(fine, -6.0) and absf(fine) < absf(coarse) / 10, "Pulling away must provide a finer adjustment without changing the captured knob")
 	session.interact("left", controller_pose(false, Vector3(0, 0, 1.1)), other_hit)
+	check(is_equal_approx(session.fine_distance, 0.1) and not session.fine_meter.visible, "Fine meter must follow push/pull distance and hide on release")
+	session.wrist_speed = 1.0
 	check(host.bridge.commands[-1].command == "release", "Controller knob release must not jump to the current ray target")
 	session.origin = XROrigin3D.new()
 	session.add_child(session.origin)

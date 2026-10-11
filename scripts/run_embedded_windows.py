@@ -65,6 +65,8 @@ def main():
     if args.dry_run:
         print('PASS: launcher paths and Meta runtime validated; no app started.', flush=True)
         return 0
+    args.user_directory.mkdir(parents=True, exist_ok=True)
+    command.extend(['--log-file', str((args.user_directory / 'session.log').resolve())])
     return subprocess.call(command, cwd=build, env=env)
 
 if __name__ == '__main__':

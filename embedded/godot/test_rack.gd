@@ -30,6 +30,14 @@ func _run():
 	await process_frame
 	session._menu_buttons("right", false, true)
 	assert(session.main_menu.visible and session.ui_panel.visible, "B must show the embedded main menu")
+	if DisplayServer.get_name() != "headless" and not OS.get_environment("CARDINAL_MENU_TEST_IMAGE").is_empty():
+		await process_frame
+		await RenderingServer.frame_post_draw
+		session.ui_viewport.get_texture().get_image().save_png(OS.get_environment("CARDINAL_MENU_TEST_IMAGE") + "-main.png")
+	session.wrist_slider.value = 4.0
+	assert(is_equal_approx(session.wrist_speed, 4.0), "Main menu must control wrist sensitivity")
+	var saved_controls := ConfigFile.new()
+	assert(saved_controls.load(session.interaction_path) == OK and saved_controls.get_value("knobs", "wrist_speed") == 4.0, "Wrist sensitivity must persist independently of audio settings")
 	session._close_ui()
 	var selected = scene.modules.values()[0]
 	session._select_module({"view": selected, "pixel": Vector2(20, 8), "world": selected.global_position, "kind": "module"})
@@ -41,6 +49,18 @@ func _run():
 	session._refresh_ui()
 	assert(session.ui_panel.visible)
 	assert(session.ui_rect == scene.overlay.get_global_rect().grow(8), "Module menus must crop the floating panel to their actual clickable rectangle")
+	if DisplayServer.get_name() != "headless":
+		await process_frame
+		await process_frame
+		await RenderingServer.frame_post_draw
+		var ui_image: Image = session.ui_viewport.get_texture().get_image()
+		var center := Vector2i(session.ui_rect.get_center())
+		if not OS.get_environment("CARDINAL_MENU_TEST_IMAGE").is_empty():
+			ui_image.save_png(OS.get_environment("CARDINAL_MENU_TEST_IMAGE"))
+			scene.overlay_texture.get_image().save_png(OS.get_environment("CARDINAL_MENU_TEST_IMAGE") + "-native.png")
+		print("MENU TEXTURE: rect=", session.ui_rect, "; overlay=", scene.overlay.get_global_rect(), "; viewport=", scene.overlay.get_viewport().get_visible_rect())
+		assert(ui_image != null and Rect2i(Vector2i.ZERO, ui_image.get_size()).has_point(center))
+		assert(ui_image.get_pixelv(center).a > 0.05, "The menu must occupy the actual sampled floating UI texture, not only have a visible flag")
 	session._close_ui()
 	await process_frame
 	print("PASS: embedded B main menu and selected-module menu through floating VR UI")

@@ -96,4 +96,17 @@ and floating menus, and the browser continues to use the stick for scrolling.
 Native module menus crop the floating panel to their actual clickable bounds.
 Audio/view settings keep the panel visible independently of the main menu.
 
+The main menu's wrist-speed slider scales coarse knob rotation from 0.1× to
+12× and persists in the isolated `interaction.cfg`. It leaves push/pull fine
+sensitivity unchanged. While a controller holds a knob, a floating meter shows
+signed distance from the grab point (centered at zero, with a ±20 cm visual
+range) and the current native display value. Releasing or cancelling hides it.
+
+The embedded native scene is explicitly sized to a 1440×900 virtual canvas
+with a pixel ratio of one. The former zero-size scene produced empty native
+module-menu images even though menu state and dimensions appeared valid.
+Validation now checks actual menu pixels in the floating GPU texture, not just
+visibility flags. Optional `CARDINAL_3D_MENU_DIAGNOSTICS=1` captures the app's
+floating panel locally; normal launches only retain a session log.
+
 The initial asset audit found 423 named knob SVGs across the full pinned source tree. The palette extractor supplies colours for 377; 46 retain artwork fallback for review. This count describes assets, not converted module models. See `docs/knob-palette-summary.json`; the full local report is `reports/knob-palettes.json`. Re-run with `scripts/audit_knob_palettes.py` and the native `tests/svg_palette_assets.cpp` probe compiled against Rack's pinned NanoSVG headers.
