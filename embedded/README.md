@@ -1,6 +1,6 @@
-# Experimental embedded Windows engine
+# Embedded Windows engine — 0.77 beta
 
-This is a development target separate from the user-confirmed Quest runtime.
+This is the engine used by the Windows Quest Link release.
 It loads Cardinal DSP, the full 1,412-model registry (or the smaller prototype), native patch
 manager, widget metadata and undo history into Godot's process. There is no
 Cardinal executable or socket in this target. Original upstream DSP is unchanged.

@@ -109,6 +109,48 @@ func _run():
 		if restored.modules.size() == 7 and restored.bridge.audio_playback != null and restored.bridge.audio_playback.get_playback_position() > 0.05: break
 		await create_timer(0.05).timeout
 	assert(restored.modules.size() == 7, "Recovery must reload the actual changed patch")
+	var fresh_session = load("res://scripts/xr_session.gd").new()
+	restored.add_child(fresh_session)
+	fresh_session.host = restored
+	fresh_session.headset = XRCamera3D.new()
+	fresh_session.add_child(fresh_session.headset)
+	fresh_session.spatial = Node3D.new()
+	fresh_session.add_child(fresh_session.spatial)
+	fresh_session.case_body = StaticBody3D.new()
+	var case_collision := CollisionShape3D.new()
+	case_collision.shape = BoxShape3D.new()
+	fresh_session.case_body.add_child(case_collision)
+	fresh_session.spatial.add_child(fresh_session.case_body)
+	var layout = load("res://scripts/rack_layout.gd").new()
+	fresh_session.add_child(layout)
+	fresh_session.rack_layout = layout
+	restored.rack_layout = layout
+	layout.setup(fresh_session)
+	layout.mode_button.button_pressed = true
+	layout.add_case()
+	fresh_session._make_ui()
+	fresh_session._toggle_menu()
+	fresh_session._request_new_rack()
+	await capture_manual(fresh_session.ui_viewport, "new-rack-warning")
+	assert(fresh_session.new_rack_dialog.visible and restored.modules.size() == 7 and layout.cases.size() == 2, "Opening New rack must warn without changing the current workspace")
+	fresh_session.new_rack_dialog.hide()
+	assert(restored.modules.size() == 7, "Cancel must preserve the patch")
+	var preserved_path: String = restored.bridge.recovery_path.get_base_dir().path_join("saved-before-new.vcv")
+	restored.bridge.send_command("save", {"path": preserved_path})
+	for _attempt in range(40):
+		if FileAccess.file_exists(preserved_path): break
+		await create_timer(0.05).timeout
+	assert(FileAccess.file_exists(preserved_path))
+	var preserved_bytes := FileAccess.get_file_as_bytes(preserved_path)
+	fresh_session._confirm_new_rack()
+	for _attempt in range(40):
+		if restored.modules.size() == 1 and layout.cases.size() == 1 and restored.immersive_environment.place == 7: break
+		await create_timer(0.05).timeout
+	assert(restored.modules.size() == 1 and restored.modules.values()[0].descriptor.model == "HostAudio2" and restored.snapshot.cables.is_empty(), "Confirmed New rack must contain only Cardinal Audio 2 and no cables")
+	assert(layout.cases.size() == 1 and not layout.layout_mode and restored.immersive_environment.scenery.get_child_count() == 0, "New rack must reset to one locked case and empty surroundings")
+	assert(FileAccess.get_file_as_bytes(preserved_path) == preserved_bytes, "New rack must never overwrite a saved patch")
+	await capture_manual(fresh_session.ui_viewport, "new-rack")
+	print("PASS: new rack warning/cancel, audio-only patch, one case, empty space and preserved saved patch")
 	for _attempt in range(30):
 		if restored.bridge.shutdown(): break
 		await process_frame

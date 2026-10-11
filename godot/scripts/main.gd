@@ -63,6 +63,8 @@ var settings_section := "audio"
 var rack_layout
 var immersive_environment
 var pending_layout_load := {}
+var pending_new_patch_request := -1
+var reset_new_patch_workspace := false
 var layout_restore_path := ""
 var settings_button: Button
 var toolbar: HBoxContainer
@@ -464,6 +466,12 @@ func _on_message(message: Dictionary) -> void:
 						if control.get("visible", true): tooltip.text = _focus_text(control)
 						else: _clear_focus()
 						break
+			if reset_new_patch_workspace:
+				reset_new_patch_workspace = false
+				layout_restore_path = ""
+				pending_layout_load.clear()
+				if rack_layout != null: rack_layout.reset_for_new_patch()
+				immersive_environment.empty_space()
 			if rack_layout != null:
 				if not layout_restore_path.is_empty():
 					rack_layout.restore_from(layout_restore_path)
@@ -484,6 +492,9 @@ func _on_message(message: Dictionary) -> void:
 			overlay.visible = next_mode != "none" and overlay_surface_mode == next_mode
 		"ack":
 			var request := int(message.get("request", -1))
+			if request == pending_new_patch_request and pending_new_patch_request >= 0:
+				pending_new_patch_request = -1
+				reset_new_patch_workspace = message.get("ok", false)
 			if pending_layout_load.has(request):
 				if message.get("ok", false): layout_restore_path = pending_layout_load[request]
 				pending_layout_load.erase(request)

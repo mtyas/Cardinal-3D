@@ -199,6 +199,7 @@ var last_controller_basis := Basis.IDENTITY
 var last_knob_distance := 0.0
 var move_velocity := Vector3.ZERO
 var main_menu: PanelContainer
+var new_rack_dialog: ConfirmationDialog
 var ui_collision: CollisionShape3D
 var button_states := {}
 var ui_rect := Rect2(0, 0, 1440, 900)
@@ -453,6 +454,7 @@ func _make_ui() -> void:
 	actions.columns = 2
 	column.add_child(actions)
 	for entry in [
+		["New rack…\nStart a fresh patch", _request_new_rack, "racks"],
 		["Rack management\nArrange your cases", func(): _open_settings("racks"), "racks"],
 		["Environment & graphics\nChoose a place & light", func(): _open_settings("environment"), "environment"],
 		["Audio & MIDI devices\nConnect your instruments", func(): _open_settings("audio"), "audio"],
@@ -475,6 +477,13 @@ func _make_ui() -> void:
 		button.pressed.connect(entry[1])
 		actions.add_child(button)
 	main_menu.hide()
+	new_rack_dialog = ConfirmationDialog.new()
+	new_rack_dialog.title = "Start a new rack?"
+	new_rack_dialog.dialog_text = "This replaces all modules, cables and cases in the current patch.\nAnything you have not saved will be lost.\n\nThe new workspace has empty surroundings, one case and\nCardinal Audio 2 output only. Save your patch first if needed."
+	new_rack_dialog.ok_button_text = "Create new rack"
+	new_rack_dialog.cancel_button_text = "Keep current rack"
+	new_rack_dialog.confirmed.connect(_confirm_new_rack)
+	main_menu.add_child(new_rack_dialog)
 	var back := Button.new()
 	back.text = "Back"
 	back.custom_minimum_size.y = 44
@@ -491,6 +500,16 @@ func _open_settings(section: String) -> void:
 	main_menu.hide()
 	host.show_settings(section)
 	_refresh_ui()
+
+func _request_new_rack() -> void:
+	cancel()
+	new_rack_dialog.popup_centered(Vector2i(580, 260))
+	_place_ui()
+	_refresh_ui()
+
+func _confirm_new_rack() -> void:
+	_close_ui()
+	host.pending_new_patch_request = host.bridge.send_command("new_patch")
 
 func _refresh_ui() -> void:
 	var visible_ui: bool = main_menu.visible or host.module_browser.visible or host.dialog.visible or host.overlay.visible or host.settings_panel.visible or (tutorial != null and tutorial.visible)
@@ -526,6 +545,7 @@ func _close_ui() -> void:
 	cancel()
 	if tutorial != null: tutorial.hide()
 	main_menu.hide()
+	if new_rack_dialog != null: new_rack_dialog.hide()
 	host.module_browser.close_browser()
 	host.settings_panel.hide()
 	host.dialog.hide()

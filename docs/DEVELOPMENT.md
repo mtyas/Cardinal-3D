@@ -1,65 +1,21 @@
-# Cardinal 3D
+# Developing Cardinal 3D 0.77 beta
 
-Playable macOS desktop prototype: Godot renders the rack; the pinned Cardinal standalone owns the audio, controls, connections, undo history and native `.vcv` files. No audio is transported to Godot.
+The supported release is a Windows x64 application for Quest Link. Godot 4.5.1 runs the VR interface and audio playback; Cardinal's pinned DSP and complete module registry run in-process through the embedded extension. See [local build instructions](BUILDING-0.77.md).
 
-Windows/Quest Link also has an experimental single-process host with the full
-1,412-model Cardinal library, native audio, original artwork and context menus,
-output/MIDI input settings and patch recovery. It builds locally and keeps the
-tested two-process Quest version available. See [embedded host status and remaining
-acceptance work](docs/STANDALONE.md) and [build/check commands](embedded/README.md).
+## Source structure
 
-## Run on this Mac
+- `godot/scripts/`: VR interaction, illustrated menus, module browser, physical cases and environments.
+- `embedded/`: Windows engine DLL, Godot extension, audio playback and embedded checks.
+- `bridge/Cardinal3DBridge.hpp`: native UI commands, descriptors, module surfaces, history and patch operations; shared by the embedded host.
+- `scripts/`: source pinning, local WSL builds, validation and release packaging.
+- `legal/` and `godot/legal/`: upstream notices and the in-app licence library.
 
-The tools and prototype are already built in this workspace:
+The engine stays on its native owner thread for UI operations, with preallocated audio buffers for playback. Each physical case belongs to the same patch. Case transforms and module membership live in `.vcv.3d.json` files beside saved patches; recovery uses a separate user settings folder.
 
-Double-click **Launch Cardinal 3D.command**, or run:
+Normal wrist sensitivity is adjustable; trigger + grip uses one-tenth sensitivity. B opens the main menu and grip + B opens the selected module's native menu. New rack is confirmed before replacing the patch with one Audio 2 module, one locked case and empty surroundings.
 
-```sh
-python3 scripts/run.py
-```
+## Release checks
 
-Choose **Patch → Fundamental starter rack** for Fundamental VCO, VCF, ADSR, VCA-1, Scope and Cardinal Audio 2. The starter routes VCO → VCF → VCA → stereo audio output and Scope; ADSR is available for patching. Audio starts at a modest VCA level. The original Cardinal window stays available. Closing Godot leaves Cardinal and its audio running; close Cardinal separately when finished.
+Use the pinned source audit, `scripts/check_embedded.py --graphics` and the frontend checks under `tests/`. Copy checked builds into new runtime directories rather than replacing DLLs in a running application. Keep personal patches, recovery state, downloaded tools and credentials outside public release archives.
 
-Drag knobs and sockets. Drag a connected socket to move its top wire. Cmd-drag an output adds another wire; Shift-click a socket removes its top wire. Wires have curved 3D meshes, colored plugs and a floating preview while patching. Cardinal performs connection validation and polyphonic signal processing.
-
-Cmd provides fine parameter adjustment. Double-click resets. Right-click opens a compact native context menu at the pointer; Escape or clicking outside closes it. **Drag the top title strip to move a module**; dragging controls, including with Alt held, cannot move a module. Delete removes the module under the pointer. Middle-drag orbits, Shift-middle pans, wheel zooms. The browser inserts modules; the Patch menu opens/saves native patches, and toolbar buttons invoke native undo/redo. **Patch → Show original Cardinal UI** explicitly exposes the complete live Cardinal interface inside Godot.
-
-For a Mac trackpad, use **two fingers to pan**, **Shift + two fingers to orbit**, and **pinch to zoom**. Alternatively hold **Space while click-dragging to orbit**, or **Shift + Space to pan**. The **View** menu switches between Play controls, Orbit view and Pan view; the latter two let an ordinary click-drag navigate without a keyboard modifier. **Front** restores the front view. The compact toolbar’s **Frame** button fits the rack. Open **View & lighting** for navigation modes, Front, lighting presets and exposure.
-
-Choose **Studio**, **Warm desk**, **Cool stage** or **Night** in **View & lighting** and adjust the Exposure slider. Faceplates, meshes and cables respond to the scene lighting. These controls affect only the 3D presentation.
-
-The Eurorack case fits the current module layout, with walnut cheeks, aluminum mounting rails and a recessed interior. It grows and shrinks when modules are inserted, moved or removed. Hardware includes fluted knobs, socket nuts and bores, cross-head screws, smooth cable tubes and detailed plug boots. ADSR, Scope and VCA meter graphics remain native live textures behind recessed glass and bezels; Braids gets the same display treatment. Native single-color lights retain their actual colors, while composite controls retain their original surfaces.
-
-**Magnet** snaps the pointer onto nearby controls and shows a cyan focus ring, control name and current value. Snapping happens once on entering a control's proximity, so you can move away freely. Disable the toolbar toggle to use ordinary picking. Camera navigation, native menus and browser previews do not use this magnet.
-
-**Browse modules** opens the searchable, scrollable 3D gallery. Use two fingers, the mouse wheel or the scrollbar to explore; up to sixteen native previews are kept alive at a time. Sort by **Name**, **Manufacturer** or **Module type**. Use **All manufacturers** to show one manufacturer and **All types** to show one module category. The filters combine with search and each other; choose All to clear either restriction. Click to select, drag to rotate, then double-click or choose **Add selected module**. Previews use actual runtime widget descriptions and native panel captures; they are never registered with the audio engine. The default build includes **190 modules**: 26 Fundamental modules, 20 Audible Instruments modules, 31 Befaco modules, 111 Bogaudio modules and Cardinal’s two audio modules. New choices include LFOs, SEQ-3, delay, mixers, quantizer, noise/random, switches and polyphonic split/merge utilities. Audible Instruments includes Braids, Plaits, Rings, Clouds, Elements, Marbles and Stages. Befaco adds Rampage, Kickall, Even VCO, Spring Reverb, Muxlicer, Noise Plethora and other instruments/utilities. Bogaudio adds oscillators/FM operators, envelopes, sequencers, arpeggiators, mixers/matrices, filters/EQ, analyzers and polyphonic utilities. Search by module, manufacturer or type. **Patch → Audible Instruments rack** adds a wired Plaits → Ripples → VCA patch feeding Scope and stereo output at a modest level.
-
-## Reproduce the build
-
-Requires macOS, Xcode Command Line Tools, Python 3, Git, curl and network access. Downloaded build tools stay under `.tools`; no package manager is required.
-
-```sh
-python3 scripts/bootstrap.py
-python3 scripts/build.py
-python3 tests/live_bridge.py
-python3 scripts/build.py --baseline
-python3 tests/audio_compare.py
-python3 tests/source_audit.py
-```
-
-Godot is pinned to 4.5.1; Cardinal and all recursive submodules are pinned by `upstream.lock.json`. Bootstrap refuses to overwrite a different dirty checkout. Upstream Makefiles require paths without spaces, so compilation uses a temporary checkout whose path is recorded in `build/cardinal-path.txt`. Rebuild if that temporary directory is cleaned. The prototype registry contains 190 models, including Audio 8.
-
-The complete bundled library is an optional larger build:
-
-```sh
-python3 scripts/build.py --full
-python3 scripts/run.py --full
-```
-
-For coverage, run Cardinal alone with `CARDINAL_3D_PORT=39413` and a token in `CARDINAL_3D_TOKEN`, then use the same variables with `python3 scripts/inspect_library.py`. The bridge accepts one frontend at a time. Scans instantiate real widget trees incrementally, without inserting their DSP modules into the playing patch. Reports identify component types, physical conversion, custom controls needing overrides and complete-surface fallback coverage.
-
-## Implementation
-
-`bridge/` is a UI-only overlay installed by `scripts/install_bridge.py`. Godot uses procedural meshes, so Blender is optional. See [protocol](docs/PROTOCOL.md), [validation](docs/VALIDATION.md) and [artwork attribution](docs/ARTWORK.md).
-
-This is the desktop prototype milestone. Private Windows cloud builds and an OpenXR hand/controller interaction prototype are implemented; see [Windows, VR hands and cloud builds](docs/WINDOWS.md). Point/pinch gestures operate native controls and cables, while a floating panel carries the browser and toolbar. Synthetic gesture tests pass; physical Windows/Quest testing remains required. AR, DAW integration and standalone headsets are later stages. Dynamic CPU-transferred surfaces are throttled; the 3D scene renders independently. Original artwork remains local to the pinned source tree. Camera and scene scale never change native module layout or patch data.
+The obsolete Mac launcher, build scripts, baseline test reports and Mac prototype instructions have been removed from the active source tree. Git history remains available for provenance.

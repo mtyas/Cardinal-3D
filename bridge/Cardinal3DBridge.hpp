@@ -531,6 +531,12 @@ class Bridge {
             release(); float x = app::RACK_OFFSET.x;
             for (auto* mw : APP->scene->rack->getModules()) x = std::max(x, mw->box.pos.x + mw->box.size.x);
             add(text(cmd, "plugin"), text(cmd, "model"), math::Vec(x, app::RACK_OFFSET.y));
+        } else if (op == "new_patch") {
+            release(); clearPreviews();
+            APP->scene->browser->hide(); overlayRequested = false;
+            APP->patch->clear();
+            ++generation; surfaceTimes.clear(); surfaceHashes.clear();
+            add("Cardinal", "HostAudio2", app::RACK_OFFSET);
         } else if (op == "starter" || op == "audible_starter") starter(op == "audible_starter");
         else if (op == "preview") preview(text(cmd, "plugin"), text(cmd, "model"));
         else if (op == "remove") {

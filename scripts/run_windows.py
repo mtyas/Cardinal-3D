@@ -14,7 +14,7 @@ def main():
     parser.add_argument("--vr", action="store_true")
     args = parser.parse_args()
     if os.name != 'nt':
-        raise RuntimeError('Use scripts/run.py on macOS')
+        raise RuntimeError('This launcher requires Windows')
     cardinal = ROOT / 'Cardinal/CardinalNative.exe'
     executables = list((ROOT / 'Godot').glob('Godot*_win64.exe'))
     if not cardinal.exists() or len(executables) != 1:

@@ -1,6 +1,7 @@
 extends Node3D
 ## Static, batched scenery. No background simulation or extra render passes.
-const PLACES := ["Recording studio", "Forest", "Mountain summit", "Stage", "Warehouse", "Desert", "Flowery field"]
+const PLACES := ["Recording studio", "Forest", "Mountain summit", "Stage", "Warehouse", "Desert", "Flowery field", "Empty space"]
+var place_picker: OptionButton
 var host
 var scenery: Node3D
 var place := 0
@@ -25,6 +26,7 @@ func setup(owner_host) -> void:
 	heading.text = "Place & time of day"
 	host.environment_column.add_child(heading)
 	var picker := OptionButton.new()
+	place_picker = picker
 	for title in PLACES: picker.add_item(title)
 	picker.select(place)
 	picker.custom_minimum_size.y = 42
@@ -108,10 +110,19 @@ func rebuild() -> void:
 		scenery.queue_free()
 	scenery = Node3D.new()
 	add_child(scenery)
+	if place == 7:
+		update_light()
+		return
 	rng.seed = 73191
 	if place in [0, 3, 4]: _interior()
 	else: _outdoor()
 	update_light()
+
+func empty_space() -> void:
+	place = 7
+	place_picker.select(place)
+	rebuild()
+	_save()
 
 func _interior() -> void:
 	var warehouse := place == 4

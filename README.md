@@ -1,10 +1,10 @@
-# Cardinal 3D · 0.77
+# Cardinal 3D · 0.77 beta
 
 A modular synthesizer you can build around yourself in VR. Cardinal 3D runs Cardinal's synthesis engine inside one Windows application, with 1,412 module models, original panels and several physical racks sharing one patch.
 
 ![Cardinal 3D starter rack](docs/images/rack.png)
 
-**[Download releases](https://github.com/mtyas/Cardinal-3D/releases) · [Illustrated manual](docs/MANUAL.md) · [Support mtyas](https://ko-fi.com/mtyas)**
+**[Download v0.77 beta](https://github.com/mtyas/Cardinal-3D/releases/tag/v0.77) · [Illustrated manual](docs/MANUAL.md) · [Support mtyas](https://ko-fi.com/mtyas)**
 
 ## Start playing
 
@@ -12,6 +12,8 @@ A modular synthesizer you can build around yourself in VR. Cardinal 3D runs Card
 2. Connect Quest 2 by USB, open Meta Horizon Link on the PC, and enter Quest Link in the headset.
 3. Run **Launch Quest Link.bat**. Start with a low volume; the starter rack produces a tone.
 4. Follow the illustrated controller tutorial, or skip it and reopen it from B.
+
+Choose **B → New rack…** for empty surroundings, one case and Cardinal Audio 2 only. A warning lets you cancel before unsaved work is cleared.
 
 The portable download includes the runtime. Python, Docker and compiling are not required. **Launch desktop.bat** offers a monitor-only test. Windows x64, a Quest Link-compatible PC and Meta's OpenXR runtime are required. This is a Windows PC VR app, not an Android headset app or DAW plugin. The binaries are unsigned.
 
@@ -39,7 +41,7 @@ Choose a studio, forest, mountain, stage, warehouse, desert or flowery field, wi
 
 This is the first public release candidate. The engine, artwork, audio, menus and recovery are tested locally; the latest rack/wrist changes still need physical Quest acceptance. Audio input, complete driver/channel/sample-rate/buffer controls, MIDI output/SysEx and universal custom-widget coverage remain future work. Other headsets and Air Link are not validated.
 
-[Release notes](docs/RELEASE-0.77.md) · [Local build instructions](docs/BUILDING-0.77.md) · [Developer history](docs/DEVELOPMENT.md)
+[Release notes](docs/RELEASE-0.77.md) · [Local build instructions](docs/BUILDING-0.77.md) · [Developer guide](docs/DEVELOPMENT.md)
 
 ## Free software and credits
 

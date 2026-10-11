@@ -359,6 +359,20 @@ func restore_from(patch_path: String) -> void:
 	if FileAccess.file_exists(sidecar):
 		var decoded = JSON.parse_string(FileAccess.get_file_as_string(sidecar))
 		if decoded is Dictionary: data = decoded
+	_restore(data)
+
+func reset_for_new_patch() -> void:
+	_restore({})
+	var facing := Basis(Vector3.UP, session.headset.global_rotation.y)
+	cases[0].root.global_transform = Transform3D(facing, session.headset.global_position + facing * Vector3(-0.15, 0.15, -1.2))
+	sync()
+	save()
+
+func _restore(data: Dictionary) -> void:
+	session.cancel()
+	mode_button.button_pressed = false
+	grabbed = -1
+	saved = data
 	# Keep module objects and their live controls while replacing case frames.
 	for view in host.modules.values():
 		if view.get_parent() != cases[0].modules: view.reparent(cases[0].modules, false)

@@ -1,4 +1,4 @@
-# Cardinal 3D 0.77 — illustrated manual
+# Cardinal 3D 0.77 beta — illustrated manual
 
 Build a modular instrument around you. Cardinal 3D runs Cardinal's synthesizer inside a Windows VR application, using a Quest 2 through Quest Link. Several physical cases share one patch, so cables can connect modules across cases.
 
@@ -75,6 +75,10 @@ Choose Recording studio, Forest, Mountain summit, Stage, Warehouse, Desert or Fl
 ![Forest environment in the application](images/forest.png)
 
 ## 8. Audio, MIDI and saving
+
+**B → New rack…** starts a fresh patch. Its warning states that all current modules, cables and cases will be replaced and unsaved work will be lost. Choose **Keep current rack** to cancel, or save first with **Save patch as…**. **Create new rack** leaves one case in front of you, Cardinal Audio 2 only, no cables and the Empty space environment. Existing saved patch files stay untouched; audio/MIDI device settings and wrist sensitivity stay as you set them.
+
+![Warning before replacing the current rack](images/new-rack-warning.png)
 
 ![Audio and MIDI page](images/audio-menu.png)
 
