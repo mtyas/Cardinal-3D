@@ -15,7 +15,8 @@ static func box(color: String, border: String = "", margin: int = 10) -> StyleBo
 
 static func make() -> Theme:
 	var theme := Theme.new()
-	theme.default_font_size = 14
+	theme.default_font_size = 20
+	theme.default_font = preload("res://scripts/clear_text.gd").font()
 	for type in ["Button", "OptionButton", "MenuButton"]:
 		theme.set_stylebox("normal", type, box("202c38", "344353"))
 		theme.set_stylebox("hover", type, box("304253", "5d8498"))

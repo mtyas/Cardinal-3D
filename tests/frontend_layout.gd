@@ -5,6 +5,13 @@ func check(condition: bool, message: String) -> void:
 		failures += 1
 		push_error(message)
 func _initialize() -> void: call_deferred("run")
+func screenshot(viewport: Viewport, name: String) -> void:
+	var directory := OS.get_environment("CARDINAL_UI_TEST_DIR")
+	if DisplayServer.get_name() == "headless" or directory.is_empty(): return
+	await process_frame
+	await process_frame
+	await RenderingServer.frame_post_draw
+	viewport.get_texture().get_image().save_png(directory.path_join(name + ".png"))
 func run() -> void:
 	var host = load("res://scripts/main.gd").new()
 	root.add_child(host)
@@ -61,7 +68,8 @@ func run() -> void:
 	check(host.modules["2"].position == Vector3.ZERO, "The first module must anchor the new case instead of retaining a distant native offset")
 	var previous: Vector3 = layout.cases[1].root.global_position
 	layout.begin_grab(1, {"basis": Basis.IDENTITY})
-	layout.drag({"position": Vector3(0.2, 0, 0), "basis": Basis(Vector3.UP, 0.3)}, Vector3.ZERO)
+	layout.drag({"position": Vector3(0.2, 0, 0), "basis": Basis(Vector3.UP, 0.3) * Basis(Vector3.RIGHT, 0.6)}, Vector3.ZERO)
+	check(layout.cases[1].root.global_basis.y.is_equal_approx(Vector3.UP), "Case movement must reject pitch/roll and keep the rack upright")
 	layout.end_grab()
 	check(not layout.cases[1].root.global_position.is_equal_approx(previous), "Captured case must move and rotate")
 	check(not layout.cases[1].root.global_basis.is_equal_approx(Basis.IDENTITY), "Case rotation must follow controller orientation")
@@ -71,6 +79,23 @@ func run() -> void:
 	layout.drag({"position": Vector3(1, 0, 0)}, Vector3.ZERO)
 	check(layout.cases[1].root.global_position == previous, "Performance mode must reject case translation")
 	session._make_ui()
+	session._open_settings("racks")
+	await screenshot(session.ui_viewport, "rack-menu")
+	check(host.racks_column.visible and not host.audio_column.visible and not host.environment_column.visible and host.settings_scroll.scroll_vertical == 0, "Rack controls must have a separate top-level page")
+	session._open_settings("environment")
+	check(host.environment_column.visible and not host.audio_column.visible and not host.racks_column.visible, "Environment controls must be separate from devices and rack management")
+	session._open_settings("audio")
+	check(host.audio_column.visible and not host.environment_column.visible and not host.racks_column.visible, "Audio and MIDI must have their own page")
+	session.tutorial.start()
+	await screenshot(session.ui_viewport, "tutorial")
+	check(session.tutorial.visible and session.ui_panel.visible and not session.main_menu.visible and not host.settings_panel.visible, "Tutorial must open alone in the floating panel")
+	session.tutorial.remember.button_pressed = false
+	session.tutorial.finish()
+	session.tutorial.start(true)
+	check(not session.tutorial.visible, "Opting out must skip the next startup tutorial")
+	session.tutorial.start()
+	check(session.tutorial.visible, "The tutorial must remain available manually after opting out")
+	session.tutorial.finish()
 	host.settings_panel.show()
 	session.main_menu.hide()
 	var option := OptionButton.new()

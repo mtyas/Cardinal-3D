@@ -23,15 +23,15 @@ func setup(owner_host) -> void:
 	hour = clampf(float(config.get_value("scene", "hour", 14.0)), 0, 24)
 	var heading := Label.new()
 	heading.text = "Place & time of day"
-	host.settings_column.add_child(heading)
+	host.environment_column.add_child(heading)
 	var picker := OptionButton.new()
 	for title in PLACES: picker.add_item(title)
 	picker.select(place)
 	picker.custom_minimum_size.y = 42
 	picker.item_selected.connect(func(index: int): place = index; rebuild(); _save())
-	host.settings_column.add_child(picker)
+	host.environment_column.add_child(picker)
 	hour_label = Label.new()
-	host.settings_column.add_child(hour_label)
+	host.environment_column.add_child(hour_label)
 	var slider := HSlider.new()
 	slider.min_value = 0
 	slider.max_value = 24
@@ -39,7 +39,7 @@ func setup(owner_host) -> void:
 	slider.value = hour
 	slider.custom_minimum_size.y = 42
 	slider.value_changed.connect(func(value: float): hour = value; update_light(); _save())
-	host.settings_column.add_child(slider)
+	host.environment_column.add_child(slider)
 	var quality := OptionButton.new()
 	quality.add_item("Balanced quality · 2× edge smoothing")
 	quality.add_item("Extra clarity · 4× edge smoothing")
@@ -48,7 +48,7 @@ func setup(owner_host) -> void:
 	quality.selected = clampi(int(config.get_value("scene", "quality", 0)), 0, 2)
 	_apply_quality(quality.selected)
 	quality.item_selected.connect(func(index: int): _apply_quality(index); config.set_value("scene", "quality", index); _save())
-	host.settings_column.add_child(quality)
+	host.environment_column.add_child(quality)
 	rebuild()
 
 func _apply_quality(index: int) -> void:

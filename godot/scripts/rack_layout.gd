@@ -20,6 +20,7 @@ var delete_ids: Array = []
 var delete_index := -1
 var delete_request := -1
 var layout_buttons: Array[Button] = []
+var cable_preview: MeshInstance3D
 
 func setup(owner_session) -> void:
 	session = owner_session
@@ -65,6 +66,7 @@ func _create_case(container: Node3D = null, cabinet: Node3D = null, body: Static
 	body.set_meta("xr_case", true)
 	body.set_meta("rack_id", cases.size())
 	var label := Label3D.new()
+	preload("res://scripts/clear_text.gd").apply(label)
 	label.text = "Rack %d · Layout mode" % (cases.size() + 1)
 	label.font_size = 32
 	label.pixel_size = 0.001
@@ -72,7 +74,7 @@ func _create_case(container: Node3D = null, cabinet: Node3D = null, body: Static
 	cases.append({"root": root, "modules": container, "case": cabinet, "body": body, "label": label, "offset": Vector2.ZERO})
 
 func _build_controls() -> void:
-	var column: VBoxContainer = host.settings_column
+	var column: VBoxContainer = host.racks_column
 	mode_button = CheckButton.new()
 	mode_button.text = "Layout mode · unlock rack positions"
 	mode_button.toggled.connect(func(enabled: bool):
@@ -83,7 +85,7 @@ func _build_controls() -> void:
 		for button in layout_buttons: button.disabled = not enabled)
 	column.add_child(mode_button)
 	var help := Label.new()
-	help.text = "In layout mode: hold a case edge to move it; turn the controller to rotate.\nSelect a module by its title, then choose a destination rack here."
+	help.text = "Hold a case edge to move it; turn your hand left/right to rotate it upright.\nSelect a module title, then choose its destination rack below."
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.custom_minimum_size.x = 500
 	column.add_child(help)
@@ -240,22 +242,63 @@ func begin_grab(index: int, sample: Dictionary) -> void:
 	active_case = grabbed
 	picker.select(active_case)
 	grab_basis = sample.get("basis", Basis.IDENTITY)
+	var root: Node3D = cases[grabbed].root
+	root.global_basis = Basis(Vector3.UP, root.global_rotation.y)
+	host.cables.hide()
+	_update_cable_preview()
 
 func drag(sample: Dictionary, previous: Vector3) -> void:
 	if not layout_mode or grabbed < 0: return
 	var root: Node3D = cases[grabbed].root
-	# Rotate around the grabbing hand, then translate with it. No extra frames
-	# of smoothing: the rigid case stays attached to the captured controller.
+	# Godot's vertical axis is Y (the user's requested vertical/Z-only turn).
+	# Restrict movement to yaw, keeping every case upright.
 	if sample.has("basis"):
-		var rotation: Basis = sample.basis * grab_basis.inverse()
+		var old_forward: Vector3 = -grab_basis.z
+		var new_forward: Vector3 = -sample.basis.z
+		var yaw := 0.0
+		if Vector2(old_forward.x, old_forward.z).length() > 0.15 and Vector2(new_forward.x, new_forward.z).length() > 0.15:
+			yaw = wrapf(atan2(new_forward.x, new_forward.z) - atan2(old_forward.x, old_forward.z), -PI, PI)
+		var rotation := Basis(Vector3.UP, yaw)
 		root.global_transform = Transform3D(rotation * root.global_basis, previous + rotation * (root.global_position - previous))
 		grab_basis = sample.basis
 	root.global_position += sample.position - previous
-	sync()
+	_update_cable_preview()
 
 func end_grab() -> void:
-	if grabbed >= 0: save()
+	var moved := grabbed >= 0
 	grabbed = -1
+	if moved:
+		if cable_preview != null: cable_preview.hide()
+		host.cables.show()
+		sync()
+		save()
+
+func _update_cable_preview() -> void:
+	if cable_preview == null:
+		cable_preview = MeshInstance3D.new()
+		cable_preview.mesh = ImmediateMesh.new()
+		var material := StandardMaterial3D.new()
+		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material.vertex_color_use_as_albedo = true
+		cable_preview.material_override = material
+		host.add_child(cable_preview)
+	var mesh: ImmediateMesh = cable_preview.mesh
+	mesh.clear_surfaces()
+	var endpoints := []
+	for cable in host.snapshot.get("cables", []):
+		var out_id := str(cable.output_module)
+		var in_id := str(cable.input_module)
+		if not host.modules.has(out_id) or not host.modules.has(in_id): continue
+		endpoints.append([host.modules[out_id].port_position(int(cable.output_port), "output"), host.modules[in_id].port_position(int(cable.input_port), "input"), Color(str(cable.get("color", "#dd9456")))])
+	if not endpoints.is_empty():
+		mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+		for wire in endpoints:
+			mesh.surface_set_color(wire[2])
+			for index in range(16):
+				for t in [index / 16.0, (index + 1) / 16.0]:
+					mesh.surface_add_vertex(wire[0].lerp(wire[1], t) + Vector3(0, -sin(t * PI) * 0.15, 0.035))
+		mesh.surface_end()
+	cable_preview.show()
 
 func sync() -> void:
 	var descriptions := []

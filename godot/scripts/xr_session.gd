@@ -217,6 +217,7 @@ var popup_scrolled: PopupMenu
 var popup_release := false
 var rack_layout
 var turn_velocity := 0.0
+var tutorial
 
 func _visible_popup(node: Node) -> PopupMenu:
 	for child in node.get_children(true):
@@ -298,6 +299,7 @@ func _update_fine_meter() -> void:
 		for x in [-0.09, 0.0, 0.09]: _meter_quad(Vector2(0.001, 0.021), Color("d0dce5"), Vector3(x, 0, 0.001))
 		fine_marker = _meter_quad(Vector2(0.004, 0.024), Color("83e7ed"), Vector3(0, 0, 0.002))
 		fine_label = Label3D.new()
+		preload("res://scripts/clear_text.gd").apply(fine_label)
 		fine_label.font_size = 30
 		fine_label.pixel_size = 0.0006
 		fine_label.no_depth_test = true
@@ -308,7 +310,7 @@ func _update_fine_meter() -> void:
 	fine_marker.position.x = clampf(fine_distance / 0.2, -1.0, 1.0) * 0.09
 	var display := ""
 	for control: Dictionary in capture.view.descriptor.get("controls", []):
-		if str(control.get("id")) == str(capture.control.get("id")) and control.get("kind") == "knob":
+		if str(control.get("id")) == str(capture.control.get("id")) and control.get("kind") in ["knob", "slider"]:
 			display = str(control.get("display", ""))
 			break
 	fine_label.text = "Push ← Fine → Pull\n%+.1f cm%s" % [fine_distance * 100.0, " · " + display if not display.is_empty() else ""]
@@ -373,6 +375,9 @@ func setup(view) -> bool:
 	get_viewport().use_xr = true
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	active = true
+	var refresh := interface.get_display_refresh_rate()
+	Engine.physics_ticks_per_second = int(round(refresh)) if refresh >= 60 and refresh <= 144 else 90
+	tutorial.start.call_deferred(true)
 	return true
 
 func _make_ui() -> void:
@@ -434,15 +439,15 @@ func _make_ui() -> void:
 	column.add_child(wrist_slider)
 	wrist_slider.value_changed.connect(_set_wrist_speed)
 	for entry in [
+		["Rack management", func(): _open_settings("racks")],
+		["Environment & graphics", func(): _open_settings("environment")],
+		["Audio & MIDI devices", func(): _open_settings("audio")],
 		["Browse modules (A)", _toggle_browser],
 		["Open patch…", func(): host._patch_action(0)],
 		["Save patch as…", func(): host._patch_action(1)],
 		["Undo", func(): host.bridge.send_command("undo")],
 		["Redo", func(): host.bridge.send_command("redo")],
-		["Bring rack here", func(): placed = false],
-		["Racks & environment", func(): main_menu.hide(); host.settings_panel.show()],
-		["Audio & view" if OS.get_environment("CARDINAL_3D_EMBEDDED") == "1" else "View & lighting", func(): host.settings_panel.visible = not host.settings_panel.visible],
-		["Control context menu", _context_menu],
+		["Tutorial", func(): tutorial.start()],
 		["Close (B)", _close_ui]]:
 		var button := Button.new()
 		button.text = entry[0]
@@ -450,15 +455,32 @@ func _make_ui() -> void:
 		button.pressed.connect(entry[1])
 		column.add_child(button)
 	main_menu.hide()
+	var back := Button.new()
+	back.text = "Back to main menu"
+	back.custom_minimum_size.y = 44
+	host.settings_title.get_parent().add_child(back)
+	host.settings_title.get_parent().move_child(back, 1)
+	back.pressed.connect(func(): host.settings_panel.hide(); main_menu.show(); _refresh_ui())
+	tutorial = load("res://scripts/startup_tutorial.gd").new()
+	ui_viewport.add_child(tutorial)
+	tutorial.setup(self)
+	_refresh_ui()
+
+func _open_settings(section: String) -> void:
+	cancel()
+	main_menu.hide()
+	host.show_settings(section)
 	_refresh_ui()
 
 func _refresh_ui() -> void:
-	var visible_ui: bool = main_menu.visible or host.module_browser.visible or host.dialog.visible or host.overlay.visible or host.settings_panel.visible
+	var visible_ui: bool = main_menu.visible or host.module_browser.visible or host.dialog.visible or host.overlay.visible or host.settings_panel.visible or (tutorial != null and tutorial.visible)
 	ui_panel.visible = visible_ui
 	ui_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if visible_ui else SubViewport.UPDATE_DISABLED
 	ui_collision.disabled = not visible_ui
 	ui_rect = Rect2(0, 0, 1440, 900)
-	if main_menu.visible and not host.module_browser.visible and not host.dialog.visible and not host.overlay.visible and not host.settings_panel.visible:
+	if tutorial != null and tutorial.visible:
+		ui_rect = tutorial.get_global_rect().grow(8)
+	elif main_menu.visible and not host.module_browser.visible and not host.dialog.visible and not host.overlay.visible and not host.settings_panel.visible:
 		var menu_rect := main_menu.get_global_rect().grow(8)
 		if menu_rect.has_area(): ui_rect = menu_rect
 	elif host.overlay.visible and host.overlay_mode == "menu" and not host.module_browser.visible and not host.dialog.visible and not host.settings_panel.visible:
@@ -482,6 +504,7 @@ func _place_ui() -> void:
 
 func _close_ui() -> void:
 	cancel()
+	if tutorial != null: tutorial.hide()
 	main_menu.hide()
 	host.module_browser.close_browser()
 	host.settings_panel.hide()
@@ -490,6 +513,7 @@ func _close_ui() -> void:
 	_refresh_ui()
 
 func _toggle_menu(force_main := false) -> void:
+	if tutorial != null and tutorial.visible: _close_ui(); return
 	if host.overlay.visible: _close_ui(); return
 	if main_menu.visible: _close_ui(); return
 	if _valid_selection() and not force_main:
@@ -503,6 +527,7 @@ func _toggle_menu(force_main := false) -> void:
 	_refresh_ui()
 
 func _toggle_browser() -> void:
+	if tutorial != null: tutorial.hide()
 	if host.module_browser.visible: _close_ui(); return
 	cancel()
 	main_menu.hide()
@@ -768,7 +793,7 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 			last_knob_distance = sample["position"].distance_to(hit["world"])
 			fine_start_distance = last_knob_distance
 			fine_distance = 0.0
-			if hit.get("control", {}).get("kind") == "knob": _update_fine_meter()
+			if hit.get("control", {}).get("kind") in ["knob", "slider"]: _update_fine_meter()
 		match hit["kind"]:
 			"ui":
 				_ui_motion(hit["pixel"], false)
@@ -834,7 +859,7 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 					if aim is Vector2: _update_move_preview(view, aim - capture.move_grab_offset - proposed_position)
 					elif sample.source == "hand": _update_move_preview(view, Vector2(delta.x / SCALE, -delta.y / SCALE))
 				elif capture.get("control", {}).is_empty(): pass
-				elif capture.get("control", {}).get("kind", "") == "knob" and sample["source"] == "controller" and sample.has("basis"):
+				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"] and sample["source"] == "controller" and sample.has("basis"):
 					host.bridge.send_command("drag_delta", {"dx": 0.0, "dy": _controller_knob_delta(sample), "mods": 0})
 				elif capture.get("control", {}).get("kind", "") in ["knob", "slider"]:
 					host.bridge.send_command("drag_delta", {"dx": delta.x / SCALE, "dy": -delta.y / SCALE, "mods": 0})
@@ -887,6 +912,11 @@ func _visual_target(side: String, hit: Dictionary) -> Dictionary:
 		target.world = move_ghost.get_parent().to_global(Vector3((slot.x + capture.pixel.x) * SCALE, -(slot.y + capture.pixel.y) * SCALE, 0.05))
 		return target
 	var pixel: Vector2 = capture["pixel"]
+	if capture.get("control", {}).get("kind") == "slider":
+		for control in capture.view.descriptor.get("controls", []):
+			if control.kind == "slider" and control.id == capture.control.id:
+				pixel = Vector2(float(control.x), float(control.y))
+				break
 	target["world"] = capture["view"].to_global(Vector3(pixel.x * SCALE, -pixel.y * SCALE, 0.04))
 	return target
 

@@ -107,6 +107,13 @@ func run() -> void:
 	check(is_equal_approx(session.fine_distance, 0.1) and not session.fine_meter.visible, "Fine meter must follow push/pull distance and hide on release")
 	session.wrist_speed = 1.0
 	check(host.bridge.commands[-1].command == "release", "Controller knob release must not jump to the current ray target")
+	hit.control = {"kind": "slider", "id": 1}
+	session.interact("left", controller_pose(true, Vector3(0, 0, 1)), hit)
+	session.interact("left", controller_pose(true, Vector3(0, 0, 1), Basis(Vector3.FORWARD, 0.2)), {})
+	check(is_equal_approx(host.bridge.commands[-1].fields.dy, -18.0), "Faders must accept wrist rotation with the same sensitivity as knobs")
+	check(session.fine_meter.visible, "Faders must show the fine-adjustment meter")
+	session.interact("left", controller_pose(false, Vector3(0, 0, 1)), {})
+	hit.control = {"kind": "knob"}
 	session.origin = XROrigin3D.new()
 	session.add_child(session.origin)
 	session.headset = XRCamera3D.new()

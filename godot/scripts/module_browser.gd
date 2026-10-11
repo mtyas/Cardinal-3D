@@ -5,7 +5,7 @@ signal insert_requested(plugin: String, model: String)
 const ModuleView := preload("res://scripts/module_view.gd")
 const Hardware := preload("res://scripts/hardware.gd")
 const COLUMNS := 4
-const ROW_HEIGHT := 0.54
+const ROW_HEIGHT := 0.60
 const SCROLL_ROW := 100.0
 const WINDOW_ROWS := 4
 var bridge: CardinalBridgeClient
@@ -131,6 +131,7 @@ func setup(client: CardinalBridgeClient) -> void:
 	shelf.add_child(scrollbar)
 	viewport = SubViewport.new()
 	viewport.own_world_3d = true
+	viewport.msaa_3d = Viewport.MSAA_2X
 	viewport.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	container.add_child(viewport)
 	container.gui_input.connect(_gallery_input)
@@ -361,11 +362,14 @@ func receive_descriptor(data: Dictionary) -> void:
 	pivot.scale = Vector3.ONE * minf(0.42 / width, 0.40 / height)
 	view.position = Vector3(-width / 2, height / 2, 0)
 	var label := Label3D.new()
+	preload("res://scripts/clear_text.gd").apply(label)
 	var metadata: Dictionary = filtered[slot]
-	label.text = str(metadata.get("module_name", data["model"])) + "\n" + str(metadata.get("manufacturer", data["plugin"]))
+	label.text = str(metadata.get("module_name", metadata.get("name", data["model"]))) + "\n" + str(metadata.get("manufacturer", data["plugin"]))
 	label.font_size = 20
+	label.width = 280
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.pixel_size = 0.0014
-	label.position = Vector3(pivot.position.x, pivot.position.y - 0.29, 0.035)
+	label.position = Vector3(pivot.position.x, pivot.position.y + 0.255, 0.035)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	gallery.add_child(label)
@@ -416,7 +420,7 @@ func _gallery_input(event: InputEvent) -> void:
 			for key in previews:
 				previews[key]["label"].modulate = Color("6ae1ff") if key == selected else Color.WHITE
 				previews[key]["highlight"].visible = key == selected
-				previews[key]["label"].text = ("✓ SELECTED\n" if key == selected else "") + previews[key]["title"]
+				previews[key]["label"].text = previews[key]["title"]
 			selection.text = str(previews[id]["data"]["name"]) + " · " + str(previews[id]["data"]["plugin"])
 			add_button.text = "Add " + str(previews[id]["data"].get("name", previews[id]["data"]["model"]))
 			add_button.disabled = false

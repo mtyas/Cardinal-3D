@@ -102,11 +102,16 @@ change the device. The settings panel itself also scrolls with the joystick.
 MixMaster fader aiming follows the actual moving handle and accepts grabs
 along the track. Native tests check fader response and undo.
 
-Grip + B opens the main menu even when a module is selected. Choose **Racks &
-environment**, then enable **Layout mode** to unlock case placement. Add an
+Grip + B opens the main menu even when a module is selected. **Rack management**,
+**Environment & graphics**, and **Audio & MIDI devices** open separate pages at
+the top of the main menu. Choose **Rack management**, then enable **Layout mode**
+to unlock case placement. Add an
 empty rack beside the selected case; select a module title and send that module
 or its whole row to the chosen rack. Hold a case edge to move it and turn the
-controller to rotate it. Line, surrounding and vertical arrangements are also
+controller left/right to rotate around the vertical axis; cases stay upright.
+While grabbing a case, lightweight cable previews replace detailed tube rebuilding;
+the detailed cables return on release. Physics updates follow the reported headset
+refresh rate (90 Hz fallback). Line, surrounding and vertical arrangements are also
 available. Disable layout mode for performance: case movement, creation and
 deletion are locked. All cases share the same patch and may connect by cables.
 Delete rack shows a warning with module and cable counts; confirmation removes
@@ -123,6 +128,16 @@ Balanced quality uses 2× MSAA; optional 4× and maximum-speed modes are availab
 Panel mipmaps/anisotropic filtering and spatial filtering of wood grain and
 display scanlines reduce shimmer without buffering live parameter updates.
 Actual headset presentation and performance still need a physical Quest test.
+
+Faders now share the knobs' controller wrist rotation and push/pull fine adjustment,
+including the fine meter; hand pinching retains direct vertical dragging. Browser
+titles sit above their own module previews with fixed selection-label height.
+World-space labels and UI fonts use scalable MSDF glyphs with larger menu text.
+
+A seven-page tutorial opens at VR startup, with Skip and a persistent startup
+toggle. It explains triggers, A/B, grip + B, navigation, knobs/faders, cables,
+module titles, rack layout, devices, environments and saving. It can always be
+reopened from the main menu, including after opting out.
 
 The main menu's wrist-speed slider scales coarse knob rotation from 0.1× to
 12× and persists in the isolated `interaction.cfg`. It leaves push/pull fine

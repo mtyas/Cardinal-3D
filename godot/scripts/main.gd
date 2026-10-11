@@ -52,6 +52,11 @@ var header_panel: PanelContainer
 var settings_panel: PanelContainer
 var settings_scroll: ScrollContainer
 var settings_column: VBoxContainer
+var audio_column: VBoxContainer
+var environment_column: VBoxContainer
+var racks_column: VBoxContainer
+var settings_title: Label
+var settings_section := "audio"
 var rack_layout
 var immersive_environment
 var pending_layout_load := {}
@@ -197,15 +202,28 @@ func _build_ui() -> void:
 	settings_panel.size = Vector2(600, 700)
 	settings_scroll = ScrollContainer.new()
 	settings_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	settings_panel.add_child(settings_scroll)
+	var settings_shell := VBoxContainer.new()
+	settings_panel.add_child(settings_shell)
+	settings_title = Label.new()
+	settings_title.text = "Audio & MIDI"
+	settings_title.add_theme_font_size_override("font_size", 26)
+	settings_shell.add_child(settings_title)
+	settings_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	settings_shell.add_child(settings_scroll)
 	settings_column = VBoxContainer.new()
 	settings_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	settings_scroll.add_child(settings_column)
+	audio_column = VBoxContainer.new()
+	environment_column = VBoxContainer.new()
+	racks_column = VBoxContainer.new()
+	for section in [audio_column, environment_column, racks_column]: settings_column.add_child(section)
+	environment_column.hide()
+	racks_column.hide()
 	if OS.get_environment("CARDINAL_3D_EMBEDDED") == "1":
 		var audio_settings = load("res://scripts/embedded_audio_settings.gd").new()
 		audio_settings.name = "EmbeddedAudioSettings"
 		audio_settings.backend = bridge
-		settings_column.add_child(audio_settings)
+		audio_column.add_child(audio_settings)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toolbar.add_child(spacer)
@@ -224,7 +242,7 @@ func _build_ui() -> void:
 	_button("Undo", func(): bridge.send_command("undo"))
 	_button("Redo", func(): bridge.send_command("redo"))
 	var view_bar := HBoxContainer.new()
-	settings_column.add_child(view_bar)
+	environment_column.add_child(view_bar)
 	var view_label := Label.new()
 	view_label.text = "View"
 	view_bar.add_child(view_label)
@@ -245,7 +263,7 @@ func _build_ui() -> void:
 		control.pressed.connect(entry["action"])
 		view_bar.add_child(control)
 	var lighting_bar := HBoxContainer.new()
-	settings_column.add_child(lighting_bar)
+	environment_column.add_child(lighting_bar)
 	var lighting_label := Label.new()
 	lighting_label.text = "Lighting"
 	lighting_label.hide()
@@ -333,6 +351,15 @@ func _build_ui() -> void:
 	module_browser.setup(bridge)
 	module_browser.insert_requested.connect(func(plugin: String, model: String):
 		bridge.send_command("add", {"plugin": plugin, "model": model}))
+
+func show_settings(section: String) -> void:
+	settings_section = section
+	audio_column.visible = section == "audio"
+	environment_column.visible = section == "environment"
+	racks_column.visible = section == "racks"
+	settings_title.text = {"audio": "Audio & MIDI", "environment": "Environment & graphics", "racks": "Rack management"}.get(section, "Settings")
+	settings_scroll.scroll_vertical = 0
+	settings_panel.show()
 
 func _patch_action(id: int) -> void:
 	match id:
@@ -468,6 +495,7 @@ func _on_surface(header: Dictionary, image: Image) -> void:
 		modules[id].apply_surface(image)
 
 func _rebuild_cables(descriptions: Array) -> void:
+	if rack_layout != null and rack_layout.grabbed >= 0: return
 	var positions := []
 	for view: CardinalModuleView in modules.values():
 		positions.append([view.descriptor["id"], str(view.global_transform)])
