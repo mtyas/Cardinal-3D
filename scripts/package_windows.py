@@ -25,6 +25,11 @@ def main():
         if native.read_bytes()[:2] != b'MZ':
             raise RuntimeError('Previous artifact has no Windows runtime')
         shutil.copytree(previous / 'Cardinal', destination / 'Cardinal')
+        # Older portable bundles nested Rack's core assets one level too deep.
+        # Cardinal's bundled asset lookup already strips the source res/ prefix.
+        old_core = destination / 'Cardinal/resources/res'
+        if old_core.exists():
+            shutil.copytree(old_core, destination / 'Cardinal/resources', dirs_exist_ok=True)
         shutil.copytree(previous / 'Notices', destination / 'Notices')
         notices = destination / 'Notices'
     else:
@@ -35,7 +40,7 @@ def main():
         (destination / 'Cardinal/resources/PluginManifests').mkdir(parents=True)
         shutil.copy2(native, destination / 'Cardinal/CardinalNative.exe')
         resources = destination / 'Cardinal/resources'
-        shutil.copytree(source / 'src/Rack/res', resources / 'res')
+        shutil.copytree(source / 'src/Rack/res', resources, dirs_exist_ok=True)
         templates = resources / 'patches/templates'
         templates.mkdir(parents=True)
         (templates / 'native.vcv').write_text(json.dumps(dict(version='2.4.1', modules=[], cables=[])))
@@ -72,7 +77,7 @@ def main():
         bundle.extractall(destination / 'Godot')
     (destination / 'Launch Cardinal 3D.bat').write_text('@echo off\r\ncd /d "%~dp0"\r\npy -3 scripts\\run_windows.py\r\nif errorlevel 1 pause\r\n')
     (destination / 'Launch Cardinal 3D VR.bat').write_text('@echo off\r\ncd /d "%~dp0"\r\npy -3 scripts\\run_windows.py --vr\r\nif errorlevel 1 pause\r\n')
-    (destination / 'README.txt').write_text('Private Windows development build. Install Python 3, extract the complete folder, then run Launch Cardinal 3D.bat.\nChoose a native audio device in the original Cardinal window. Closing Godot leaves audio running.\nFor VR, connect Quest Link, select the Meta OpenXR runtime, and run Launch Cardinal 3D VR.bat. Point and pinch to operate controls and wires; controller triggers are the fallback. Physical headset validation remains required. See docs/WINDOWS.md in the private repository.\nSource: https://github.com/mtyas/Cardinal-3D (private), pinned dependencies in upstream.lock.json.\nPreserve Notices and artwork restrictions; this bundle is not cleared for public distribution.\n')
+    (destination / 'README.txt').write_text('Private Windows development build. Install Python 3, extract the complete folder, then run Launch Cardinal 3D.bat.\nSelect the Windows default sound output before launching Cardinal. Closing Godot leaves audio running.\nFor VR, connect Quest Link, select the Meta OpenXR runtime, and run Launch Cardinal 3D VR.bat. Point and pinch to operate controls and wires; controller triggers are the fallback. Physical headset validation remains required. See docs/WINDOWS.md in the private repository.\nSource: https://github.com/mtyas/Cardinal-3D (private), pinned dependencies in upstream.lock.json.\nPreserve Notices and artwork restrictions; this bundle is not cleared for public distribution.\n')
     print(shutil.make_archive(str(destination), 'zip', destination.parent, destination.name))
 
 if __name__ == '__main__': main()

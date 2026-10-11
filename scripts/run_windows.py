@@ -14,7 +14,7 @@ def main():
     parser.add_argument("--vr", action="store_true")
     args = parser.parse_args()
     if os.name != 'nt':
-        raise RuntimeError('Use scripts/run.py on macOS')
+        raise RuntimeError('This launcher requires Windows')
     cardinal = ROOT / 'Cardinal/CardinalNative.exe'
     executables = list((ROOT / 'Godot').glob('Godot*_win64.exe'))
     if not cardinal.exists() or len(executables) != 1:
@@ -32,7 +32,9 @@ def main():
     if args.vr: env['CARDINAL_3D_XR'] = '1'
     native = subprocess.Popen([str(cardinal)], cwd=cardinal.parent, env=env)
     try:
-        frontend = subprocess.Popen([str(executables[0]), '--path', str(ROOT / 'godot'), '--xr-mode', 'on' if args.vr else 'off'], cwd=ROOT, env=env)
+        # The frontend transports no audio. Avoid initializing a second Windows
+        # audio client and explicitly select the project's OpenGL renderer.
+        frontend = subprocess.Popen([str(executables[0]), '--path', str(ROOT / 'godot'), '--rendering-driver', 'opengl3', '--audio-driver', 'Dummy', '--xr-mode', 'on' if args.vr else 'off'], cwd=ROOT, env=env)
         print('Cardinal 3D started. Closing the frontend leaves Cardinal audio running.', flush=True)
         frontend.wait()
         native.wait()

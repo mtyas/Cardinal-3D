@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
+#include <app/LedDisplay.hpp>
+#include <ui/TextField.hpp>
 #include <tag.hpp>
 #include "Transport.hpp"
 #include <app/Scene.hpp>
 #include <app/RackWidget.hpp>
 #include <app/SvgKnob.hpp>
+#include "SvgPalette.hpp"
+#include <map>
 #include <app/SvgSlider.hpp>
 #include <app/SvgSwitch.hpp>
 #include <app/SvgPort.hpp>
@@ -27,6 +31,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <cxxabi.h>
+#include <zstd.h>
 
 namespace rack { namespace window { void WindowSetMods(Window*, int); } }
 
@@ -52,10 +57,22 @@ inline std::string encode(json_t* value) {
     std::string result = buffer ? buffer : "null";
     free(buffer); return result;
 }
+inline bool absolutePath(const std::string& path) {
+#ifdef _WIN32
+    return (path.size() >= 3 && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z'))
+        && path[1] == ':' && (path[2] == '/' || path[2] == '\\'))
+        || (path.size() > 2 && ((path[0] == '\\' && path[1] == '\\') || (path[0] == '/' && path[1] == '/')));
+#else
+    return !path.empty() && path[0] == '/';
+#endif
+}
 
 class Bridge {
     Transport transport;
-    bool enabled = false, authenticated = false, overlayRequested = false;
+    json_t* localMessages = nullptr;
+    bool inProcessMode = false;
+    std::function<void(json_t*, const std::vector<uint8_t>&)> localSurface;
+    bool enabled = false, authenticated = false, overlayRequested = false, compressSurfaces = false;
     std::string token;
     uint64_t generation = 1;
     std::string topology;
@@ -70,6 +87,7 @@ class Bridge {
     math::Vec movingPosition;
     std::unordered_map<std::string, double> surfaceTimes;
     std::unordered_map<std::string, uint64_t> surfaceHashes;
+    std::map<std::shared_ptr<window::Svg>, std::string> knobPalette;
     std::vector<std::pair<std::string, std::unique_ptr<app::ModuleWidget>>> previews;
     std::vector<plugin::Model*> scanModels;
     size_t scanIndex = 0;
@@ -108,6 +126,7 @@ class Bridge {
         return APP->scene->rack->getModule(value);
     }
     void send(json_t* value, const std::string& key = "") {
+        if (localMessages) { json_array_append_new(localMessages, value); return; }
         transport.json(encode(value), key); json_decref(value);
     }
     void ack(json_t* command, const std::string& error = "") {
@@ -132,17 +151,27 @@ class Bridge {
     std::string kind(widget::Widget* widget) const {
         if (dynamic_cast<app::SvgSlider*>(widget)) return "slider";
         if (dynamic_cast<app::SvgKnob*>(widget)) return "knob";
+        if (dynamic_cast<app::Knob*>(widget)) return "knob";
         if (dynamic_cast<app::SvgSwitch*>(widget)) return "switch";
+        if (dynamic_cast<app::Switch*>(widget)) return "switch";
         if (dynamic_cast<app::SvgPort*>(widget)) return "port";
         if (dynamic_cast<app::SvgScrew*>(widget)) return "screw";
         if (dynamic_cast<app::ModuleLightWidget*>(widget)) return "light";
         if (dynamic_cast<app::ParamWidget*>(widget)) return "custom";
         if (dynamic_cast<app::PortWidget*>(widget)) return "port";
+        if (dynamic_cast<app::LedDisplayChoice*>(widget) || dynamic_cast<ui::TextField*>(widget)) return "custom";
+        // MindMeld's group arrows are native momentary widgets without ParamWidget IDs.
+        const std::string name = typeid(*widget).name();
+        if (name.find("MmGroupPlusButton") != std::string::npos || name.find("MmGroupMinusButton") != std::string::npos) return "custom";
         return "";
     }
     bool physical(app::ModuleWidget* mw, widget::Widget* w) const {
         const std::string k = kind(w);
         if (k.empty() || k == "custom") return false;
+        // Identify native rotary/button input semantics while retaining exact
+        // custom-painted faces until a matching 3D visual is available.
+        if (k == "knob" && !dynamic_cast<app::SvgKnob*>(w)) return false;
+        if (k == "switch" && !dynamic_cast<app::SvgSwitch*>(w)) return false;
         // Illuminated switches must keep their composite appearance on the surface.
         if (dynamic_cast<app::Switch*>(w)) {
             bool composite = false;
@@ -221,9 +250,27 @@ class Bridge {
                 if (auto* knob = dynamic_cast<app::Knob*>(w)) {
                     real(control, "min_angle", knob->minAngle); real(control, "max_angle", knob->maxAngle);
                 }
+                if (auto* knob = dynamic_cast<app::SvgKnob*>(w)) {
+                    std::string faceColor;
+                    // RoundKnob and Davies knobs split body/background and pointer
+                    // across SVG widgets. Read visible layers in native paint order.
+                    visit(knob, [&](widget::Widget* child) {
+                        auto* svgWidget = dynamic_cast<widget::SvgWidget*>(child);
+                        if (!svgWidget || !svgWidget->svg || !child->isVisible()) return;
+                        const auto svg = svgWidget->svg;
+                        auto cached = knobPalette.find(svg);
+                        if (cached == knobPalette.end()) cached = knobPalette.emplace(svg, knobFaceColor(svg->handle)).first;
+                        if (!cached->second.empty()) faceColor = cached->second;
+                    });
+                    if (!faceColor.empty()) string(control, "body_color", faceColor);
+                }
                 if (auto* sw = dynamic_cast<app::Switch*>(w))
                     json_object_set_new(control, "momentary", json_boolean(sw->momentary));
                 if (auto* slider = dynamic_cast<app::SvgSlider*>(w)) {
+                    // Slider aiming follows its moving handle, not the centre of
+                    // the whole track (which can be far away on mixer faders).
+                    const auto handleCenter = slider->getRelativeOffset(slider->handle->box.pos.plus(slider->handle->box.size.div(2)), mw);
+                    real(control, "x", handleCenter.x); real(control, "y", handleCenter.y);
                     const auto start = slider->getRelativeOffset(slider->minHandlePos.plus(slider->handle->box.size.div(2)), mw);
                     const auto end = slider->getRelativeOffset(slider->maxHandlePos.plus(slider->handle->box.size.div(2)), mw);
                     real(control, "start_x", start.x); real(control, "start_y", start.y);
@@ -245,7 +292,16 @@ class Bridge {
                 json_object_set_new(control, "id", json_integer(light->firstLightId));
                 if (auto* value = light->getLight(0)) real(control, "brightness", value->getBrightness());
                 if (light->baseColors.size() == 1) string(control, "color", color::toHexString(light->baseColors.front()));
-            } else string(control, "id", "screw-" + std::to_string(screw++));
+                float r = 0, g = 0, b = 0;
+                for (size_t i = 0; i < light->baseColors.size(); ++i) {
+                    auto* value = light->getLight(i);
+                    const float brightness = value ? value->getBrightness() : 0;
+                    r += light->baseColors[i].r * brightness;
+                    g += light->baseColors[i].g * brightness;
+                    b += light->baseColors[i].b * brightness;
+                }
+                real(control, "emission_r", r); real(control, "emission_g", g); real(control, "emission_b", b);
+            } else string(control, "id", (type == "custom" ? "surface-" : "screw-") + std::to_string(screw++));
             json_array_append_new(controls, control);
         });
         json_object_set_new(result, "controls", controls);
@@ -322,12 +378,13 @@ class Bridge {
         auto* action = new history::ModuleAdd; action->setModule(mw); APP->history->push(action);
         return mw;
     }
-    void connect(app::ModuleWidget* output, int outputId, app::ModuleWidget* input, int inputId) {
+    void connect(app::ModuleWidget* output, int outputId, app::ModuleWidget* input, int inputId, history::ComplexAction* group = nullptr) {
         auto* cw = new app::CableWidget;
         cw->color = APP->scene->rack->getNextCableColor();
         cw->outputPort = output->getOutput(outputId); cw->inputPort = input->getInput(inputId);
         cw->updateCable(); APP->scene->rack->addCable(cw);
-        auto* action = new history::CableAdd; action->setCable(cw); APP->history->push(action);
+        auto* action = new history::CableAdd; action->setCable(cw);
+        if (group) group->push(action); else APP->history->push(action);
     }
     void starter(bool audible = false) {
         release();
@@ -389,6 +446,7 @@ class Bridge {
         if (op == "hello") {
             if (number(cmd, "version") != 1) throw std::runtime_error("Unsupported bridge protocol");
             if (!token.empty() && text(cmd, "token") != token) throw std::runtime_error("Invalid session token");
+            compressSurfaces = text(cmd, "surface_compression") == "zstd";
             authenticated = true; catalog(); snapshot(); return;
         }
         if (!authenticated) throw std::runtime_error("Send hello before commands");
@@ -425,7 +483,43 @@ class Bridge {
                 pressedButton = -1; activeModule.clear();
             }
             APP->event->rootWidget = previousRoot;
+            // A raw surface click may hit decorative panel space. Never let
+            // native module dragging bypass the VR title-strip placement ghost.
+            if (dynamic_cast<app::ModuleWidget*>(APP->event->draggedWidget)) release();
             if (dynamic_cast<app::Knob*>(APP->event->draggedWidget)) APP->window->cursorUnlock();
+        } else if (op == "parameter_choices") {
+            release();
+            const std::string id = text(cmd, "module");
+            auto* mw = module(id);
+            const int paramId = number(cmd, "param");
+            if (!mw || !mw->module) throw std::runtime_error("Module was removed");
+            if (paramId < 0 || paramId >= (int)mw->module->params.size()) throw std::runtime_error("Parameter does not exist");
+            auto* quantity = mw->module->getParamQuantity(paramId);
+            auto* widget = mw->getParam(paramId);
+            // GroupSelectDisplay rounds its quantity in the upstream widget,
+            // rather than setting ParamQuantity::snapEnabled.
+            if (!quantity || !widget || std::string(typeid(*widget).name()).find("GroupSelectDisplay") == std::string::npos || !std::isfinite(quantity->minValue) || !std::isfinite(quantity->maxValue) || quantity->maxValue - quantity->minValue > 32)
+                throw std::runtime_error("Parameter has no discrete choices");
+            APP->scene->mousePos = mw->getAbsoluteOffset(math::Vec(number(cmd, "x"), number(cmd, "y")));
+            auto* menu = createMenu();
+            menu->addChild(createMenuLabel(quantity->getLabel()));
+            for (int value = (int)std::ceil(quantity->minValue); value <= (int)std::floor(quantity->maxValue); ++value) {
+                const std::string label = value == 0 ? "Main output" : "Group " + std::to_string(value);
+                menu->addChild(createCheckMenuItem(label, "", [this, id, paramId, value]() {
+                    auto* target = module(id);
+                    auto* quantity = target && target->module && paramId < (int)target->module->params.size() ? target->module->getParamQuantity(paramId) : nullptr;
+                    return quantity && quantity->getValue() == value;
+                }, [this, id, paramId, value]() {
+                    auto* target = module(id);
+                    if (!target || !target->module || paramId >= (int)target->module->params.size()) return;
+                    auto* quantity = target->module->getParamQuantity(paramId);
+                    if (!quantity || quantity->getValue() == value) return;
+                    auto* change = new history::ParamChange;
+                    change->moduleId = target->module->id; change->paramId = paramId;
+                    change->oldValue = quantity->getValue(); quantity->setValue(value);
+                    change->newValue = quantity->getValue(); APP->history->push(change);
+                }));
+            }
         } else if (op == "drag_delta") {
             math::Vec delta(number(cmd, "dx"), number(cmd, "dy"));
             mouseMods = number(cmd, "mods"); rack::window::WindowSetMods(APP->window, mouseMods);
@@ -437,12 +531,86 @@ class Bridge {
             release(); float x = app::RACK_OFFSET.x;
             for (auto* mw : APP->scene->rack->getModules()) x = std::max(x, mw->box.pos.x + mw->box.size.x);
             add(text(cmd, "plugin"), text(cmd, "model"), math::Vec(x, app::RACK_OFFSET.y));
+        } else if (op == "new_patch") {
+            release(); clearPreviews();
+            APP->scene->browser->hide(); overlayRequested = false;
+            APP->patch->clear();
+            ++generation; surfaceTimes.clear(); surfaceHashes.clear();
+            add("Cardinal", "HostAudio2", app::RACK_OFFSET);
         } else if (op == "starter" || op == "audible_starter") starter(op == "audible_starter");
         else if (op == "preview") preview(text(cmd, "plugin"), text(cmd, "model"));
         else if (op == "remove") {
             release(); auto* mw = module(text(cmd, "module"));
             if (!mw) throw std::runtime_error("Module was removed");
             mw->removeAction();
+        } else if (op == "remove_many") {
+            release();
+            auto* ids = json_object_get(cmd, "modules");
+            if (!json_is_array(ids)) throw std::runtime_error("Module list required");
+            std::vector<app::ModuleWidget*> targets;
+            size_t index; json_t* value;
+            json_array_foreach(ids, index, value) {
+                if (!json_is_string(value)) throw std::runtime_error("Invalid module id");
+                auto* mw = module(json_string_value(value));
+                if (!mw) throw std::runtime_error("Module was removed; try again");
+                targets.push_back(mw);
+            }
+            // Validate everything before deleting anything. Upstream selection
+            // deletion records modules and attached cables as one undo action.
+            auto* rack = APP->scene->rack;
+            std::vector<std::string> previous;
+            for (auto* mw : rack->getSelected()) previous.push_back(std::to_string(mw->module->id));
+            rack->deselectAll();
+            for (auto* mw : targets) rack->select(mw);
+            if (!targets.empty()) rack->deleteSelectionAction();
+            rack->deselectAll();
+            for (const auto& id : previous) if (auto* mw = module(id)) rack->select(mw);
+            rack->updateExpanders();
+        } else if (op == "patch_cable") {
+            release();
+            auto* output = module(text(cmd, "output_module"));
+            auto* input = module(text(cmd, "input_module"));
+            const int outputId = number(cmd, "output_port"), inputId = number(cmd, "input_port");
+            if (!output || !input || !output->getOutput(outputId) || !input->getInput(inputId))
+                throw std::runtime_error("Socket was removed");
+            const std::string replaceId = text(cmd, "replace_cable");
+            auto cables = APP->scene->rack->getCompleteCables();
+            bool foundReplacement = replaceId.empty();
+            for (auto* cw : cables) {
+                auto* c = cw->getCable();
+                if (std::to_string(c->id) == replaceId) {
+                    if (c->outputModule != output->module || c->outputId != outputId)
+                        throw std::runtime_error("Cable endpoint changed; try again");
+                    foundReplacement = true;
+                }
+                if (c->outputModule == output->module && c->outputId == outputId && c->inputModule == input->module && c->inputId == inputId)
+                    return;
+            }
+            if (!foundReplacement) throw std::runtime_error("Cable was removed; try again");
+            auto* group = new history::ComplexAction;
+            group->name = "patch cable";
+            for (auto* cw : cables) {
+                auto* c = cw->getCable();
+                if ((c->inputModule == input->module && c->inputId == inputId) || std::to_string(c->id) == replaceId) {
+                    auto* action = new history::CableRemove; action->setCable(cw); group->push(action);
+                    APP->scene->rack->removeCable(cw); delete cw;
+                }
+            }
+            connect(output, outputId, input, inputId, group);
+            APP->history->push(group);
+        } else if (op == "disconnect_cable") {
+            release();
+            for (auto* cw : APP->scene->rack->getCompleteCables()) {
+                auto* c = cw->getCable();
+                if (std::to_string(c->id) != text(cmd, "cable_id")) continue;
+                if (std::to_string(c->inputModule->id) != text(cmd, "input_module") || c->inputId != number(cmd, "input_port"))
+                    throw std::runtime_error("Cable endpoint changed; try again");
+                auto* action = new history::CableRemove; action->setCable(cw);
+                APP->scene->rack->removeCable(cw); delete cw;
+                APP->history->push(action);
+                return;
+            }
+            throw std::runtime_error("Cable was removed; try again");
         } else if (op == "disconnect_port") {
             release(); auto* mw = module(text(cmd, "module"));
             if (!mw) throw std::runtime_error("Module was removed");
@@ -458,7 +626,8 @@ class Bridge {
         } else if (op == "move_delta") {
             auto* mw = module(movingModule); if (!mw) throw std::runtime_error("Module was removed");
             movingPosition = movingPosition.plus(math::Vec(number(cmd, "dx"), number(cmd, "dy")));
-            APP->scene->rack->setModulePosNearest(mw, movingPosition);
+            if (json_is_true(json_object_get(cmd, "insert"))) APP->scene->rack->setModulePosForce(mw, movingPosition);
+            else APP->scene->rack->setModulePosNearest(mw, movingPosition);
         } else if (op == "move_end") finishMove();
         else if (op == "save" || op == "load") {
             release(); const std::string path = text(cmd, "path");
@@ -470,7 +639,10 @@ class Bridge {
             if (path.empty() || path[0] != '/') throw std::runtime_error("An absolute patch path is required");
 #endif
             if (op == "save") { APP->patch->save(path); APP->patch->path = path; APP->history->setSaved(); }
-            else { ++generation; APP->patch->loadAction(path); surfaceTimes.clear(); }
+            else {
+                if (!system::isFile(path)) throw std::runtime_error("Patch file does not exist");
+                ++generation; APP->patch->loadAction(path); surfaceTimes.clear();
+            }
         } else if (op == "overlay") overlayRequested = json_is_true(json_object_get(cmd, "enabled"));
         else if (op == "reset_hovered") {
             auto* param = dynamic_cast<app::ParamWidget*>(APP->event->hoveredWidget);
@@ -498,7 +670,7 @@ class Bridge {
         APP->history->push(APP->scene->rack->getModuleDragAction()); movingModule.clear();
     }
     void describeLibrary(const std::string& path) {
-        if (path.empty() || path[0] != '/') throw std::runtime_error("An absolute report path is required");
+        if (!absolutePath(path)) throw std::runtime_error("An absolute report path is required");
         if (scanReport) throw std::runtime_error("Library scan already active");
         release(); scanReport = json_object(); scanPath = path; scanIndex = 0; scanModels.clear();
         string(scanReport, "type", "library_report");
@@ -541,7 +713,9 @@ class Bridge {
     }
 public:
     ~Bridge() { cancelScan(); }
-    Bridge() {
+    Bridge(bool inProcess = false) {
+        inProcessMode = inProcess;
+        if (inProcess) { authenticated = true; return; }
         const char* port = std::getenv("CARDINAL_3D_PORT");
         if (!port) return; // Existing Cardinal behaves normally unless explicitly enabled.
         int value = std::atoi(port);
@@ -557,6 +731,67 @@ public:
             }
         }
         enabled = transport.listenOn(value);
+    }
+    // Same native metadata, validation and history as TCP, without a socket.
+    // The caller supplies the Cardinal context on the UI/owner thread.
+    std::string invokeLocal(const std::string& request) {
+        if (enabled || localMessages) throw std::runtime_error("Bridge is not an idle local host");
+        json_error_t error;
+        json_t* cmd = request.empty() ? nullptr : json_loadb(request.data(), request.size(), JSON_REJECT_DUPLICATES, &error);
+        if (!request.empty() && !json_is_object(cmd) && !json_is_array(cmd)) {
+            if (cmd) json_decref(cmd);
+            throw std::runtime_error("Invalid local command JSON");
+        }
+        std::vector<json_t*> batch;
+        if (json_is_array(cmd)) {
+            if (json_array_size(cmd) > 8) {
+                json_decref(cmd); throw std::runtime_error("Local batch exceeds eight commands");
+            }
+            size_t index; json_t* item;
+            json_array_foreach(cmd, index, item) {
+                if (!json_is_object(item)) {
+                    json_decref(cmd); throw std::runtime_error("Invalid local batch command");
+                }
+                batch.push_back(item);
+            }
+        } else if (cmd) batch.push_back(cmd);
+        localMessages = json_array();
+        try {
+            refreshTopology();
+            for (auto* item : batch) {
+                try {
+                    command(item); refreshTopology();
+                    if (text(item, "op") == "describe_library") scanCommand = json_incref(item);
+                    else ack(item);
+                }
+                catch (const std::exception& e) { ack(item, e.what()); }
+            }
+            // Controller actions keep their ordering and individual acknowledgments,
+            // but the scene and live descriptors only update once per rendered frame.
+            APP->scene->step();
+            scanStep();
+            const std::string mode = overlayMode();
+            if (mode != previousOverlayMode) {
+                surfaceHashes.erase("scene"); surfaceTimes.erase("scene");
+                previousOverlayMode = mode;
+            }
+            snapshot();
+            const std::string result = encode(localMessages);
+            json_decref(localMessages); localMessages = nullptr;
+            if (cmd) json_decref(cmd);
+            return result;
+        } catch (...) {
+            json_decref(localMessages); localMessages = nullptr;
+            if (cmd) json_decref(cmd);
+            throw;
+        }
+    }
+    app::ModuleWidget* findLocalModule(const std::string& id) const {
+        if (id.compare(0, 8, "preview/") == 0) {
+            for (const auto& item : previews) if (item.first == id) return item.second.get();
+            return nullptr;
+        }
+        return module(id);
     }
     void release() {
         if (pressedButton >= 0 && APP && APP->event) {
@@ -605,27 +840,36 @@ public:
             previousOverlayMode = mode;
             lastSnapshot = 0;
         }
-        if (authenticated && now - lastSnapshot > 0.05) { snapshot(); lastSnapshot = now; }
+        if (authenticated && now - lastSnapshot > 1.0 / 60) { snapshot(); lastSnapshot = now; }
         transport.flush();
     }
+#ifndef HEADLESS
+    void setLocalSurfaceCallback(std::function<void(json_t*, const std::vector<uint8_t>&)> callback) { localSurface = std::move(callback); }
     void render() {
-        if (!enabled || !authenticated || !APP->window->fbVg) return;
+        if ((!enabled && !inProcessMode) || !authenticated || !APP->window->fbVg) return;
         const double now = system::getTime();
-        if (now - lastSurface < 1.0/30) return;
+        if (!inProcessMode && now - lastSurface < 1.0/30) return;
         auto modules = APP->scene->rack->getModules();
         const bool overlay = overlayVisible();
         const size_t count = modules.size() + previews.size() + (overlay ? 1 : 0);
         if (!count) return;
         widget::Widget* root = nullptr; app::ModuleWidget* mw = nullptr;
         std::string id;
-        for (size_t tries = 0; tries < count; ++tries) {
+        if (inProcessMode && overlay && now - surfaceTimes["scene"] > 1.0 / 60) {
+            root = APP->scene; id = "scene";
+        }
+        for (size_t tries = 0; !root && tries < count; ++tries) {
             size_t index = surfaceIndex++ % count;
             const bool isPreview = index >= modules.size() && index < modules.size() + previews.size();
             if (isPreview && surfaceHashes.count(previews[index - modules.size()].first)) continue;
             mw = index < modules.size() ? modules[index] : isPreview ? previews[index - modules.size()].second.get() : nullptr;
             root = mw ? static_cast<widget::Widget*>(mw) : APP->scene;
             id = isPreview ? previews[index - modules.size()].first : mw ? std::to_string(mw->module->id) : "scene";
-            if (now - surfaceTimes[id] > (mw ? 0.12 : 0.1)) break;
+            const bool liveDisplay = mw && ((mw->model->plugin->slug == "Fundamental" &&
+                (mw->model->slug == "Scope" || mw->model->slug == "ADSR" || mw->model->slug == "VCA-1")) ||
+                (mw->model->plugin->slug == "AudibleInstruments" && mw->model->slug == "Braids"));
+            const double interval = inProcessMode && (liveDisplay || !mw || id == activeModule) ? 1.0 / 60 : mw ? 0.12 : 0.1;
+            if (now - surfaceTimes[id] > interval) break;
             root = nullptr;
         }
         if (!root) return;
@@ -664,7 +908,9 @@ public:
         std::vector<std::pair<widget::FramebufferWidget*, bool>> caching;
         visit(root, [&](widget::Widget* w) {
             if (auto* fb = dynamic_cast<widget::FramebufferWidget*>(w)) { caching.emplace_back(fb, fb->bypassed); fb->bypassed = true; }
-            if (mw && physical(mw, w)) { visibility.emplace_back(w, w->visible); w->visible = false; }
+            // All LEDs now have live RGB overlays, including lights nested in
+            // buttons. Do not leave a stale baked glow underneath those overlays.
+            if (mw && (physical(mw, w) || dynamic_cast<app::ModuleLightWidget*>(w))) { visibility.emplace_back(w, w->visible); w->visible = false; }
         });
         nvgBeginFrame(vg, width, height, 1);
         nvgScale(vg, scale, scale);
@@ -675,7 +921,11 @@ public:
         for (const auto& entry : caching) entry.first->bypassed = entry.second;
         std::vector<uint8_t> pixels(width * height * 4);
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-        glBindFramebuffer(GL_FRAMEBUFFER, previousFramebuffer); glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        // DGL resolves framebuffer extensions on Windows; opengl32 only exports
+        // OpenGL 1.1. Use its NanoVG helper to restore the exact previous FBO.
+        NVGLUframebuffer previousTarget = {};
+        previousTarget.fbo = static_cast<GLuint>(previousFramebuffer);
+        nvgluBindFramebuffer(&previousTarget); glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
         surfaceTimes[id] = now; lastSurface = now;
         uint64_t hash = 1469598103934665603ull;
         for (uint8_t byte : pixels) { hash ^= byte; hash *= 1099511628211ull; }
@@ -692,13 +942,30 @@ public:
             json_object_set_new(header, "origin_x", json_real(region.pos.x));
             json_object_set_new(header, "origin_y", json_real(region.pos.y));
         }
+        std::vector<uint8_t> artwork;
+        artwork.reserve(pixels.size());
+        for (int row = height - 1; row >= 0; --row)
+            artwork.insert(artwork.end(), pixels.begin()+row*width*4, pixels.begin()+(row+1)*width*4);
+        if (inProcessMode && localSurface) {
+            localSurface(header, artwork);
+            json_decref(header);
+            return;
+        }
+        if (compressSurfaces) {
+            std::vector<uint8_t> compressed(ZSTD_compressBound(artwork.size()));
+            const size_t compressedSize = ZSTD_compress(compressed.data(), compressed.size(), artwork.data(), artwork.size(), 1);
+            if (!ZSTD_isError(compressedSize) && compressedSize < artwork.size()) {
+                compressed.resize(compressedSize);
+                artwork.swap(compressed);
+                string(header, "encoding", "zstd");
+            }
+        }
         std::string metadata = encode(header); json_decref(header);
         std::vector<uint8_t> payload;
         uint32_t size = metadata.size();
         for (int i = 0; i < 4; ++i) payload.push_back((size >> (8*i)) & 255);
         payload.insert(payload.end(), metadata.begin(), metadata.end());
-        for (int row = height - 1; row >= 0; --row)
-            payload.insert(payload.end(), pixels.begin()+row*width*4, pixels.begin()+(row+1)*width*4);
+        payload.insert(payload.end(), artwork.begin(), artwork.end());
         transport.queue(2, payload, "surface/" + id);
         transport.flush();
     }
@@ -707,5 +974,9 @@ public:
         if (framebuffer) nvgluDeleteFramebuffer(framebuffer);
         framebuffer = nullptr; framebufferWidth = framebufferHeight = 0;
     }
+#else
+    void render() {}
+    void destroyGraphics() { clearPreviews(); }
+#endif
 };
 }

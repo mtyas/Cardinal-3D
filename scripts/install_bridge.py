@@ -18,18 +18,42 @@ def replace(path, old, new):
 
 def main():
     pin = json.loads((ROOT / "upstream.lock.json").read_text())["commit"]
-    revision = subprocess.check_output(["git", "-C", str(CARDINAL), "rev-parse", "HEAD"], text=True).strip()
+    archive_manifest = CARDINAL / '.source-snapshot.json'
+    revision = json.loads(archive_manifest.read_text())['commit'] if archive_manifest.is_file() and not (CARDINAL / '.git').exists() else subprocess.check_output(["git", "-C", str(CARDINAL), "rev-parse", "HEAD"], text=True).strip()
     if revision != pin:
         raise RuntimeError(f"Expected Cardinal {pin}, found {revision}")
+    # DPF's STATIC_BUILD also disables standalone bundle discovery. Keep its
+    # normal Windows executable/resources lookup for this portable prototype.
+    dpf = CARDINAL / "dpf/distrho/src"
+    replace(dpf / "DistrhoUtils.cpp", '  #ifndef STATIC_BUILD\n    if (filename.isNotEmpty())', '  #if !defined(STATIC_BUILD) || defined(DISTRHO_OS_WINDOWS)\n    if (filename.isNotEmpty())')
+    replace(dpf / "DistrhoPluginJACK.cpp", '#ifndef STATIC_BUILD\n# include "../DistrhoPluginUtils.hpp"', '#if !defined(STATIC_BUILD) || defined(DISTRHO_OS_WINDOWS)\n# include "../DistrhoPluginUtils.hpp"')
+    replace(dpf / "DistrhoPluginJACK.cpp", '   #ifndef STATIC_BUILD\n    // find plugin bundle', '   #if !defined(STATIC_BUILD) || defined(DISTRHO_OS_WINDOWS)\n    // find plugin bundle')
     target = CARDINAL / "src/cardinal3d"
     target.mkdir(exist_ok=True)
-    for filename in ("Transport.hpp", "Cardinal3DBridge.hpp"):
+    for filename in ("Transport.hpp", "Cardinal3DBridge.hpp", "SvgPalette.hpp"):
         shutil.copy2(ROOT / "bridge" / filename, target / filename)
     shutil.copy2(ROOT / "bridge/plugins-3d.cpp", CARDINAL / "plugins/plugins-3d.cpp")
     ui = CARDINAL / "src/CardinalUI.cpp"
     # Preserve subclass destructors during standalone extraction. Only registered
     # widgets remove a module from the live engine; preview widgets still own/delete it.
     replace(CARDINAL / "src/override/ModuleWidget.cpp", '\t\tAPP->engine->removeModule(this->module);', '\t\tif (APP->engine->getModule(this->module->id) == this->module)\n\t\t\tAPP->engine->removeModule(this->module);')
+    # Enter Cardinal's existing hidden GL context without creating a second app
+    # process or a desktop UI. The embedding host restores its caller's WGL context.
+    replace(CARDINAL / "src/override/Window.cpp", 'void WindowSetMods(Window* const window, const int mods)', '''void WindowRunEmbedded(Window* window, void (*callback)(void*), void* user)
+{
+    const DGL_NAMESPACE::Window::ScopedGraphicsContext scope(window->internal->hiddenWindow);
+    const double now = system::getTime();
+    if (std::isfinite(window->internal->frameTime))
+        window->internal->lastFrameDuration = now - window->internal->frameTime;
+    window->internal->frameTime = now;
+    window->internal->fbCount = 0;
+    nvgReset(window->vg);
+    if (window->uiFont != nullptr) bndSetFont(window->uiFont->handle);
+    callback(user);
+    ++window->internal->frame;
+}
+
+void WindowSetMods(Window* const window, const int mods)''')
     replace(ui, '#include "WindowParameters.hpp"', '#include "WindowParameters.hpp"\n#if defined(CARDINAL_3D_BRIDGE) && !defined(DISTRHO_OS_WASM)\n#include "cardinal3d/Cardinal3DBridge.hpp"\n#endif')
     replace(ui, '    int rateLimitStep = 0;', '    int rateLimitStep = 0;\n#ifdef CARDINAL_3D_BRIDGE\n    cardinal3d::Bridge spatialBridge;\n#endif')
     replace(ui, '        context->window->step();\n    }\n\n    void uiIdle()', '        context->window->step();\n#ifdef CARDINAL_3D_BRIDGE\n        spatialBridge.render();\n#endif\n    }\n\n    void uiIdle()')
@@ -49,7 +73,8 @@ def main():
     replace(plugins, '$(BUILD_DIR)/plugins.cpp.o: plugins.cpp', '$(BUILD_DIR)/plugins-3d.cpp.o: plugins-3d.cpp\n\t@mkdir -p $(dir $@)\n\t$(CXX) $< $(BUILD_CXX_FLAGS) -c -o $@\n\n$(BUILD_DIR)/plugins.cpp.o: plugins.cpp')
     # Reuse the pinned upstream source list and its existing per-plugin compiler
     # flags. No Audible Instruments DSP source or implementation is copied/edited.
-    upstream_make = subprocess.check_output(["git", "-C", str(CARDINAL), "show", "HEAD:plugins/Makefile"], text=True)
+    archived_make = CARDINAL / '.source-original-plugins-Makefile'
+    upstream_make = archived_make.read_text() if archived_make.is_file() and not (CARDINAL / '.git').exists() else subprocess.check_output(["git", "-C", str(CARDINAL), "show", "HEAD:plugins/Makefile"], text=True)
     audible_block = upstream_make.split("# AudibleInstruments\n", 1)[1].split("# Autinn\n", 1)[0]
     audible_sources = "\n".join(line for line in audible_block.splitlines() if line.startswith("PLUGIN_FILES +=")) + "\n"
     fundamental_block = upstream_make.split("# Fundamental (always enabled)\n", 1)[1].split("# ZamAudio", 1)[0]

@@ -1,0 +1,37 @@
+Cardinal 3D 0.77
+Copyright (C) 2026 mtyas and Cardinal-3D contributors.
+Project code: GNU General Public License, version 3 or any later version.
+This software comes with no warranty. You may modify and redistribute its
+software under the GPL-3.0-or-later terms. See GPL-3.0.txt.
+
+This is an independent modified Cardinal host. It is not an official release
+of DISTRHO Cardinal, VCV Rack, Godot or Meta. It embeds the unchanged Cardinal
+DSP and adds a Godot/OpenXR frontend, VR interaction, Windows audio playback,
+MIDI input, case layout and environment controls.
+
+Cardinal: DISTRHO / Filipe Coelho and contributors, GPL-3.0-or-later.
+Rack / Fundamental: VCV / Andrew Belt and contributors.
+Godot Engine and godot-cpp: Godot Engine contributors, MIT.
+Original module authors retain their names and copyright notices. See the
+complete pinned Cardinal licence table, artwork permissions and individual
+notices under upstream/ and the corresponding source archive.
+
+Panel graphics, component graphics, presets, samples and fonts do NOT all
+use the GPL. Their upstream terms, including CC-BY, CC-BY-SA, CC-BY-NC,
+CC-BY-NC-ND, font reserved names and custom permissions, remain in force.
+Do not assume permission for commercial artwork reuse or for modifying an
+artwork asset from the software licence. Ko-fi support is voluntary and
+does not grant extra rights to bundled third-party artwork.
+
+Quest 2 / Touch names identify compatible hardware; no Meta endorsement.
+The controller teaching diagram was created and supplied by mtyas for this
+project, not a Meta product photograph. Its action legend is added by this
+project. Documentation and project-original graphics: GPL-3.0-or-later.
+System fonts are used from Windows and are not redistributed.
+
+Source and build instructions: https://github.com/mtyas/Cardinal-3D
+Author: https://github.com/mtyas
+Voluntary support: https://ko-fi.com/mtyas
+Release binaries must be accompanied by the matching full corresponding
+source archive and notices. GitHub's automatic source ZIP alone omits the
+recursive Cardinal sources and is not the complete source package.

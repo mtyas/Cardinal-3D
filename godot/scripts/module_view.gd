@@ -12,6 +12,17 @@ var lights: Dictionary = {}
 var switches: Dictionary = {}
 var screens: Array = []
 var control_nodes: Dictionary = {}
+var selection_strip: MeshInstance3D
+
+func set_selected(selected: bool) -> void:
+	if selection_strip == null:
+		var strip := QuadMesh.new()
+		strip.size = Vector2(float(descriptor.get("width", 90)) * SCALE, 0.006)
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.albedo_color = Color("83e7ed")
+		selection_strip = mesh_node(strip, Vector3(strip.size.x / 2, -0.009, 0.007), mat)
+	selection_strip.visible = selected
 
 static func control_key(control: Dictionary) -> String:
 	return "%s/%s/%s" % [control["kind"], control["id"], control.get("direction", "")]
@@ -64,17 +75,19 @@ func setup(data: Dictionary) -> void:
 		var at := Vector3(float(control["x"]) * SCALE, -float(control["y"]) * SCALE, 0.014)
 		var radius := maxf(float(control["width"]) * SCALE / 2, 0.005)
 		var kind := str(control["kind"])
-		if not control.get("physical", false):
+		if not control.get("physical", false) and kind != "light":
 			continue
 		var first_child := get_child_count()
 		if kind == "knob":
+			var face_color := Color(str(control.get("body_color", "#333c45")))
 			var pivot := Node3D.new()
 			pivot.position = at
 			add_child(pivot)
 			Hardware.cylinder(pivot, radius * 1.04, 0.004, Vector3(0, 0, -0.009), Hardware.finish(Color("161b20"), 0.15, 0.4))
-			Hardware.cylinder(pivot, radius, 0.023, Vector3.ZERO, Hardware.finish(Color("252c33"), 0.05, 0.38), 64, 0.9)
+			Hardware.cylinder(pivot, radius, 0.023, Vector3.ZERO, Hardware.finish(face_color.darkened(0.18), 0.05, 0.38), 64, 0.9)
 			Hardware.ring(pivot, radius * 0.86, radius * 0.94, Vector3(0, 0, 0.011), Hardware.finish(Color("424a51"), 0.65, 0.26))
-			cylinder(radius * 0.86, 0.003, Vector3(0, 0, 0.012), Hardware.finish(Color("333c45"), 0.18, 0.34), pivot)
+			var cap := cylinder(radius * 0.86, 0.003, Vector3(0, 0, 0.012), Hardware.finish(face_color, 0.18, 0.34), pivot)
+			cap.name = "ColourCap"
 			# Grip flutes use one instanced draw rather than dozens of separate nodes.
 			var ribs := MultiMesh.new()
 			ribs.transform_format = MultiMesh.TRANSFORM_3D
@@ -90,8 +103,14 @@ func setup(data: Dictionary) -> void:
 			grip.material_override = Hardware.finish(Color("171d22"), 0.0, 0.55)
 			pivot.add_child(grip)
 			var mark := BoxMesh.new()
-			mark.size = Vector3(radius * 0.1, radius * 0.5, 0.002)
-			mesh_node(mark, Vector3(0, radius * 0.62, 0.017), material(Color("e8ece8")), pivot)
+			mark.size = Vector3(radius * 0.16, radius * 0.57, 0.002)
+			var indicator := StandardMaterial3D.new()
+			indicator.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			var brightness := face_color.r * 0.2126 + face_color.g * 0.7152 + face_color.b * 0.0722
+			indicator.albedo_color = Color.BLACK if brightness > 0.5 else Color("f4fff8")
+			var marker := mesh_node(mark, Vector3(0, radius * 0.58, 0.018), indicator, pivot)
+			marker.name = "ValueIndicator"
+			marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			knobs[str(control["id"])] = {"node": pivot, "control": control}
 		elif kind == "port":
 			var steel := Hardware.finish(Color("b6c0c9"), 0.95, 0.22)
@@ -113,6 +132,7 @@ func setup(data: Dictionary) -> void:
 			var lens := Hardware.finish(Color("142523")).duplicate() as StandardMaterial3D
 			lens.clearcoat_enabled = true
 			lens.clearcoat = 0.7
+			lens.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 			var node := mesh_node(bulb, at - Vector3(0, 0, 0.008), lens)
 			lights[str(control["id"])] = node
 		elif kind == "switch" or kind == "button":
@@ -155,11 +175,15 @@ func update_state(data: Dictionary) -> void:
 			var brightness := clampf(float(control.get("brightness", 0)), 0, 1)
 			var mat: StandardMaterial3D = lights[id].material_override
 			var light_color := Color(str(control.get("color", "#17d6b2")))
-			mat.albedo_color = light_color * maxf(brightness, 0.12)
+			var emission := Color(float(control.get("emission_r", light_color.r * brightness)), float(control.get("emission_g", light_color.g * brightness)), float(control.get("emission_b", light_color.b * brightness)))
+			mat.albedo_color = Color(0.025, 0.025, 0.025) + emission
 			mat.emission_enabled = true
-			mat.emission = light_color * brightness
+			mat.emission = emission
 
 func apply_surface(image: Image) -> void:
+	# Spatial mipmaps suppress shimmering at distance and oblique angles without
+	# buffering controller changes or delaying live control/LED updates.
+	if not image.has_mipmaps(): image.generate_mipmaps()
 	if texture == null:
 		texture = ImageTexture.create_from_image(image)
 		var mat := StandardMaterial3D.new()
@@ -167,10 +191,13 @@ func apply_surface(image: Image) -> void:
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 		mat.metallic = 0.22
 		mat.roughness = 0.48
-		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 		face.material_override = mat
 	else:
-		texture.set_image(image)
+		if texture.get_width() == image.get_width() and texture.get_height() == image.get_height():
+			texture.update(image)
+		else:
+			texture.set_image(image)
 	for display in screens:
 		display.apply_texture(texture)
 

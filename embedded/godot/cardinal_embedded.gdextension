@@ -1,0 +1,6 @@
+[configuration]
+entry_symbol = "cardinal3d_embedded_init"
+compatibility_minimum = "4.5"
+reloadable = false
+[libraries]
+windows.x86_64 = "res://bin/Cardinal3DExtension.dll"

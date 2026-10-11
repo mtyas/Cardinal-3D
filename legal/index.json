@@ -1,0 +1,1614 @@
+[
+  {
+    "label": "Cardinal 3D — credits & terms",
+    "path": "NOTICE.txt"
+  },
+  {
+    "label": "Software — GPL version 3",
+    "path": "GPL-3.0.txt"
+  },
+  {
+    "label": "Cardinal — module code & artwork licences",
+    "path": "LICENSES.md"
+  },
+  {
+    "label": "Cardinal — artwork permissions",
+    "path": "LICENSE-PERMISSIONS.md"
+  },
+  {
+    "label": "Godot — licence",
+    "path": "Godot-LICENSE.txt"
+  },
+  {
+    "label": "Godot — third-party notices",
+    "path": "Godot-COPYRIGHT.txt"
+  },
+  {
+    "label": "Cardinal/LICENSE",
+    "path": "upstream/Cardinal/LICENSE"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/dgl/src/nanovg/LICENSE.txt",
+    "path": "upstream/Cardinal/carla/source/modules/dgl/src/nanovg/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/dgl/src/pugl-upstream/COPYING",
+    "path": "upstream/Cardinal/carla/source/modules/dgl/src/pugl-upstream/COPYING"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/lilv/lilv-0.24.0/COPYING",
+    "path": "upstream/Cardinal/carla/source/modules/lilv/lilv-0.24.0/COPYING"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/lilv/serd-0.24.0/COPYING",
+    "path": "upstream/Cardinal/carla/source/modules/lilv/serd-0.24.0/COPYING"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/lilv/serd-0.24.0/tests/TurtleTests/LICENSE",
+    "path": "upstream/Cardinal/carla/source/modules/lilv/serd-0.24.0/tests/TurtleTests/LICENSE"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/lilv/sord-0.16.0/COPYING",
+    "path": "upstream/Cardinal/carla/source/modules/lilv/sord-0.16.0/COPYING"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/lilv/sratom-0.6.0/COPYING",
+    "path": "upstream/Cardinal/carla/source/modules/lilv/sratom-0.6.0/COPYING"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/sfzero/LICENSE",
+    "path": "upstream/Cardinal/carla/source/modules/sfzero/LICENSE"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/ysfx/COPYING",
+    "path": "upstream/Cardinal/carla/source/modules/ysfx/COPYING"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/ysfx/LICENSE-2.0.txt",
+    "path": "upstream/Cardinal/carla/source/modules/ysfx/LICENSE-2.0.txt"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/ysfx/sources/eel2-gas/LICENSE.txt",
+    "path": "upstream/Cardinal/carla/source/modules/ysfx/sources/eel2-gas/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/ysfx/thirdparty/WDL/LICENSE.txt",
+    "path": "upstream/Cardinal/carla/source/modules/ysfx/thirdparty/WDL/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/ysfx/thirdparty/dr_libs/LICENSE",
+    "path": "upstream/Cardinal/carla/source/modules/ysfx/thirdparty/dr_libs/LICENSE"
+  },
+  {
+    "label": "Cardinal/carla/source/modules/ysfx/thirdparty/stb/LICENSE",
+    "path": "upstream/Cardinal/carla/source/modules/ysfx/thirdparty/stb/LICENSE"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/LICENSE.md",
+    "path": "upstream/Cardinal/deps/JUCE/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/examples/DemoRunner/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt",
+    "path": "upstream/Cardinal/deps/JUCE/examples/DemoRunner/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/examples/Plugins/extern/LICENSE.md",
+    "path": "upstream/Cardinal/deps/JUCE/examples/Plugins/extern/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/extras/AudioPerformanceTest/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt",
+    "path": "upstream/Cardinal/deps/JUCE/extras/AudioPerformanceTest/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/extras/AudioPluginHost/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt",
+    "path": "upstream/Cardinal/deps/JUCE/extras/AudioPluginHost/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/extras/NetworkGraphicsDemo/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt",
+    "path": "upstream/Cardinal/deps/JUCE/extras/NetworkGraphicsDemo/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseController.h",
+    "path": "upstream/Cardinal/deps/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseController.h"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseQueryThread.h",
+    "path": "upstream/Cardinal/deps/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseQueryThread.h"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseState.h",
+    "path": "upstream/Cardinal/deps/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseState.h"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/extras/Projucer/Source/BinaryData/gradle/LICENSE",
+    "path": "upstream/Cardinal/deps/JUCE/extras/Projucer/Source/BinaryData/gradle/LICENSE"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/extras/Projucer/Source/Licenses/jucer_LicenseController.cpp",
+    "path": "upstream/Cardinal/deps/JUCE/extras/Projucer/Source/Licenses/jucer_LicenseController.cpp"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/modules/juce_audio_devices/native/oboe/LICENSE",
+    "path": "upstream/Cardinal/deps/JUCE/modules/juce_audio_devices/native/oboe/LICENSE"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/modules/juce_audio_formats/codecs/flac/Flac Licence.txt",
+    "path": "upstream/Cardinal/deps/JUCE/modules/juce_audio_formats/codecs/flac/Flac Licence.txt"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/modules/juce_audio_formats/codecs/oggvorbis/Ogg Vorbis Licence.txt",
+    "path": "upstream/Cardinal/deps/JUCE/modules/juce_audio_formats/codecs/oggvorbis/Ogg Vorbis Licence.txt"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/modules/juce_audio_formats/codecs/oggvorbis/libvorbis-1.3.7/COPYING",
+    "path": "upstream/Cardinal/deps/JUCE/modules/juce_audio_formats/codecs/oggvorbis/libvorbis-1.3.7/COPYING"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/LICENSE.txt",
+    "path": "upstream/Cardinal/deps/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/base/LICENSE.txt",
+    "path": "upstream/Cardinal/deps/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/base/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/pluginterfaces/LICENSE.txt",
+    "path": "upstream/Cardinal/deps/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/pluginterfaces/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/public.sdk/LICENSE.txt",
+    "path": "upstream/Cardinal/deps/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/public.sdk/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/deps/JUCE/modules/juce_graphics/image_formats/pnglib/LICENSE",
+    "path": "upstream/Cardinal/deps/JUCE/modules/juce_graphics/image_formats/pnglib/LICENSE"
+  },
+  {
+    "label": "Cardinal/deps/PawPaw/LICENSE",
+    "path": "upstream/Cardinal/deps/PawPaw/LICENSE"
+  },
+  {
+    "label": "Cardinal/deps/aubio/COPYING",
+    "path": "upstream/Cardinal/deps/aubio/COPYING"
+  },
+  {
+    "label": "Cardinal/docs/.generate-plugin-licenses.sh",
+    "path": "upstream/Cardinal/docs/.generate-plugin-licenses.sh"
+  },
+  {
+    "label": "Cardinal/docs/LICENSE-PERMISSIONS.md",
+    "path": "upstream/Cardinal/docs/LICENSE-PERMISSIONS.md"
+  },
+  {
+    "label": "Cardinal/docs/LICENSES.md",
+    "path": "upstream/Cardinal/docs/LICENSES.md"
+  },
+  {
+    "label": "Cardinal/dpf/LICENSE",
+    "path": "upstream/Cardinal/dpf/LICENSE"
+  },
+  {
+    "label": "Cardinal/dpf/dgl/src/nanovg/LICENSE.txt",
+    "path": "upstream/Cardinal/dpf/dgl/src/nanovg/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/dpf/dgl/src/pugl-upstream/COPYING",
+    "path": "upstream/Cardinal/dpf/dgl/src/pugl-upstream/COPYING"
+  },
+  {
+    "label": "Cardinal/dpf/dgl/src/resources/LICENSE-DejaVuSans.ttf.txt",
+    "path": "upstream/Cardinal/dpf/dgl/src/resources/LICENSE-DejaVuSans.ttf.txt"
+  },
+  {
+    "label": "Cardinal/dpf/distrho/extra/choc/LICENSE.md",
+    "path": "upstream/Cardinal/dpf/distrho/extra/choc/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/dpf/distrho/src/jackbridge/rtaudio/LICENSE",
+    "path": "upstream/Cardinal/dpf/distrho/src/jackbridge/rtaudio/LICENSE"
+  },
+  {
+    "label": "Cardinal/dpf/distrho/src/jackbridge/rtmidi/LICENSE",
+    "path": "upstream/Cardinal/dpf/distrho/src/jackbridge/rtmidi/LICENSE"
+  },
+  {
+    "label": "Cardinal/dpf/distrho/src/xaymar-vst2/LICENSE",
+    "path": "upstream/Cardinal/dpf/distrho/src/xaymar-vst2/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/21kHz/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/21kHz/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/8Mode/LICENSE",
+    "path": "upstream/Cardinal/plugins/8Mode/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/AS/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AS/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AaronStatic/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AaronStatic/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Algoritmarte/LICENSE",
+    "path": "upstream/Cardinal/plugins/Algoritmarte/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Algoritmarte/res/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/Algoritmarte/res/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/Algoritmarte/res/nunito/SIL Open Font License.txt",
+    "path": "upstream/Cardinal/plugins/Algoritmarte/res/nunito/SIL Open Font License.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AmalgamatedHarmonics/LICENSE",
+    "path": "upstream/Cardinal/plugins/AmalgamatedHarmonics/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/AmalgamatedHarmonics/res/DSEG-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AmalgamatedHarmonics/res/DSEG-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AmalgamatedHarmonics/res/ROBOTO-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AmalgamatedHarmonics/res/ROBOTO-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AmalgamatedHarmonics/src/LICENSE-Fundamental.txt",
+    "path": "upstream/Cardinal/plugins/AmalgamatedHarmonics/src/LICENSE-Fundamental.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AmalgamatedHarmonics/src/dsp/Bogaudio-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AmalgamatedHarmonics/src/dsp/Bogaudio-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AnimatedCircuits/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/AnimatedCircuits/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AnimatedCircuits/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/AnimatedCircuits/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/ArableInstruments/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/ArableInstruments/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ArableInstruments/LICENSE-dist.txt",
+    "path": "upstream/Cardinal/plugins/ArableInstruments/LICENSE-dist.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ArableInstruments/eurorack/avr_audio_bootloader/LICENSE",
+    "path": "upstream/Cardinal/plugins/ArableInstruments/eurorack/avr_audio_bootloader/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ArableInstruments/eurorack/stm_audio_bootloader/LICENSE",
+    "path": "upstream/Cardinal/plugins/ArableInstruments/eurorack/stm_audio_bootloader/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ArableInstruments/eurorack/stmlib/LICENSE",
+    "path": "upstream/Cardinal/plugins/ArableInstruments/eurorack/stmlib/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ArableInstruments/eurorack/stmlib/third_party/STM/CMSIS/DSP_Lib/license.txt",
+    "path": "upstream/Cardinal/plugins/ArableInstruments/eurorack/stmlib/third_party/STM/CMSIS/DSP_Lib/license.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ArableInstruments/parasites/avr_audio_bootloader/LICENSE",
+    "path": "upstream/Cardinal/plugins/ArableInstruments/parasites/avr_audio_bootloader/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ArableInstruments/parasites/stm_audio_bootloader/LICENSE",
+    "path": "upstream/Cardinal/plugins/ArableInstruments/parasites/stm_audio_bootloader/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ArableInstruments/parasites/stmlib/LICENSE",
+    "path": "upstream/Cardinal/plugins/ArableInstruments/parasites/stmlib/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ArableInstruments/parasites/stmlib/third_party/STM/CMSIS/DSP_Lib/license.txt",
+    "path": "upstream/Cardinal/plugins/ArableInstruments/parasites/stmlib/third_party/STM/CMSIS/DSP_Lib/license.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/LICENSE",
+    "path": "upstream/Cardinal/plugins/AriaModules/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/doc/LICENSE_QuickJS.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/doc/LICENSE_QuickJS.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/doc/LICENSE_TonalJs.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/doc/LICENSE_TonalJs.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/res/Arcane/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/res/Arcane/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/res/components/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/res/components/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/res/dseg/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/res/dseg/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/res/faceplates/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/res/faceplates/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/res/lcd/Fixed_v01/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/res/lcd/Fixed_v01/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/res/lcd/piano/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/res/lcd/piano/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/res/numbered-buttons/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/res/numbered-buttons/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/res/piano-buttons/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/res/piano-buttons/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AriaModules/res/signature/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/AriaModules/res/signature/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AudibleInstruments/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/AudibleInstruments/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AudibleInstruments/LICENSE-dist.txt",
+    "path": "upstream/Cardinal/plugins/AudibleInstruments/LICENSE-dist.txt"
+  },
+  {
+    "label": "Cardinal/plugins/AudibleInstruments/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/AudibleInstruments/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/AudibleInstruments/eurorack/avr_audio_bootloader/LICENSE",
+    "path": "upstream/Cardinal/plugins/AudibleInstruments/eurorack/avr_audio_bootloader/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/AudibleInstruments/eurorack/stm_audio_bootloader/LICENSE",
+    "path": "upstream/Cardinal/plugins/AudibleInstruments/eurorack/stm_audio_bootloader/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/AudibleInstruments/eurorack/stmlib/LICENSE",
+    "path": "upstream/Cardinal/plugins/AudibleInstruments/eurorack/stmlib/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/AudibleInstruments/eurorack/stmlib/third_party/STM/CMSIS/DSP_Lib/license.txt",
+    "path": "upstream/Cardinal/plugins/AudibleInstruments/eurorack/stmlib/third_party/STM/CMSIS/DSP_Lib/license.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Autinn/LICENSE",
+    "path": "upstream/Cardinal/plugins/Autinn/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Axioma/LICENSE",
+    "path": "upstream/Cardinal/plugins/Axioma/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/BaconPlugs/LICENSE",
+    "path": "upstream/Cardinal/plugins/BaconPlugs/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/BaconPlugs/LICENSE_other.txt",
+    "path": "upstream/Cardinal/plugins/BaconPlugs/LICENSE_other.txt"
+  },
+  {
+    "label": "Cardinal/plugins/BaconPlugs/libs/midifile/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/BaconPlugs/libs/midifile/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/BaconPlugs/libs/open303-code/License.txt",
+    "path": "upstream/Cardinal/plugins/BaconPlugs/libs/open303-code/License.txt"
+  },
+  {
+    "label": "Cardinal/plugins/BaconPlugs/libs/sst/sst-basic-blocks/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/BaconPlugs/libs/sst/sst-basic-blocks/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/BaconPlugs/libs/sst/sst-rackhelpers/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/BaconPlugs/libs/sst/sst-rackhelpers/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/Befaco/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/Befaco/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Befaco/LICENSE-dist.md",
+    "path": "upstream/Cardinal/plugins/Befaco/LICENSE-dist.md"
+  },
+  {
+    "label": "Cardinal/plugins/Befaco/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/Befaco/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/Befaco/src/noise-plethora/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/Befaco/src/noise-plethora/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/Bidoo/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/Bidoo/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Bidoo/src/dep/AudioFile/LICENSE",
+    "path": "upstream/Cardinal/plugins/Bidoo/src/dep/AudioFile/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Bidoo/src/dep/minimp3/LICENSE",
+    "path": "upstream/Cardinal/plugins/Bidoo/src/dep/minimp3/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Bidoo/src/dep/resampler/license.txt",
+    "path": "upstream/Cardinal/plugins/Bidoo/src/dep/resampler/license.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Biset/LICENSE",
+    "path": "upstream/Cardinal/plugins/Biset/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/BogaudioModules/LICENSE-dist.md",
+    "path": "upstream/Cardinal/plugins/BogaudioModules/LICENSE-dist.md"
+  },
+  {
+    "label": "Cardinal/plugins/BogaudioModules/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/BogaudioModules/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/BogaudioModules/lib/ffft/license.txt",
+    "path": "upstream/Cardinal/plugins/BogaudioModules/lib/ffft/license.txt"
+  },
+  {
+    "label": "Cardinal/plugins/CVfunk/LICENSE",
+    "path": "upstream/Cardinal/plugins/CVfunk/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/CVfunk/res/fonts/DejaVu Fonts License.txt",
+    "path": "upstream/Cardinal/plugins/CVfunk/res/fonts/DejaVu Fonts License.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Cardinal/src/AIDA-X/RTNeural/LICENSE",
+    "path": "upstream/Cardinal/plugins/Cardinal/src/AIDA-X/RTNeural/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Cardinal/src/AIDA-X/RTNeural/modules/xsimd/LICENSE",
+    "path": "upstream/Cardinal/plugins/Cardinal/src/AIDA-X/RTNeural/modules/xsimd/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Cardinal/src/DearImGui/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/Cardinal/src/DearImGui/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Cardinal/src/DearImGuiColorTextEditor/LICENSE",
+    "path": "upstream/Cardinal/plugins/Cardinal/src/DearImGuiColorTextEditor/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Cardinal/src/sassy/fftreal/license.txt",
+    "path": "upstream/Cardinal/plugins/Cardinal/src/sassy/fftreal/license.txt"
+  },
+  {
+    "label": "Cardinal/plugins/CatroModulo/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/CatroModulo/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ChowDSP/LICENSE",
+    "path": "upstream/Cardinal/plugins/ChowDSP/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ChowDSP/lib/Eigen/COPYING.txt",
+    "path": "upstream/Cardinal/plugins/ChowDSP/lib/Eigen/COPYING.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ChowDSP/lib/chowdsp_utils/LICENSE",
+    "path": "upstream/Cardinal/plugins/ChowDSP/lib/chowdsp_utils/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ChowDSP/lib/r8lib/COPYING.txt",
+    "path": "upstream/Cardinal/plugins/ChowDSP/lib/r8lib/COPYING.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Computerscare/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/Computerscare/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/DHE-Modules/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/DHE-Modules/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ESeries/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/ESeries/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ESeries/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/ESeries/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/EnigmaCurry/LICENSE",
+    "path": "upstream/Cardinal/plugins/EnigmaCurry/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/EnigmaCurry/LICENSE.MIT",
+    "path": "upstream/Cardinal/plugins/EnigmaCurry/LICENSE.MIT"
+  },
+  {
+    "label": "Cardinal/plugins/EnigmaCurry/res/fonts/Fantasque/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/EnigmaCurry/res/fonts/Fantasque/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/EnigmaCurry/res/fonts/dseg/DSEG-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/EnigmaCurry/res/fonts/dseg/DSEG-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/EnigmaCurry/res/fonts/manrope/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/EnigmaCurry/res/fonts/manrope/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ExpertSleepers-Encoders/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/ExpertSleepers-Encoders/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Extratone/license.txt",
+    "path": "upstream/Cardinal/plugins/Extratone/license.txt"
+  },
+  {
+    "label": "Cardinal/plugins/FehlerFabrik/LICENSE",
+    "path": "upstream/Cardinal/plugins/FehlerFabrik/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Fundamental/LICENSE",
+    "path": "upstream/Cardinal/plugins/Fundamental/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/GlueTheGiant/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/GlueTheGiant/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/GlueTheGiant/res/fonts/DSEG-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/GlueTheGiant/res/fonts/DSEG-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/GoodSheperd/LICENSE-dist.txt",
+    "path": "upstream/Cardinal/plugins/GoodSheperd/LICENSE-dist.txt"
+  },
+  {
+    "label": "Cardinal/plugins/GoodSheperd/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/GoodSheperd/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/GrandeModular/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/GrandeModular/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/HamptonHarmonics/LICENSE",
+    "path": "upstream/Cardinal/plugins/HamptonHarmonics/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/HetrickCV/Gamma/LICENSE",
+    "path": "upstream/Cardinal/plugins/HetrickCV/Gamma/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/HetrickCV/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/HetrickCV/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ImpromptuModular/LICENSE-ext.md",
+    "path": "upstream/Cardinal/plugins/ImpromptuModular/LICENSE-ext.md"
+  },
+  {
+    "label": "Cardinal/plugins/ImpromptuModular/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/ImpromptuModular/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/JW-Modules/LICENSE",
+    "path": "upstream/Cardinal/plugins/JW-Modules/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/JW-Modules/lib/oscpack/LICENSE",
+    "path": "upstream/Cardinal/plugins/JW-Modules/lib/oscpack/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/JW-Modules/res/DejaVu-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/JW-Modules/res/DejaVu-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/JW-Modules/res/fonts/ShareTechMono-Regular-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/JW-Modules/res/fonts/ShareTechMono-Regular-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/LifeFormModular/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/LifeFormModular/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/LilacLoop/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/LilacLoop/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/LittleUtils/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/LittleUtils/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/LomasModules/LICENSE",
+    "path": "upstream/Cardinal/plugins/LomasModules/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/LyraeModules/LICENSE",
+    "path": "upstream/Cardinal/plugins/LyraeModules/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ML_modules/LICENSE",
+    "path": "upstream/Cardinal/plugins/ML_modules/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ML_modules/LICENSE-dist.txt",
+    "path": "upstream/Cardinal/plugins/ML_modules/LICENSE-dist.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ML_modules/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/ML_modules/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ML_modules/res/LICENSE-DejaVu.txt",
+    "path": "upstream/Cardinal/plugins/ML_modules/res/LICENSE-DejaVu.txt"
+  },
+  {
+    "label": "Cardinal/plugins/MSM/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/MSM/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/MSM/LICENSE-dist.md",
+    "path": "upstream/Cardinal/plugins/MSM/LICENSE-dist.md"
+  },
+  {
+    "label": "Cardinal/plugins/MSM/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/MSM/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/MSM/res/Fonts/DejaVu-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/MSM/res/Fonts/DejaVu-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/MUS-X/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/MUS-X/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/MUS-X/LICENSE-dist.md",
+    "path": "upstream/Cardinal/plugins/MUS-X/LICENSE-dist.md"
+  },
+  {
+    "label": "Cardinal/plugins/MUS-X/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/MUS-X/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/Meander/LICENSE",
+    "path": "upstream/Cardinal/plugins/Meander/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Meander/res/DejaVu-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/Meander/res/DejaVu-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/MindMeldModular/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/MindMeldModular/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/MindMeldModular/res/fonts/Apache License.txt",
+    "path": "upstream/Cardinal/plugins/MindMeldModular/res/fonts/Apache License.txt"
+  },
+  {
+    "label": "Cardinal/plugins/MockbaModular/LICENSE",
+    "path": "upstream/Cardinal/plugins/MockbaModular/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Mog/License.txt",
+    "path": "upstream/Cardinal/plugins/Mog/License.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Orbits/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/Orbits/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Orbits/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/Orbits/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/Orbits/res/fonts/ShareTechMono-Regular-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/Orbits/res/fonts/ShareTechMono-Regular-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/PathSet/LICENSE",
+    "path": "upstream/Cardinal/plugins/PathSet/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/PdArray/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/PdArray/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/PinkTrombone/LICENSE",
+    "path": "upstream/Cardinal/plugins/PinkTrombone/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/PinkTrombone/src/PinkTrombone/LICENSE",
+    "path": "upstream/Cardinal/plugins/PinkTrombone/src/PinkTrombone/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Prism/Graphics-license.txt",
+    "path": "upstream/Cardinal/plugins/Prism/Graphics-license.txt"
+  },
+  {
+    "label": "Cardinal/plugins/Prism/LICENSE",
+    "path": "upstream/Cardinal/plugins/Prism/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Prism/src/dsp/Bogaudio-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/Prism/src/dsp/Bogaudio-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/RebelTech/LICENSE",
+    "path": "upstream/Cardinal/plugins/RebelTech/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/RebelTech/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/RebelTech/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/Sapphire/LICENSE",
+    "path": "upstream/Cardinal/plugins/Sapphire/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/Sapphire/util/unittest/airwindows/LICENSE",
+    "path": "upstream/Cardinal/plugins/Sapphire/util/unittest/airwindows/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/StarlingVia/LICENSE",
+    "path": "upstream/Cardinal/plugins/StarlingVia/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/StarlingVia/Via/LICENSE",
+    "path": "upstream/Cardinal/plugins/StarlingVia/Via/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/StarlingVia/src/dep/starling-dsp/LICENSE",
+    "path": "upstream/Cardinal/plugins/StarlingVia/src/dep/starling-dsp/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ValleyAudio/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/ValleyAudio/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ValleyAudio/LICENSE-dist.md",
+    "path": "upstream/Cardinal/plugins/ValleyAudio/LICENSE-dist.md"
+  },
+  {
+    "label": "Cardinal/plugins/ValleyAudio/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/ValleyAudio/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/Venom/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/plugins/Venom/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/plugins/WSTD-Drums/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/WSTD-Drums/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/WSTD-Drums/deps/SynthDevKit/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/WSTD-Drums/deps/SynthDevKit/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/WhatTheRack/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/WhatTheRack/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/WhatTheRack/res/BoomButton/LICENSE",
+    "path": "upstream/Cardinal/plugins/WhatTheRack/res/BoomButton/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ZZC/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/ZZC/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ZZC/res/fonts/DSEG/DSEG-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/ZZC/res/fonts/DSEG/DSEG-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ZZC/res/fonts/Nunito/SIL Open Font License.txt",
+    "path": "upstream/Cardinal/plugins/ZZC/res/fonts/Nunito/SIL Open Font License.txt"
+  },
+  {
+    "label": "Cardinal/plugins/ZamAudio/LICENSE",
+    "path": "upstream/Cardinal/plugins/ZamAudio/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ZetaCarinaeModules/LICENSE",
+    "path": "upstream/Cardinal/plugins/ZetaCarinaeModules/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/admiral/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/admiral/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/alefsbits/LICENSE",
+    "path": "upstream/Cardinal/plugins/alefsbits/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/cf/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/cf/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/cf/res/DejaVu-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/cf/res/DejaVu-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/dBiz/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/dBiz/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/dBiz/res/DejaVu-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/dBiz/res/DejaVu-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/dBiz/res/ShareTechMono-Regular-LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/dBiz/res/ShareTechMono-Regular-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/forsitan-modulare/LICENSE",
+    "path": "upstream/Cardinal/plugins/forsitan-modulare/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/h4n4-modules/LICENSE",
+    "path": "upstream/Cardinal/plugins/h4n4-modules/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/h4n4-modules/src/tuning/SUBLICENSE",
+    "path": "upstream/Cardinal/plugins/h4n4-modules/src/tuning/SUBLICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/ihtsyn/LICENSE",
+    "path": "upstream/Cardinal/plugins/ihtsyn/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/kocmoc/LICENSE",
+    "path": "upstream/Cardinal/plugins/kocmoc/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/mscHack/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/mscHack/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/myth-modules/LICENSE",
+    "path": "upstream/Cardinal/plugins/myth-modules/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/nonlinearcircuits/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/nonlinearcircuits/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/rackwindows/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/rackwindows/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/rcm-modules/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/rcm-modules/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/repelzen/LICENSE",
+    "path": "upstream/Cardinal/plugins/repelzen/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/repelzen/res/LICENSE-graphics",
+    "path": "upstream/Cardinal/plugins/repelzen/res/LICENSE-graphics"
+  },
+  {
+    "label": "Cardinal/plugins/sonusmodular/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/sonusmodular/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/stocaudio/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/stocaudio/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/stoermelder-packone/LICENSE-dist.txt",
+    "path": "upstream/Cardinal/plugins/stoermelder-packone/LICENSE-dist.txt"
+  },
+  {
+    "label": "Cardinal/plugins/stoermelder-packone/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/stoermelder-packone/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/stoermelder-packone/res/fonts/RedkostComic-LICENCE.txt",
+    "path": "upstream/Cardinal/plugins/stoermelder-packone/res/fonts/RedkostComic-LICENCE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/libs/sst-rackhelpers/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/libs/sst-rackhelpers/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/res/xt/fonts/quicksand/SIL Open Font License.txt",
+    "path": "upstream/Cardinal/plugins/surgext/res/xt/fonts/quicksand/SIL Open Font License.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/CLI11/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/CLI11/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/examples/DemoRunner/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/examples/DemoRunner/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/examples/Plugins/extern/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/examples/Plugins/extern/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/extras/AudioPerformanceTest/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/extras/AudioPerformanceTest/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/extras/AudioPluginHost/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/extras/AudioPluginHost/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/extras/NetworkGraphicsDemo/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/extras/NetworkGraphicsDemo/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseController.h",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseController.h"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseQueryThread.h",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseQueryThread.h"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseState.h",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/extras/Projucer/Source/Application/UserAccount/jucer_LicenseState.h"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/extras/Projucer/Source/BinaryData/gradle/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/extras/Projucer/Source/BinaryData/gradle/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/extras/Projucer/Source/Licenses/jucer_LicenseController.cpp",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/extras/Projucer/Source/Licenses/jucer_LicenseController.cpp"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_devices/native/oboe/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_devices/native/oboe/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_formats/codecs/flac/Flac Licence.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_formats/codecs/flac/Flac Licence.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_formats/codecs/oggvorbis/Ogg Vorbis Licence.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_formats/codecs/oggvorbis/Ogg Vorbis Licence.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_formats/codecs/oggvorbis/libvorbis-1.3.7/COPYING",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_formats/codecs/oggvorbis/libvorbis-1.3.7/COPYING"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_plugin_client/AU/AudioUnitSDK/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_plugin_client/AU/AudioUnitSDK/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/LV2_SDK/lilv/COPYING",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/LV2_SDK/lilv/COPYING"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/LV2_SDK/lv2/COPYING",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/LV2_SDK/lv2/COPYING"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/LV2_SDK/serd/COPYING",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/LV2_SDK/serd/COPYING"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/LV2_SDK/sord/COPYING",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/LV2_SDK/sord/COPYING"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/LV2_SDK/sratom/COPYING",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/LV2_SDK/sratom/COPYING"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/base/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/base/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/pluginterfaces/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/pluginterfaces/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/public.sdk/LICENSE.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_audio_processors/format_types/VST3_SDK/public.sdk/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_graphics/image_formats/pnglib/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/JUCE/modules/juce_graphics/image_formats/pnglib/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/LuaJitLib/LuaJIT/COPYRIGHT",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/LuaJitLib/LuaJIT/COPYRIGHT"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/PEGTL/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/PEGTL/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/airwindows/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/airwindows/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/clap-juce-extensions/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/clap-juce-extensions/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/clap-juce-extensions/clap-libs/clap/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/clap-juce-extensions/clap-libs/clap/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/clap-juce-extensions/clap-libs/clap-helpers/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/clap-juce-extensions/clap-libs/clap-helpers/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/eurorack/eurorack/stmlib/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/eurorack/eurorack/stmlib/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/fmt/LICENSE.rst",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/fmt/LICENSE.rst"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/fmt/doc/python-license.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/fmt/doc/python-license.txt"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/libpng/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/libpng/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/libsamplerate/COPYING",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/libsamplerate/COPYING"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/libsamplerate/docs/license.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/libsamplerate/docs/license.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/oddsound-mts/MTS-ESP/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/oddsound-mts/MTS-ESP/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/pybind11/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/pybind11/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/simde/COPYING",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/simde/COPYING"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/simde/test/munit/COPYING",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/simde/test/munit/COPYING"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/sst/sst-basic-blocks/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/sst/sst-basic-blocks/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/sst/sst-cpputils/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/sst/sst-cpputils/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/sst/sst-effects/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/sst/sst-effects/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/sst/sst-filters/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/sst/sst-filters/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/sst/sst-plugininfra/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/sst/sst-plugininfra/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/sst/sst-plugininfra/LICENSE_MIT.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/sst/sst-plugininfra/LICENSE_MIT.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/sst/sst-plugininfra/libs/filesystem/ghc-filesystem/LICENSE",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/sst/sst-plugininfra/libs/filesystem/ghc-filesystem/LICENSE"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/sst/sst-waveshapers/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/sst/sst-waveshapers/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/libs/tuning-library/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/surgext/surge/libs/tuning-library/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/surgext/surge/scripts/installer_mac/Resources/License.txt",
+    "path": "upstream/Cardinal/plugins/surgext/surge/scripts/installer_mac/Resources/License.txt"
+  },
+  {
+    "label": "Cardinal/plugins/unless_modules/LICENSE.md",
+    "path": "upstream/Cardinal/plugins/unless_modules/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/plugins/unless_modules/font/Terminus-TTF-license.txt",
+    "path": "upstream/Cardinal/plugins/unless_modules/font/Terminus-TTF-license.txt"
+  },
+  {
+    "label": "Cardinal/plugins/voxglitch/LICENSE",
+    "path": "upstream/Cardinal/plugins/voxglitch/LICENSE"
+  },
+  {
+    "label": "Cardinal/src/Rack/LICENSE-GPLv3.txt",
+    "path": "upstream/Cardinal/src/Rack/LICENSE-GPLv3.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/LICENSE-dist.md",
+    "path": "upstream/Cardinal/src/Rack/LICENSE-dist.md"
+  },
+  {
+    "label": "Cardinal/src/Rack/LICENSE.md",
+    "path": "upstream/Cardinal/src/Rack/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/filesystem/LICENSE",
+    "path": "upstream/Cardinal/src/Rack/dep/filesystem/LICENSE"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/glfw/LICENSE.md",
+    "path": "upstream/Cardinal/src/Rack/dep/glfw/LICENSE.md"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/jansson-2.12/LICENSE",
+    "path": "upstream/Cardinal/src/Rack/dep/jansson-2.12/LICENSE"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/libarchive-3.4.3/COPYING",
+    "path": "upstream/Cardinal/src/Rack/dep/libarchive-3.4.3/COPYING"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/libsamplerate-0.1.9/COPYING",
+    "path": "upstream/Cardinal/src/Rack/dep/libsamplerate-0.1.9/COPYING"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/libsamplerate-0.1.9/doc/license.html",
+    "path": "upstream/Cardinal/src/Rack/dep/libsamplerate-0.1.9/doc/license.html"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/nanosvg/LICENSE.txt",
+    "path": "upstream/Cardinal/src/Rack/dep/nanosvg/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/nanovg/LICENSE.txt",
+    "path": "upstream/Cardinal/src/Rack/dep/nanovg/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/nanovg/example/LICENSE_OFL.txt",
+    "path": "upstream/Cardinal/src/Rack/dep/nanovg/example/LICENSE_OFL.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/osdialog/LICENSE.txt",
+    "path": "upstream/Cardinal/src/Rack/dep/osdialog/LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/oui-blendish/LICENSE",
+    "path": "upstream/Cardinal/src/Rack/dep/oui-blendish/LICENSE"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/oui-blendish/LICENSE-DejaVuSans.ttf.txt",
+    "path": "upstream/Cardinal/src/Rack/dep/oui-blendish/LICENSE-DejaVuSans.ttf.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/oui-blendish/LICENSE-blender_icons.svg.txt",
+    "path": "upstream/Cardinal/src/Rack/dep/oui-blendish/LICENSE-blender_icons.svg.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/rtaudio/LICENSE",
+    "path": "upstream/Cardinal/src/Rack/dep/rtaudio/LICENSE"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/rtaudio/doc/doxygen/license.txt",
+    "path": "upstream/Cardinal/src/Rack/dep/rtaudio/doc/doxygen/license.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/rtmidi/LICENSE",
+    "path": "upstream/Cardinal/src/Rack/dep/rtmidi/LICENSE"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/simde/COPYING",
+    "path": "upstream/Cardinal/src/Rack/dep/simde/COPYING"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/simde/test/munit/COPYING",
+    "path": "upstream/Cardinal/src/Rack/dep/simde/test/munit/COPYING"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/speexdsp/COPYING",
+    "path": "upstream/Cardinal/src/Rack/dep/speexdsp/COPYING"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/tinyexpr/LICENSE",
+    "path": "upstream/Cardinal/src/Rack/dep/tinyexpr/LICENSE"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/zstd-1.4.5/COPYING",
+    "path": "upstream/Cardinal/src/Rack/dep/zstd-1.4.5/COPYING"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/zstd-1.4.5/LICENSE",
+    "path": "upstream/Cardinal/src/Rack/dep/zstd-1.4.5/LICENSE"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/zstd-1.4.5/contrib/linux-kernel/COPYING",
+    "path": "upstream/Cardinal/src/Rack/dep/zstd-1.4.5/contrib/linux-kernel/COPYING"
+  },
+  {
+    "label": "Cardinal/src/Rack/dep/zstd-1.4.5/tests/test-license.py",
+    "path": "upstream/Cardinal/src/Rack/dep/zstd-1.4.5/tests/test-license.py"
+  },
+  {
+    "label": "Cardinal/src/Rack/res/fonts/DSEG-LICENSE.txt",
+    "path": "upstream/Cardinal/src/Rack/res/fonts/DSEG-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/res/fonts/DejaVuSans-LICENSE.txt",
+    "path": "upstream/Cardinal/src/Rack/res/fonts/DejaVuSans-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/res/fonts/Nunito-LICENSE.txt",
+    "path": "upstream/Cardinal/src/Rack/res/fonts/Nunito-LICENSE.txt"
+  },
+  {
+    "label": "Cardinal/src/Rack/res/fonts/ShareTechMono-Regular-LICENSE.txt",
+    "path": "upstream/Cardinal/src/Rack/res/fonts/ShareTechMono-Regular-LICENSE.txt"
+  },
+  {
+    "label": "Dependencies/cairo-1.16.0/COPYING",
+    "path": "upstream/Dependencies/cairo-1.16.0/COPYING"
+  },
+  {
+    "label": "Dependencies/cairo-1.16.0/COPYING-LGPL-2.1",
+    "path": "upstream/Dependencies/cairo-1.16.0/COPYING-LGPL-2.1"
+  },
+  {
+    "label": "Dependencies/cairo-1.16.0/COPYING-MPL-1.1",
+    "path": "upstream/Dependencies/cairo-1.16.0/COPYING-MPL-1.1"
+  },
+  {
+    "label": "Dependencies/cairo-1.16.0/perf/COPYING",
+    "path": "upstream/Dependencies/cairo-1.16.0/perf/COPYING"
+  },
+  {
+    "label": "Dependencies/cairo-1.16.0/test/COPYING",
+    "path": "upstream/Dependencies/cairo-1.16.0/test/COPYING"
+  },
+  {
+    "label": "Dependencies/cairo-1.16.0/util/COPYING",
+    "path": "upstream/Dependencies/cairo-1.16.0/util/COPYING"
+  },
+  {
+    "label": "Dependencies/cairo-1.16.0/util/cairo-script/COPYING",
+    "path": "upstream/Dependencies/cairo-1.16.0/util/cairo-script/COPYING"
+  },
+  {
+    "label": "Dependencies/cairo-1.16.0/util/cairo-trace/COPYING",
+    "path": "upstream/Dependencies/cairo-1.16.0/util/cairo-trace/COPYING"
+  },
+  {
+    "label": "Dependencies/cairo-1.16.0/util/cairo-trace/COPYING-GPL-3",
+    "path": "upstream/Dependencies/cairo-1.16.0/util/cairo-trace/COPYING-GPL-3"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/includes/vst3sdk/LICENSE.txt",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/includes/vst3sdk/LICENSE.txt"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/includes/vst3sdk/base/LICENSE.txt",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/includes/vst3sdk/base/LICENSE.txt"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/includes/vst3sdk/pluginterfaces/LICENSE.txt",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/includes/vst3sdk/pluginterfaces/LICENSE.txt"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/includes/vst3sdk/public.sdk/LICENSE.txt",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/includes/vst3sdk/public.sdk/LICENSE.txt"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/dgl/src/nanovg/LICENSE.txt",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/dgl/src/nanovg/LICENSE.txt"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/dgl/src/pugl-upstream/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/dgl/src/pugl-upstream/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_formats/codecs/flac/Flac Licence.txt",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_formats/codecs/flac/Flac Licence.txt"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_formats/codecs/oggvorbis/Ogg Vorbis Licence.txt",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_formats/codecs/oggvorbis/Ogg Vorbis Licence.txt"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_formats/codecs/oggvorbis/libvorbis-1.3.7/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_formats/codecs/oggvorbis/libvorbis-1.3.7/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_processors/format_types/LV2_SDK/lilv/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_processors/format_types/LV2_SDK/lilv/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_processors/format_types/LV2_SDK/lv2/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_processors/format_types/LV2_SDK/lv2/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_processors/format_types/LV2_SDK/serd/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_processors/format_types/LV2_SDK/serd/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_processors/format_types/LV2_SDK/sord/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_processors/format_types/LV2_SDK/sord/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_processors/format_types/LV2_SDK/sratom/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_audio_processors/format_types/LV2_SDK/sratom/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_graphics/image_formats/pnglib/LICENSE",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/juce_graphics/image_formats/pnglib/LICENSE"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/lilv/lilv-0.24.0/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/lilv/lilv-0.24.0/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/lilv/serd-0.24.0/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/lilv/serd-0.24.0/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/lilv/serd-0.24.0/tests/TurtleTests/LICENSE",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/lilv/serd-0.24.0/tests/TurtleTests/LICENSE"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/lilv/sord-0.16.0/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/lilv/sord-0.16.0/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/lilv/sratom-0.6.0/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/lilv/sratom-0.6.0/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/sfzero/LICENSE",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/sfzero/LICENSE"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/COPYING",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/COPYING"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/LICENSE-2.0.txt",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/LICENSE-2.0.txt"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/sources/eel2-gas/LICENSE.txt",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/sources/eel2-gas/LICENSE.txt"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/thirdparty/WDL/LICENSE.txt",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/thirdparty/WDL/LICENSE.txt"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/thirdparty/dr_libs/LICENSE",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/thirdparty/dr_libs/LICENSE"
+  },
+  {
+    "label": "Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/thirdparty/stb/LICENSE",
+    "path": "upstream/Dependencies/carla-66afe24a08790732cc17d81d4b846a1e0cfa0118/source/modules/ysfx/thirdparty/stb/LICENSE"
+  },
+  {
+    "label": "Dependencies/fftw-3.3.10/COPYING",
+    "path": "upstream/Dependencies/fftw-3.3.10/COPYING"
+  },
+  {
+    "label": "Dependencies/fftw-3.3.10/COPYRIGHT",
+    "path": "upstream/Dependencies/fftw-3.3.10/COPYRIGHT"
+  },
+  {
+    "label": "Dependencies/fftw-3.3.10/doc/html/License-and-Copyright.html",
+    "path": "upstream/Dependencies/fftw-3.3.10/doc/html/License-and-Copyright.html"
+  },
+  {
+    "label": "Dependencies/fftw-3.3.10/doc/license.texi",
+    "path": "upstream/Dependencies/fftw-3.3.10/doc/license.texi"
+  },
+  {
+    "label": "Dependencies/fftwf-3.3.10/COPYING",
+    "path": "upstream/Dependencies/fftwf-3.3.10/COPYING"
+  },
+  {
+    "label": "Dependencies/fftwf-3.3.10/COPYRIGHT",
+    "path": "upstream/Dependencies/fftwf-3.3.10/COPYRIGHT"
+  },
+  {
+    "label": "Dependencies/fftwf-3.3.10/doc/html/License-and-Copyright.html",
+    "path": "upstream/Dependencies/fftwf-3.3.10/doc/html/License-and-Copyright.html"
+  },
+  {
+    "label": "Dependencies/fftwf-3.3.10/doc/license.texi",
+    "path": "upstream/Dependencies/fftwf-3.3.10/doc/license.texi"
+  },
+  {
+    "label": "Dependencies/flac-1.5.0/COPYING.FDL",
+    "path": "upstream/Dependencies/flac-1.5.0/COPYING.FDL"
+  },
+  {
+    "label": "Dependencies/flac-1.5.0/COPYING.GPL",
+    "path": "upstream/Dependencies/flac-1.5.0/COPYING.GPL"
+  },
+  {
+    "label": "Dependencies/flac-1.5.0/COPYING.LGPL",
+    "path": "upstream/Dependencies/flac-1.5.0/COPYING.LGPL"
+  },
+  {
+    "label": "Dependencies/flac-1.5.0/COPYING.Xiph",
+    "path": "upstream/Dependencies/flac-1.5.0/COPYING.Xiph"
+  },
+  {
+    "label": "Dependencies/fontconfig-2.15.0/COPYING",
+    "path": "upstream/Dependencies/fontconfig-2.15.0/COPYING"
+  },
+  {
+    "label": "Dependencies/freetype-2.13.2/LICENSE.TXT",
+    "path": "upstream/Dependencies/freetype-2.13.2/LICENSE.TXT"
+  },
+  {
+    "label": "Dependencies/freetype-2.13.2/src/tools/no-copyright",
+    "path": "upstream/Dependencies/freetype-2.13.2/src/tools/no-copyright"
+  },
+  {
+    "label": "Dependencies/freetype-2.13.2/src/tools/update-copyright",
+    "path": "upstream/Dependencies/freetype-2.13.2/src/tools/update-copyright"
+  },
+  {
+    "label": "Dependencies/freetype-2.13.2/src/tools/update-copyright-year",
+    "path": "upstream/Dependencies/freetype-2.13.2/src/tools/update-copyright-year"
+  },
+  {
+    "label": "Dependencies/libffi-3.4.2/LICENSE",
+    "path": "upstream/Dependencies/libffi-3.4.2/LICENSE"
+  },
+  {
+    "label": "Dependencies/libffi-3.4.2/LICENSE-BUILDTOOLS",
+    "path": "upstream/Dependencies/libffi-3.4.2/LICENSE-BUILDTOOLS"
+  },
+  {
+    "label": "Dependencies/liblo-0.32/COPYING",
+    "path": "upstream/Dependencies/liblo-0.32/COPYING"
+  },
+  {
+    "label": "Dependencies/liblo-0.32/doc/doxygen-awesome-css-LICENSE",
+    "path": "upstream/Dependencies/liblo-0.32/doc/doxygen-awesome-css-LICENSE"
+  },
+  {
+    "label": "Dependencies/libogg-1.3.5/COPYING",
+    "path": "upstream/Dependencies/libogg-1.3.5/COPYING"
+  },
+  {
+    "label": "Dependencies/libpng-1.6.43/LICENSE",
+    "path": "upstream/Dependencies/libpng-1.6.43/LICENSE"
+  },
+  {
+    "label": "Dependencies/libpng-1.6.43/ci/LICENSE_MIT.txt",
+    "path": "upstream/Dependencies/libpng-1.6.43/ci/LICENSE_MIT.txt"
+  },
+  {
+    "label": "Dependencies/libpng-1.6.43/contrib/gregbook/COPYING",
+    "path": "upstream/Dependencies/libpng-1.6.43/contrib/gregbook/COPYING"
+  },
+  {
+    "label": "Dependencies/libpng-1.6.43/contrib/gregbook/LICENSE",
+    "path": "upstream/Dependencies/libpng-1.6.43/contrib/gregbook/LICENSE"
+  },
+  {
+    "label": "Dependencies/libpng-1.6.43/contrib/pngexif/LICENSE_MIT.txt",
+    "path": "upstream/Dependencies/libpng-1.6.43/contrib/pngexif/LICENSE_MIT.txt"
+  },
+  {
+    "label": "Dependencies/libpng-1.6.43/contrib/pngminus/LICENSE.txt",
+    "path": "upstream/Dependencies/libpng-1.6.43/contrib/pngminus/LICENSE.txt"
+  },
+  {
+    "label": "Dependencies/libsndfile-1.2.2/COPYING",
+    "path": "upstream/Dependencies/libsndfile-1.2.2/COPYING"
+  },
+  {
+    "label": "Dependencies/libsndfile-1.2.2/src/GSM610/COPYRIGHT",
+    "path": "upstream/Dependencies/libsndfile-1.2.2/src/GSM610/COPYRIGHT"
+  },
+  {
+    "label": "Dependencies/libvorbis-1.3.7/COPYING",
+    "path": "upstream/Dependencies/libvorbis-1.3.7/COPYING"
+  },
+  {
+    "label": "Dependencies/libxml2-2.12.4/Copyright",
+    "path": "upstream/Dependencies/libxml2-2.12.4/Copyright"
+  },
+  {
+    "label": "Dependencies/mingw-std-threads-c931bac289dd431f1dd30fc4a5d1a7be36668073/LICENSE",
+    "path": "upstream/Dependencies/mingw-std-threads-c931bac289dd431f1dd30fc4a5d1a7be36668073/LICENSE"
+  },
+  {
+    "label": "Dependencies/mxml-3.3.1/LICENSE",
+    "path": "upstream/Dependencies/mxml-3.3.1/LICENSE"
+  },
+  {
+    "label": "Dependencies/mxml-3.3.1/NOTICE",
+    "path": "upstream/Dependencies/mxml-3.3.1/NOTICE"
+  },
+  {
+    "label": "Dependencies/opus-1.5.2/COPYING",
+    "path": "upstream/Dependencies/opus-1.5.2/COPYING"
+  },
+  {
+    "label": "Dependencies/pcre-8.45/COPYING",
+    "path": "upstream/Dependencies/pcre-8.45/COPYING"
+  },
+  {
+    "label": "Dependencies/pcre-8.45/LICENCE",
+    "path": "upstream/Dependencies/pcre-8.45/LICENCE"
+  },
+  {
+    "label": "Dependencies/pcre-8.45/cmake/COPYING-CMAKE-SCRIPTS",
+    "path": "upstream/Dependencies/pcre-8.45/cmake/COPYING-CMAKE-SCRIPTS"
+  },
+  {
+    "label": "Dependencies/pixman-0.42.2/COPYING",
+    "path": "upstream/Dependencies/pixman-0.42.2/COPYING"
+  },
+  {
+    "label": "Dependencies/pkg-config-0.28/COPYING",
+    "path": "upstream/Dependencies/pkg-config-0.28/COPYING"
+  },
+  {
+    "label": "Dependencies/pkg-config-0.28/glib/COPYING",
+    "path": "upstream/Dependencies/pkg-config-0.28/glib/COPYING"
+  },
+  {
+    "label": "Dependencies/zlib-1.3.1/LICENSE",
+    "path": "upstream/Dependencies/zlib-1.3.1/LICENSE"
+  },
+  {
+    "label": "Dependencies/zlib-1.3.1/contrib/dotzlib/LICENSE_1_0.txt",
+    "path": "upstream/Dependencies/zlib-1.3.1/contrib/dotzlib/LICENSE_1_0.txt"
+  }
+]

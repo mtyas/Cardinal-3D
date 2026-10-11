@@ -2,6 +2,7 @@ extends Node3D
 
 const ModuleView := preload("res://scripts/module_view.gd")
 const BridgeClient := preload("res://scripts/bridge_client.gd")
+const EmbeddedClient := preload("res://scripts/embedded_client.gd")
 const Hardware := preload("res://scripts/hardware.gd")
 const RackCase := preload("res://scripts/rack_case.gd")
 const ControlFocus := preload("res://scripts/control_focus.gd")
@@ -49,6 +50,22 @@ var magnet_latched := ""
 var focus_binding: Dictionary = {}
 var header_panel: PanelContainer
 var settings_panel: PanelContainer
+var settings_scroll: ScrollContainer
+var settings_column: VBoxContainer
+var audio_column: VBoxContainer
+var environment_column: VBoxContainer
+var racks_column: VBoxContainer
+var about_page: VBoxContainer
+var settings_title: Label
+var settings_icon: TextureRect
+var settings_hint: Label
+var settings_section := "audio"
+var rack_layout
+var immersive_environment
+var pending_layout_load := {}
+var pending_new_patch_request := -1
+var reset_new_patch_workspace := false
+var layout_restore_path := ""
 var settings_button: Button
 var toolbar: HBoxContainer
 var path_edit: LineEdit
@@ -67,9 +84,16 @@ var panning := false
 var snapshot: Dictionary = {}
 var status_timer := 0.0
 var cable_signature := ""
+var pending_mesh: MeshInstance3D
+var local_pending_cable := {}
+var pending_signature := ""
+var performance_elapsed := 0.0
+var performance_frames := 0
+var performance_worst := 0.0
+var performance_previous_usec := 0
 
 func _ready() -> void:
-	bridge = BridgeClient.new()
+	bridge = EmbeddedClient.new() if OS.get_environment("CARDINAL_3D_EMBEDDED") == "1" else BridgeClient.new()
 	add_child(bridge)
 	bridge.message_received.connect(_on_message)
 	bridge.surface_received.connect(_on_surface)
@@ -112,6 +136,9 @@ func _ready() -> void:
 	add_child(camera)
 	_update_camera()
 	_build_ui()
+	immersive_environment = load("res://scripts/immersive_environment.gd").new()
+	add_child(immersive_environment)
+	immersive_environment.setup(self)
 	get_tree().auto_accept_quit = false
 	if OS.get_environment("CARDINAL_3D_XR") == "1":
 		xr_session = load("res://scripts/xr_session.gd").new()
@@ -176,8 +203,49 @@ func _build_ui() -> void:
 	settings_panel.position = Vector2(16, 62)
 	settings_panel.visible = false
 	root.add_child(settings_panel)
-	var settings_column := VBoxContainer.new()
-	settings_panel.add_child(settings_column)
+	settings_panel.custom_minimum_size = Vector2(600, 700)
+	settings_panel.size = Vector2(600, 700)
+	settings_scroll = ScrollContainer.new()
+	settings_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var settings_shell := VBoxContainer.new()
+	settings_panel.add_child(settings_shell)
+	var settings_heading := HBoxContainer.new()
+	settings_shell.add_child(settings_heading)
+	settings_icon = TextureRect.new()
+	settings_icon.custom_minimum_size = Vector2(40, 40)
+	settings_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	settings_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	settings_heading.add_child(settings_icon)
+	settings_title = Label.new()
+	settings_title.text = "Audio & MIDI"
+	settings_title.add_theme_font_size_override("font_size", 26)
+	settings_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_title.add_theme_color_override("font_color", Color("62e4ca"))
+	settings_heading.add_child(settings_title)
+	settings_heading.add_child(preload("res://scripts/ui_theme.gd").close_button(func(): settings_panel.hide()))
+	settings_hint = Label.new()
+	settings_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	settings_shell.add_child(settings_hint)
+	settings_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	settings_shell.add_child(settings_scroll)
+	settings_column = VBoxContainer.new()
+	settings_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_scroll.add_child(settings_column)
+	audio_column = VBoxContainer.new()
+	environment_column = VBoxContainer.new()
+	racks_column = VBoxContainer.new()
+	for section in [audio_column, environment_column, racks_column]: settings_column.add_child(section)
+	about_page = preload("res://scripts/about_page.gd").new()
+	settings_column.add_child(about_page)
+	about_page.setup(self)
+	about_page.hide()
+	environment_column.hide()
+	racks_column.hide()
+	if OS.get_environment("CARDINAL_3D_EMBEDDED") == "1":
+		var audio_settings = load("res://scripts/embedded_audio_settings.gd").new()
+		audio_settings.name = "EmbeddedAudioSettings"
+		audio_settings.backend = bridge
+		audio_column.add_child(audio_settings)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toolbar.add_child(spacer)
@@ -196,7 +264,7 @@ func _build_ui() -> void:
 	_button("Undo", func(): bridge.send_command("undo"))
 	_button("Redo", func(): bridge.send_command("redo"))
 	var view_bar := HBoxContainer.new()
-	settings_column.add_child(view_bar)
+	environment_column.add_child(view_bar)
 	var view_label := Label.new()
 	view_label.text = "View"
 	view_bar.add_child(view_label)
@@ -217,9 +285,10 @@ func _build_ui() -> void:
 		control.pressed.connect(entry["action"])
 		view_bar.add_child(control)
 	var lighting_bar := HBoxContainer.new()
-	settings_column.add_child(lighting_bar)
+	environment_column.add_child(lighting_bar)
 	var lighting_label := Label.new()
 	lighting_label.text = "Lighting"
+	lighting_label.hide()
 	lighting_bar.add_child(lighting_label)
 	lighting_picker = OptionButton.new()
 	for preset in LIGHTING_PRESETS:
@@ -228,6 +297,7 @@ func _build_ui() -> void:
 		lighting_preset = index
 		_apply_lighting())
 	lighting_bar.add_child(lighting_picker)
+	lighting_picker.hide()
 	var brightness_label := Label.new()
 	brightness_label.text = "Exposure"
 	lighting_bar.add_child(brightness_label)
@@ -287,17 +357,39 @@ func _build_ui() -> void:
 	overlay.focus_mode = Control.FOCUS_ALL
 	overlay.gui_input.connect(_overlay_input)
 	root.add_child(overlay)
+	var menu_close := preload("res://scripts/ui_theme.gd").close_button(func(): bridge.send_command("escape"); overlay.hide())
+	overlay.add_child(menu_close)
+	menu_close.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	menu_close.position = Vector2(overlay.size.x - 44, -44)
+	overlay.resized.connect(func(): menu_close.position = Vector2(overlay.size.x - 44, -44))
 	dialog = FileDialog.new()
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
 	dialog.filters = PackedStringArray(["*.vcv ; Cardinal patch"])
 	dialog.use_native_dialog = false
-	dialog.file_selected.connect(func(path: String): bridge.send_command("save" if dialog.file_mode == FileDialog.FILE_MODE_SAVE_FILE else "load", {"path": path}))
+	dialog.file_selected.connect(func(path: String):
+		var saving := dialog.file_mode == FileDialog.FILE_MODE_SAVE_FILE
+		var request := bridge.send_command("save" if saving else "load", {"path": path})
+		if rack_layout != null:
+			if saving: rack_layout.save(path + ".3d.json")
+			else: pending_layout_load[request] = path)
 	root.add_child(dialog)
 	module_browser = ModuleBrowser.new()
 	root.add_child(module_browser)
 	module_browser.setup(bridge)
 	module_browser.insert_requested.connect(func(plugin: String, model: String):
 		bridge.send_command("add", {"plugin": plugin, "model": model}))
+
+func show_settings(section: String) -> void:
+	settings_section = section
+	audio_column.visible = section == "audio"
+	environment_column.visible = section == "environment"
+	racks_column.visible = section == "racks"
+	about_page.visible = section == "about"
+	settings_title.text = {"audio": "Audio & MIDI", "environment": "Environment & graphics", "racks": "Rack management", "about": "About & licences"}.get(section, "Settings")
+	settings_icon.texture = preload("res://scripts/ui_theme.gd").icon(section)
+	settings_hint.text = {"audio": "Your sound and instruments · Use the stick to scroll long lists.", "environment": "Find your place · Choose scenery, daylight and picture quality.", "racks": "Arrange your space · Unlock Layout mode to move, turn or add cases."}.get(section, "")
+	settings_scroll.scroll_vertical = 0
+	settings_panel.show()
 
 func _patch_action(id: int) -> void:
 	match id:
@@ -331,12 +423,6 @@ func _on_connection(connected: bool) -> void:
 		dragging = false
 		moving = false
 		_pending_wire()
-		for module: Node3D in modules.values():
-			module.queue_free()
-		rack_case.sync([])
-		modules.clear()
-		for cable in cables.get_children():
-			cable.queue_free()
 
 func _on_message(message: Dictionary) -> void:
 	match message.get("type", ""):
@@ -352,13 +438,13 @@ func _on_message(message: Dictionary) -> void:
 				cable_signature = ""
 				_release()
 				_clear_focus()
-				for module: Node3D in modules.values():
-					module.queue_free()
-				modules.clear()
 			var present := {}
 			for descriptor: Dictionary in message.get("modules", []):
 				var id := str(descriptor["id"])
 				present[id] = true
+				if modules.has(id) and (modules[id].descriptor.get("plugin") != descriptor.get("plugin") or modules[id].descriptor.get("model") != descriptor.get("model")):
+					modules[id].queue_free()
+					modules.erase(id)
 				if not modules.has(id):
 					var view := ModuleView.new()
 					rack.add_child(view)
@@ -380,7 +466,18 @@ func _on_message(message: Dictionary) -> void:
 						if control.get("visible", true): tooltip.text = _focus_text(control)
 						else: _clear_focus()
 						break
-			rack_case.sync(message.get("modules", []))
+			if reset_new_patch_workspace:
+				reset_new_patch_workspace = false
+				layout_restore_path = ""
+				pending_layout_load.clear()
+				if rack_layout != null: rack_layout.reset_for_new_patch()
+				immersive_environment.empty_space()
+			if rack_layout != null:
+				if not layout_restore_path.is_empty():
+					rack_layout.restore_from(layout_restore_path)
+					layout_restore_path = ""
+				else: rack_layout.sync()
+			else: rack_case.sync(message.get("modules", []))
 			_rebuild_cables(message.get("cables", []))
 			_pending_wire()
 			if reset:
@@ -394,6 +491,13 @@ func _on_message(message: Dictionary) -> void:
 			# Never flash a cached full scene while waiting for a new context menu.
 			overlay.visible = next_mode != "none" and overlay_surface_mode == next_mode
 		"ack":
+			var request := int(message.get("request", -1))
+			if request == pending_new_patch_request and pending_new_patch_request >= 0:
+				pending_new_patch_request = -1
+				reset_new_patch_workspace = message.get("ok", false)
+			if pending_layout_load.has(request):
+				if message.get("ok", false): layout_restore_path = pending_layout_load[request]
+				pending_layout_load.erase(request)
 			if not message.get("ok", false):
 				status_label.text = "  " + str(message.get("error", "Command failed"))
 				status_timer = 5
@@ -430,9 +534,10 @@ func _on_surface(header: Dictionary, image: Image) -> void:
 		modules[id].apply_surface(image)
 
 func _rebuild_cables(descriptions: Array) -> void:
+	if rack_layout != null and rack_layout.grabbed >= 0: return
 	var positions := []
 	for view: CardinalModuleView in modules.values():
-		positions.append([view.descriptor["id"], view.position.x, view.position.y])
+		positions.append([view.descriptor["id"], str(view.global_transform)])
 	var signature := JSON.stringify([descriptions, positions])
 	if signature == cable_signature:
 		return
@@ -493,15 +598,49 @@ func _draw_wire(start: Vector3, end: Vector3, color: Color, parent_node: Node3D)
 			Hardware.ring(parent_node, 0.0048, 0.0068 - index * 0.0004, endpoint + Vector3(0, 0, 0.02 + index * 0.006), Hardware.finish(color.darkened(0.18), 0, 0.5))
 
 func _pending_wire() -> void:
-	for child in pending_wire.get_children():
-		pending_wire.remove_child(child)
-		child.queue_free()
-	var pending: Dictionary = snapshot.get("pending_cable", {})
+	var pending: Dictionary = local_pending_cable if not local_pending_cable.is_empty() else snapshot.get("pending_cable", {})
 	var id := str(pending.get("module", ""))
 	if not dragging or not modules.has(id):
+		if is_instance_valid(pending_mesh): pending_mesh.hide()
+		pending_signature = ""
 		return
 	var start: Vector3 = modules[id].port_position(int(pending["port"]), str(pending["direction"]))
-	_draw_wire(pending_wire.to_local(start), pending_wire.to_local(wire_cursor), Color(str(pending.get("color", "#e39756"))), pending_wire)
+	var signature := str([start, wire_cursor, pending.get("color", "#e39756")])
+	if signature == pending_signature: return
+	pending_signature = signature
+	if not is_instance_valid(pending_mesh):
+		pending_mesh = MeshInstance3D.new()
+		pending_mesh.mesh = ImmediateMesh.new()
+		pending_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		pending_mesh.material_override = mat
+		pending_wire.add_child(pending_mesh)
+	pending_mesh.visible = true
+	pending_mesh.material_override.albedo_color = Color(str(pending.get("color", "#e39756")))
+	var mesh: ImmediateMesh = pending_mesh.mesh
+	mesh.clear_surfaces()
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	var a := pending_wire.to_local(start)
+	var b := pending_wire.to_local(wire_cursor)
+	var sag := minf(a.distance_to(b) * 0.3, 0.2)
+	var rings := []
+	for index in range(25):
+		var t := float(index) / 24
+		var point := a.lerp(b, t) + Vector3(0, -4 * sag * t * (1 - t), 0.04)
+		var tangent := (b - a + Vector3(0, -4 * sag * (1 - 2 * t), 0)).normalized()
+		var reference := Vector3.FORWARD if absf(tangent.dot(Vector3.FORWARD)) < 0.95 else Vector3.RIGHT
+		var normal := tangent.cross(reference).normalized()
+		var binormal := tangent.cross(normal).normalized()
+		var ring := []
+		for side in range(8): ring.append(point + (normal * cos(TAU * side / 8) + binormal * sin(TAU * side / 8)) * 0.0036)
+		rings.append(ring)
+	for index in range(24):
+		for side in range(8):
+			var next := (side + 1) % 8
+			for pair in [Vector2i(index, side), Vector2i(index + 1, next), Vector2i(index + 1, side), Vector2i(index, side), Vector2i(index, next), Vector2i(index + 1, next)]:
+				mesh.surface_add_vertex(rings[pair.x][pair.y])
+	mesh.surface_end()
 
 func _frame_rack() -> void:
 	if modules.is_empty():
@@ -519,6 +658,9 @@ func _frame_rack() -> void:
 	_update_camera()
 
 func _apply_lighting() -> void:
+	if immersive_environment != null:
+		immersive_environment.update_light()
+		return
 	var preset: Dictionary = LIGHTING_PRESETS[lighting_preset]
 	environment.background_color = Color(preset["background"])
 	environment.ambient_light_color = Color(preset["ambient"])
@@ -835,6 +977,22 @@ func _overlay_input(event: InputEvent) -> void:
 		overlay.accept_event()
 
 func _process(delta: float) -> void:
+	if OS.get_environment("CARDINAL_3D_DIAGNOSTICS") == "1":
+		var now := Time.get_ticks_usec()
+		var frame_seconds := float(now - performance_previous_usec) / 1000000.0 if performance_previous_usec > 0 else 0.0
+		performance_previous_usec = now
+		performance_elapsed += frame_seconds
+		performance_frames += 1
+		performance_worst = maxf(performance_worst, frame_seconds)
+		if performance_elapsed >= 5:
+			print("VR timing: %.1f fps, worst %.1f ms, process %.1f ms, physics %.1f ms, draw calls %d" % [performance_frames / performance_elapsed, performance_worst * 1000, Performance.get_monitor(Performance.TIME_PROCESS) * 1000, Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000, Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)])
+			var diagnostics := FileAccess.open(ProjectSettings.globalize_path("res://../vr-timing.json"), FileAccess.WRITE)
+			if diagnostics != null:
+				diagnostics.store_string(JSON.stringify({"fps": performance_frames / performance_elapsed, "worst_frame_ms": performance_worst * 1000, "process_ms": Performance.get_monitor(Performance.TIME_PROCESS) * 1000, "physics_ms": Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000, "draw_calls": Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), "modules": modules.size(), "xr_focused": xr_session != null and xr_session.was_focused, "snapshot_hz": bridge.snapshot_count / performance_elapsed, "incoming_bytes": bridge.incoming.size(), "outgoing_bytes": bridge.outgoing.size() }))
+			bridge.snapshot_count = 0
+			performance_elapsed = 0
+			performance_frames = 0
+			performance_worst = 0
 	status_timer = maxf(status_timer - delta, 0)
 	if bridge.connected and status_timer == 0 and not snapshot.is_empty():
 		status_label.text = "  %d modules · %d cables · %d fps · Cardinal owns audio and patch state" % [modules.size(), snapshot.get("cables", []).size(), Engine.get_frames_per_second()]

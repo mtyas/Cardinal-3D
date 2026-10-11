@@ -1,0 +1,11 @@
+{
+  "commands_per_frame": 8,
+  "patch": "six-module native starter",
+  "audio_running": false,
+  "headset_latency_measurement": false,
+  "median_ms": {
+    "separate": 8.150549998390488,
+    "batch": 0.9261499981221277
+  },
+  "reduction_percent": 88.63696317052202
+}

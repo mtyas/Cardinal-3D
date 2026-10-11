@@ -90,6 +90,42 @@ class Client:
     def pointer(self, module, control, phase, dy=0, mods=0):
         self.cmd("pointer", module=module["id"], x=control["x"], y=control["y"]+dy, phase=phase, button=0, mods=mods)
 
+def verify_vr_actions(client, vco, scope):
+    # VR patching bypasses pixel hit testing and preserves a single undo step.
+    client.cmd("patch_cable", output_module=vco["id"], output_port=0, input_module=scope["id"], input_port=1)
+    state = client.wait(lambda s: len(s["cables"]) == 6)
+    added_cable = next(c for c in state["cables"] if c["input_module"] == scope["id"] and c["input_port"] == 1)
+    client.cmd("patch_cable", output_module=vco["id"], output_port=0, input_module=scope["id"], input_port=1)
+    client.wait(lambda s: len(s["cables"]) == 6)
+    client.cmd("patch_cable", output_module=vco["id"], output_port=0, input_module=scope["id"], input_port=0, replace_cable=added_cable["id"])
+    client.wait(lambda s: len(s["cables"]) == 5)
+    client.cmd("undo")
+    client.wait(lambda s: len(s["cables"]) == 6)
+    client.cmd("undo")
+    client.wait(lambda s: len(s["cables"]) == 5)
+    print("PASS: direct socket patching, occupied-input replacement and single-step undo", flush=True)
+    client.cmd("patch_cable", output_module=vco["id"], output_port=0, input_module=scope["id"], input_port=1)
+    state = client.wait(lambda s: len(s['cables']) == 6)
+    unplug = next(c for c in state['cables'] if c['input_module'] == scope['id'] and c['input_port'] == 1)
+    client.cmd("disconnect_cable", cable_id=unplug['id'], input_module=scope['id'], input_port=1)
+    client.wait(lambda s: len(s['cables']) == 5)
+    client.cmd('undo')
+    client.wait(lambda s: len(s['cables']) == 6)
+    client.cmd('undo')
+    client.wait(lambda s: len(s['cables']) == 5)
+    print('PASS: unplugging a specific cable and restoring it with undo', flush=True)
+    positions = {m["id"]: (m["x"], m["y"]) for m in client.snapshot["modules"]}
+    client.cmd("move_begin", module=scope["id"])
+    client.cmd("move_delta", dx=vco["x"]-scope["x"], dy=0, insert=True)
+    client.cmd("move_end")
+    state = client.wait(lambda s: next(m for m in s["modules"] if m["id"] == scope["id"])["x"] == vco["x"])
+    row = sorted(state["modules"], key=lambda m: m["x"])
+    assert all(a["x"] + a["width"] <= b["x"] for a, b in zip(row, row[1:])), "Insertion overlapped modules"
+    client.cmd("undo")
+    client.wait(lambda s: {m["id"]: (m["x"], m["y"]) for m in s["modules"]} == positions)
+    print("PASS: module insertion shifts neighbors and undoes the whole layout", flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--full", action="store_true")
@@ -132,6 +168,7 @@ def main():
         scope = next(m for m in state["modules"] if m["model"] == "Scope")
         knob = next(c for c in vco["controls"] if c["kind"] == "knob" and c["id"] == 2)
         old = knob["value"]
+        verify_vr_actions(client, vco, scope)
         def frequency(s):
             m = next(m for m in s["modules"] if m["id"] == vco["id"])
             return next(c["value"] for c in m["controls"] if c["kind"] == "knob" and c["id"] == 2)

@@ -32,6 +32,7 @@ func run() -> void:
 	view.bridge.set_process(false)
 	var module := {"id": "10", "plugin": "Test", "model": "Panel", "x": 0, "y": 0, "width": 90, "height": 380, "screens": [{"kind": "display", "x": 5, "y": 150, "width": 80, "height": 70}], "controls": [{"id": 2, "kind": "knob", "physical": true, "label": "Frequency", "display": "440 Hz", "x": 45, "y": 100, "width": 30, "height": 30, "normalized": 0.5}]}
 	var other: Dictionary = module.duplicate(true)
+	module.controls[0]["body_color"] = "#dd6622"
 	other["id"] = "11"
 	other["x"] = 90
 	var state := {"type": "snapshot", "generation": "1", "modules": [module, other], "cables": [], "overlay_mode": "none"}
@@ -49,14 +50,53 @@ func run() -> void:
 	view.rack_case.sync([module])
 	check(view.rack_case.bounds.size.x < original_bounds.size.x, "Case must shrink after removal")
 	var panel = view.modules["10"]
+	var artwork := Image.create(180, 760, false, Image.FORMAT_RGBA8)
+	artwork.fill(Color.RED)
+	panel.apply_surface(artwork)
+	var original_texture: ImageTexture = panel.texture
+	artwork.fill(Color.BLUE)
+	panel.apply_surface(artwork)
+	check(panel.texture == original_texture, "Same-size panel frames must reuse the existing texture")
+	# The dummy headless renderer retains the initial image instead of uploading updates.
+	if DisplayServer.get_name() != "headless":
+		check(panel.texture.get_image().get_pixel(0, 0).is_equal_approx(Color.BLUE), "GPU texture updates must contain fresh panel pixels")
+	var resized := Image.create(90, 380, false, Image.FORMAT_RGBA8)
+	panel.apply_surface(resized)
+	check(panel.texture == original_texture and panel.texture.get_width() == 90, "Changed panel dimensions must still resize the existing texture safely")
+	var knob: Node3D = panel.knobs["2"].node
+	check(knob.get_node("ColourCap").material_override.albedo_color.is_equal_approx(Color("#dd6622")), "Knob cap must preserve the colour supplied by the original native SVG")
+	var marker: MeshInstance3D = knob.get_node("ValueIndicator")
+	check(marker.material_override.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED and marker.position.z > 0.015, "The value marker must stay bright and in front of the knob cap")
+	var white_data: Dictionary = module.duplicate(true)
+	white_data.controls[0].body_color = "#ffffff"
+	var white_view = load("res://scripts/module_view.gd").new()
+	root.add_child(white_view)
+	white_view.setup(white_data)
+	check(white_view.knobs["2"].node.get_node("ValueIndicator").material_override.albedo_color == Color.BLACK, "White knobs must use a black position marker")
+	white_view.queue_free()
+	var changed: Dictionary = module.duplicate(true)
+	changed.controls[0].normalized = 0.8
+	panel.update_state(changed)
+	check(is_equal_approx(knob.rotation.z, -lerpf(-2.6, 2.6, 0.8)), "Live normalized values must visibly rotate the knob marker")
+	panel.update_state(module)
 	check(view.header_panel.size.y <= 65 and not view.settings_panel.visible, "Header must occupy a single compact row with view settings hidden")
 	var alternate: Dictionary = module["controls"][0].duplicate(true)
 	alternate["id"] = 3
 	alternate["visible"] = false
 	module["controls"].append(alternate)
 	var overlap = load("res://scripts/module_view.gd").new()
+	module["controls"].append({"id": 4, "kind": "light", "physical": false, "x": 30, "y": 200, "width": 6, "height": 6, "emission_r": 0.0, "emission_g": 0.8, "emission_b": 0.2})
 	view.rack.add_child(overlap)
 	overlap.setup(module)
+	var led_material: StandardMaterial3D = overlap.lights["4"].material_override
+	check(led_material.emission.is_equal_approx(Color(0, 0.8, 0.2)), "Composite and multicolor LEDs must follow direct native RGB values")
+	var dark: Dictionary = module.duplicate(true)
+	dark.controls[-1].emission_g = 0.0
+	dark.controls[-1].emission_b = 0.0
+	overlap.update_state(dark)
+	check(led_material.emission == Color.BLACK and led_material.albedo_color.r < 0.03, "An unlit sequencer LED must remain dark instead of showing an artificial minimum brightness")
+	overlap.update_state(module)
+	module["controls"].pop_back()
 	check(not overlap.control_nodes["knob/3/"].visible and overlap.control_nodes["knob/2/"].visible, "Hidden alternate controls must not draw duplicate markers")
 	module["controls"][0]["visible"] = false
 	alternate["visible"] = true
@@ -67,6 +107,10 @@ func run() -> void:
 	overlap.queue_free()
 	var live_texture := Image.create(180, 760, false, Image.FORMAT_RGBA8)
 	panel.apply_surface(live_texture)
+	var refreshed: Dictionary = state.duplicate(true)
+	refreshed.generation = "2"
+	view._on_message(refreshed)
+	check(view.modules["10"] == panel and panel.texture != null, "Topology refreshes must preserve panel textures of unchanged modules")
 	check(panel.screens.size() == 1 and panel.screens[0].display_material.get_shader_parameter("panel_texture") == panel.texture, "Screens must reuse the live native texture")
 	var screen: Vector2 = view.camera.unproject_position(panel.to_global(Vector3(45 * 0.002, -100 * 0.002, 0)))
 	var hit: Dictionary = view._hit(screen)

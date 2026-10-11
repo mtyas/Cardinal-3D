@@ -14,3 +14,5 @@ godot/tests/*.vcv
 .idea/
 .vscode/
 dist/
+embedded/*.o
+embedded/.sconsign.dblite

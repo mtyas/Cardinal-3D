@@ -23,9 +23,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Restore pinned Windows dependency toolchain
+        if: inputs.reuse_run == ''
+        id: pawpaw-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/PawPawBuilds
+          key: pawpaw-win64-ubuntu22-${{ hashFiles('upstream.lock.json') }}-v1
       - name: Build pinned Windows x64 runtime and package frontend
         if: inputs.reuse_run == ''
         run: bash scripts/build_windows.sh
+      - name: Preserve dependency toolchain even if application linking fails
+        if: always() && inputs.reuse_run == '' && steps.pawpaw-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/PawPawBuilds
+          key: pawpaw-win64-ubuntu22-${{ hashFiles('upstream.lock.json') }}-v1
       - name: Verify the previous runtime has identical native sources
         if: inputs.reuse_run != ''
         env:
