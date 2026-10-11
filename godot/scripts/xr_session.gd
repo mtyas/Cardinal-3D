@@ -218,6 +218,7 @@ var popup_release := false
 var rack_layout
 var turn_velocity := 0.0
 var tutorial
+var tutorial_pending := false
 
 func _visible_popup(node: Node) -> PopupMenu:
 	for child in node.get_children(true):
@@ -377,7 +378,8 @@ func setup(view) -> bool:
 	active = true
 	var refresh := interface.get_display_refresh_rate()
 	Engine.physics_ticks_per_second = int(round(refresh)) if refresh >= 60 and refresh <= 144 else 90
-	tutorial.start.call_deferred(true)
+	# Wait for the focused, tracked session before positioning the startup guide.
+	tutorial_pending = true
 	return true
 
 func _make_ui() -> void:
@@ -927,6 +929,9 @@ func _physics_process(delta: float) -> void:
 		was_focused = false
 		return
 	_sync_layout()
+	if tutorial_pending:
+		tutorial_pending = false
+		tutorial.start(true)
 	_refresh_ui()
 	was_focused = true
 	for side: String in devices:
