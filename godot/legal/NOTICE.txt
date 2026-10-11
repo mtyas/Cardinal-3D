@@ -24,9 +24,9 @@ artwork asset from the software licence. Ko-fi support is voluntary and
 does not grant extra rights to bundled third-party artwork.
 
 Quest 2 / Touch names identify compatible hardware; no Meta endorsement.
-The controller teaching image is an original AI-assisted illustration based
-on that hardware, not a Meta product photograph. Its callouts are added by
-this project. Documentation and project-original graphics: GPL-3.0-or-later.
+The controller teaching diagram was created and supplied by mtyas for this
+project, not a Meta product photograph. Its action legend is added by this
+project. Documentation and project-original graphics: GPL-3.0-or-later.
 System fonts are used from Windows and are not redistributed.
 
 Source and build instructions: https://github.com/mtyas/Cardinal-3D

@@ -92,8 +92,7 @@ func setup(client: CardinalBridgeClient) -> void:
 	sort_picker.tooltip_text = "Order modules by"
 	sort_picker.item_selected.connect(func(_index: int): _filter(); _reset_scroll())
 	header.add_child(sort_picker)
-	var close := Button.new(); close.text = "Close"
-	close.pressed.connect(close_browser)
+	var close := preload("res://scripts/ui_theme.gd").close_button(close_browser)
 	header.add_child(close)
 	filter_panel = PanelContainer.new()
 	column.add_child(filter_panel)
@@ -112,8 +111,7 @@ func setup(client: CardinalBridgeClient) -> void:
 	filter_next.custom_minimum_size = Vector2(140, 48)
 	filter_next.pressed.connect(func(): _filter_page_by(1))
 	navigation.add_child(filter_next)
-	var dismiss := Button.new(); dismiss.text = "Done"; dismiss.custom_minimum_size = Vector2(100, 48)
-	dismiss.pressed.connect(func(): filter_panel.hide())
+	var dismiss := preload("res://scripts/ui_theme.gd").close_button(func(): filter_panel.hide())
 	navigation.add_child(dismiss)
 	filter_grid = GridContainer.new(); filter_grid.columns = 4
 	filter_column.add_child(filter_grid)

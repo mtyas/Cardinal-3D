@@ -19,7 +19,7 @@ The portable download includes the runtime. Python, Docker and compiling are not
 
 ## Your hands on the instrument
 
-Trigger + wrist twist adjusts knobs and faders. Hold the grip as well for ten times finer wrist control; the B menu sets your normal sensitivity. A opens the browser. B opens the main menu, or a selected module's own context menu. Grip + B always opens the main menu.
+Trigger + wrist twist adjusts knobs and faders. Hold the grip as well for ten times finer wrist control; the B menu sets your normal sensitivity. A opens the browser. B always opens the main menu. Select a module, then press grip + B for its context menu. Menu windows have a close button at the top right.
 
 The sticks pan and zoom; grip + stick moves vertically and turns your viewpoint. In menus and the browser, the stick scrolls. Move modules from their title strips using an insertion ghost. Connect, repatch and unplug cables through their sockets, with native undo.
 

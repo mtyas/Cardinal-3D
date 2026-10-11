@@ -66,14 +66,14 @@ func _run():
 	session._close_ui()
 	var selected = scene.modules.values()[0]
 	session._select_module({"view": selected, "pixel": Vector2(20, 8), "world": selected.global_position, "kind": "module"})
-	session._toggle_menu()
+	session._toggle_menu(true)
 	for _attempt in range(40):
 		if scene.overlay.visible: break
 		await create_timer(0.05).timeout
-	assert(scene.overlay.visible and scene.overlay_mode == "menu", "B on a selected module must display its native menu in the embedded frontend")
+	assert(scene.overlay.visible and scene.overlay_mode == "menu", "Grip + B on a selected module must display its native menu in the embedded frontend")
 	session._refresh_ui()
 	assert(session.ui_panel.visible)
-	assert(session.ui_rect == scene.overlay.get_global_rect().grow(8), "Module menus must crop the floating panel to their actual clickable rectangle")
+	assert(session.ui_rect == scene.overlay.get_global_rect().grow_individual(8, 52, 8, 8), "Module menus must include their top-right close button in the clickable rectangle")
 	if DisplayServer.get_name() != "headless":
 		await process_frame
 		await process_frame

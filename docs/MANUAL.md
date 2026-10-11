@@ -22,15 +22,15 @@ Your computer needs Windows x64, a graphics card supported by Quest Link and the
 |---|---|
 | Trigger | Click; hold to adjust a control, patch a cable or drag a title/case |
 | Right A / left X | Open or close the module browser |
-| Right B / left Y | Main menu; selected module's native menu when a module is selected |
-| Grip + B/Y | Always open the main menu |
+| Right B / left Y | Always open the main menu; press again to close it |
+| Grip + B/Y | Open the selected module's native context menu |
 | Joystick | Pan left/right and move closer/farther; scroll when a menu/browser is open |
 | Grip + joystick | Raise/lower your viewpoint; turn left/right around your head |
 | Trigger + wrist twist | Turn a knob or move a fader |
 | Trigger + grip + wrist twist | Ten times finer knob/fader adjustment |
 | Trigger on a case edge, in Layout mode | Aim to position; twist wrist to rotate upright; stick up/down changes distance |
 
-The Oculus/system button remains a headset control, not an app shortcut. The right-controller illustration is an original teaching render; A/X and B/Y are the corresponding shortcuts on either hand. Tracked hand pointing/pinching is available when the PC OpenXR runtime exposes it, but the controller grip shortcuts are controller actions.
+The Oculus/system button remains a headset control, not an app shortcut. The right-controller diagram was created by mtyas; its R1 marker means joystick, R2 means trigger and R3 means grip. A/X and B/Y are the corresponding shortcuts on either hand. Tracked hand pointing/pinching is available when the PC OpenXR runtime exposes it, but the controller grip shortcuts are controller actions.
 
 ## 3. Play knobs, faders and small selectors
 
@@ -46,7 +46,7 @@ Click switches and buttons with the trigger. In MixMaster, the small arrows besi
 
 Press A/X. Use Search, Manufacturer and Type to narrow the list; filter choices use large buttons. The stick scrolls the module gallery or an open filter list. Click a preview; the highlight and selection text show what you chose. **Add selected module** inserts it and closes the browser. New modules go into the active rack and use native non-overlapping placement. Titles belong to the preview immediately underneath them.
 
-To move a module, hold only its top title strip. A placement ghost shows the destination and neighbours that will slide aside. Release to commit the move. Selecting its title also makes B/Y open that module's native context menu, including its duplicate, delete and other available options. Use Undo for reversible patch edits.
+To move a module, hold only its top title strip. A placement ghost shows the destination and neighbours that will slide aside. Release to commit the move. Select its title, then hold grip and press B/Y to open that module's native context menu, including its duplicate, delete and other available options. B/Y alone always opens the main menu. Close menu windows with the × at the top right. Use Undo for reversible patch edits.
 
 ## 5. Patch and unplug cables
 

@@ -220,6 +220,7 @@ func _build_ui() -> void:
 	settings_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	settings_title.add_theme_color_override("font_color", Color("62e4ca"))
 	settings_heading.add_child(settings_title)
+	settings_heading.add_child(preload("res://scripts/ui_theme.gd").close_button(func(): settings_panel.hide()))
 	settings_hint = Label.new()
 	settings_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	settings_shell.add_child(settings_hint)
@@ -354,6 +355,11 @@ func _build_ui() -> void:
 	overlay.focus_mode = Control.FOCUS_ALL
 	overlay.gui_input.connect(_overlay_input)
 	root.add_child(overlay)
+	var menu_close := preload("res://scripts/ui_theme.gd").close_button(func(): bridge.send_command("escape"); overlay.hide())
+	overlay.add_child(menu_close)
+	menu_close.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	menu_close.position = Vector2(overlay.size.x - 44, -44)
+	overlay.resized.connect(func(): menu_close.position = Vector2(overlay.size.x - 44, -44))
 	dialog = FileDialog.new()
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
 	dialog.filters = PackedStringArray(["*.vcv ; Cardinal patch"])

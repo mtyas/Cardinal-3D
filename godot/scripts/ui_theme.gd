@@ -1,5 +1,15 @@
 extends RefCounted
 
+static func close_button(action: Callable) -> Button:
+	var button := Button.new()
+	button.name = "WindowClose"
+	button.icon = icon("close")
+	button.tooltip_text = "Close"
+	button.custom_minimum_size = Vector2(44, 44)
+	button.add_theme_constant_override("icon_max_width", 24)
+	button.pressed.connect(action)
+	return button
+
 static func icon(kind: String) -> Texture2D:
 	var shapes := {
 		"racks": '<rect x="5" y="8" width="38" height="14" rx="2"/><rect x="5" y="27" width="38" height="14" rx="2"/><path d="M13 12v6m9-6v6m9-6v6M13 31v6m9-6v6m9-6v6"/>',

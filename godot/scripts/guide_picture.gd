@@ -3,12 +3,13 @@ extends Control
 var page := 0:
 	set(value):
 		page = value
+		custom_minimum_size = Vector2(560, 280 if page in [0, 2] else 175)
 		queue_redraw()
 const INK := Color("d9e9f3")
 const ACCENT := Color("62e4ca")
 const GOLD := Color("ffcd83")
 func _ready() -> void:
-	custom_minimum_size = Vector2(560, 175)
+	custom_minimum_size = Vector2(560, 280 if page in [0, 2] else 175)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 func line(a: Vector2, b: Vector2, color := ACCENT) -> void: draw_line(a, b, color, 3, true)
 func words(at: Vector2, text: String, color := INK) -> void:
@@ -59,13 +60,21 @@ func _draw() -> void:
 			words(Vector2(240, 65), "YOUR SPACE", ACCENT)
 func controller() -> void:
 	var image := preload("res://assets/quest2-controller.png")
-	draw_texture_rect(image, Rect2(185, 0, 165, 175), false)
-	words(Vector2(20, 35), "RIGHT TOUCH", GOLD)
-	line(Vector2(264, 67), Vector2(150, 67)); words(Vector2(20, 63), "STICK · Move")
-	line(Vector2(291, 79), Vector2(370, 44)); words(Vector2(380, 48), "B · Menu")
-	line(Vector2(281, 92), Vector2(370, 80)); words(Vector2(380, 84), "A · Browser")
-	line(Vector2(279, 119), Vector2(370, 123)); words(Vector2(380, 127), "GRIP · Fine", GOLD)
-	line(Vector2(238, 107), Vector2(150, 145)); words(Vector2(20, 163), "TRIGGER · Hold")
+	# Display the author's supplied diagram unchanged. Trim only empty canvas
+	# while preserving its proportions and its existing A/B/R1/R2/R3 markers.
+	var source := Rect2(280, 15, 625, 980)
+	var rect := Rect2(Vector2(25, 5), source.size * (270.0 / source.size.y))
+	# The supplied linework uses transparency, so its original black backing
+	# is necessary for readable contours and button markers.
+	draw_rect(rect, Color.BLACK)
+	draw_texture_rect_region(image, rect, source)
+	words(Vector2(240, 36), "RIGHT QUEST 2 TOUCH", GOLD)
+	words(Vector2(240, 74), "B · Main menu")
+	words(Vector2(240, 108), "A · Module browser")
+	words(Vector2(240, 142), "R1 · Joystick / scroll")
+	words(Vector2(240, 176), "R2 · Trigger / hold")
+	words(Vector2(240, 210), "R3 · Grip / fine control", GOLD)
+	words(Vector2(240, 250), "R3 + B · Module menu", GOLD)
 func draw_bezier_curve(a: Vector2, b: Vector2, c: Vector2, d: Vector2, color: Color, width: float) -> void:
 	var points := PackedVector2Array()
 	for i in range(33): points.append(a.bezier_interpolate(b, c, d, float(i) / 32))

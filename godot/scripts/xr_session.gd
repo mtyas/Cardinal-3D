@@ -428,7 +428,11 @@ func _make_ui() -> void:
 	title.text = "Cardinal 3D"
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color("62e4ca"))
-	column.add_child(title)
+	var heading := HBoxContainer.new()
+	column.add_child(heading)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_child(title)
+	heading.add_child(preload("res://scripts/ui_theme.gd").close_button(_close_ui))
 	var subtitle := Label.new()
 	subtitle.text = "Your instruments. Your space."
 	column.add_child(subtitle)
@@ -500,7 +504,7 @@ func _refresh_ui() -> void:
 		var menu_rect := main_menu.get_global_rect().grow(8)
 		if menu_rect.has_area(): ui_rect = menu_rect
 	elif host.overlay.visible and host.overlay_mode == "menu" and not host.module_browser.visible and not host.dialog.visible and not host.settings_panel.visible:
-		ui_rect = host.overlay.get_global_rect().grow(8)
+		ui_rect = host.overlay.get_global_rect().grow_individual(8, 52, 8, 8)
 	elif host.settings_panel.visible and not main_menu.visible and not host.module_browser.visible and not host.dialog.visible and not host.overlay.visible:
 		ui_rect = host.settings_panel.get_global_rect().grow(8)
 	var window_bounds := _window_bounds(ui_viewport) if visible_ui else Rect2()
@@ -525,19 +529,19 @@ func _close_ui() -> void:
 	host.module_browser.close_browser()
 	host.settings_panel.hide()
 	host.dialog.hide()
+	host.overlay.hide()
 	host.bridge.send_command("escape")
 	_refresh_ui()
 
-func _toggle_menu(force_main := false) -> void:
-	if tutorial != null and tutorial.visible: _close_ui(); return
-	if host.overlay.visible: _close_ui(); return
-	if main_menu.visible: _close_ui(); return
-	if _valid_selection() and not force_main:
+func _toggle_menu(module_context := false) -> void:
+	if module_context:
+		if host.overlay.visible: _close_ui(); return
+		if not _valid_selection(): return
+		_close_ui()
 		_context_menu(selected_module)
 		return
-	cancel()
-	host.module_browser.close_browser()
-	host.bridge.send_command("escape")
+	if main_menu.visible: _close_ui(); return
+	_close_ui()
 	_place_ui()
 	main_menu.show()
 	_refresh_ui()
@@ -553,13 +557,13 @@ func _toggle_browser() -> void:
 	host.module_browser.show_browser()
 	_refresh_ui()
 
-func _menu_buttons(side: String, browse: bool, menu: bool, force_main := false) -> void:
+func _menu_buttons(side: String, browse: bool, menu: bool, module_context := false) -> void:
 	var previous: Dictionary = button_states.get(side, {"browse": false, "menu": false})
 	if browse and not previous.browse:
 		_toggle_browser()
 		print("XR browser button received: ", side)
 	if menu and not previous.menu:
-		_toggle_menu(force_main)
+		_toggle_menu(module_context)
 		print("XR menu button received: ", side, "; main=", main_menu.visible, "; module=", host.overlay.visible, "; selected=", _valid_selection())
 		_record_menu_frame()
 	button_states[side] = {"browse": browse, "menu": menu}

@@ -2,7 +2,7 @@ extends PanelContainer
 const PAGES := [
 	["Welcome to Cardinal 3D", "Point a controller’s ray at a control. Use the trigger to click or hold.\n\nYou can skip this guide now and open it again from the B menu."],
 	["Knobs & faders", "Point at a knob or fader and hold the trigger. Twist your wrist to adjust it; set your preferred wrist speed in the B menu.\n\nKeep the trigger held and squeeze the grip for ten times finer wrist adjustment. Let go of the grip to return to normal speed. Distance movement never changes the value."],
-	["Browse & menus", "A opens the module browser. Use the joystick to scroll, click a module, then choose Add.\n\nB opens the main menu. Select a module by its top strip, then B opens its own menu. Grip + B always opens the main menu."],
+	["Browse & menus", "A opens the module browser. Use the joystick to scroll, click a module, then choose Add.\n\nB always opens the main menu. Select a module by its top strip, then hold grip and press B for its context menu. Use the × in a window’s top-right corner to close it."],
 	["Move your viewpoint", "The joystick pans left/right and moves closer/farther.\n\nHold the grip: up/down raises or lowers you; left/right turns your view. In menus, the joystick scrolls instead."],
 	["Modules & cables", "Hold a module’s top strip to show its placement ghost. Release to place it.\n\nHold an output socket and release on an input to connect a cable. Grab an input plug, pull it clear, and release away from sockets to unplug it."],
 	["Arrange your racks", "Open B → Rack management and enable Layout mode. Add creates a case beside the selected rack.\n\nHold a case edge and aim the pointer to place it, including up/down. The stick pushes/pulls it along your ray. Twist your wrist to turn the case upright. Switch Layout mode off before performing."],
@@ -32,7 +32,11 @@ func setup(owner_session) -> void:
 	add_child(column)
 	heading = Label.new()
 	heading.add_theme_font_size_override("font_size", 28)
-	column.add_child(heading)
+	var title_row := HBoxContainer.new()
+	column.add_child(title_row)
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(heading)
+	title_row.add_child(preload("res://scripts/ui_theme.gd").close_button(finish))
 	progress = Label.new()
 	column.add_child(progress)
 	steps = ProgressBar.new()
