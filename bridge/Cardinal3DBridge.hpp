@@ -55,6 +55,15 @@ inline std::string encode(json_t* value) {
     std::string result = buffer ? buffer : "null";
     free(buffer); return result;
 }
+inline bool absolutePath(const std::string& path) {
+#ifdef _WIN32
+    return (path.size() >= 3 && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z'))
+        && path[1] == ':' && (path[2] == '/' || path[2] == '\\'))
+        || (path.size() > 2 && ((path[0] == '\\' && path[1] == '\\') || (path[0] == '/' && path[1] == '/')));
+#else
+    return !path.empty() && path[0] == '/';
+#endif
+}
 
 class Bridge {
     Transport transport;
@@ -140,7 +149,9 @@ class Bridge {
     std::string kind(widget::Widget* widget) const {
         if (dynamic_cast<app::SvgSlider*>(widget)) return "slider";
         if (dynamic_cast<app::SvgKnob*>(widget)) return "knob";
+        if (dynamic_cast<app::Knob*>(widget)) return "knob";
         if (dynamic_cast<app::SvgSwitch*>(widget)) return "switch";
+        if (dynamic_cast<app::Switch*>(widget)) return "switch";
         if (dynamic_cast<app::SvgPort*>(widget)) return "port";
         if (dynamic_cast<app::SvgScrew*>(widget)) return "screw";
         if (dynamic_cast<app::ModuleLightWidget*>(widget)) return "light";
@@ -151,6 +162,10 @@ class Bridge {
     bool physical(app::ModuleWidget* mw, widget::Widget* w) const {
         const std::string k = kind(w);
         if (k.empty() || k == "custom") return false;
+        // Identify native rotary/button input semantics while retaining exact
+        // custom-painted faces until a matching 3D visual is available.
+        if (k == "knob" && !dynamic_cast<app::SvgKnob*>(w)) return false;
+        if (k == "switch" && !dynamic_cast<app::SvgSwitch*>(w)) return false;
         // Illuminated switches must keep their composite appearance on the surface.
         if (dynamic_cast<app::Switch*>(w)) {
             bool composite = false;
@@ -549,7 +564,10 @@ class Bridge {
             if (path.empty() || path[0] != '/') throw std::runtime_error("An absolute patch path is required");
 #endif
             if (op == "save") { APP->patch->save(path); APP->patch->path = path; APP->history->setSaved(); }
-            else { ++generation; APP->patch->loadAction(path); surfaceTimes.clear(); }
+            else {
+                if (!system::isFile(path)) throw std::runtime_error("Patch file does not exist");
+                ++generation; APP->patch->loadAction(path); surfaceTimes.clear();
+            }
         } else if (op == "overlay") overlayRequested = json_is_true(json_object_get(cmd, "enabled"));
         else if (op == "reset_hovered") {
             auto* param = dynamic_cast<app::ParamWidget*>(APP->event->hoveredWidget);
@@ -577,7 +595,7 @@ class Bridge {
         APP->history->push(APP->scene->rack->getModuleDragAction()); movingModule.clear();
     }
     void describeLibrary(const std::string& path) {
-        if (path.empty() || path[0] != '/') throw std::runtime_error("An absolute report path is required");
+        if (!absolutePath(path)) throw std::runtime_error("An absolute report path is required");
         if (scanReport) throw std::runtime_error("Library scan already active");
         release(); scanReport = json_object(); scanPath = path; scanIndex = 0; scanModels.clear();
         string(scanReport, "type", "library_report");
@@ -653,10 +671,20 @@ public:
         try {
             refreshTopology();
             if (cmd) {
-                try { command(cmd); refreshTopology(); ack(cmd); }
+                try {
+                    command(cmd); refreshTopology();
+                    if (text(cmd, "op") == "describe_library") scanCommand = json_incref(cmd);
+                    else ack(cmd);
+                }
                 catch (const std::exception& e) { ack(cmd, e.what()); }
             }
             APP->scene->step();
+            scanStep();
+            const std::string mode = overlayMode();
+            if (mode != previousOverlayMode) {
+                surfaceHashes.erase("scene"); surfaceTimes.erase("scene");
+                previousOverlayMode = mode;
+            }
             snapshot();
             const std::string result = encode(localMessages);
             json_decref(localMessages); localMessages = nullptr;
@@ -730,21 +758,28 @@ public:
     void render() {
         if ((!enabled && !inProcessMode) || !authenticated || !APP->window->fbVg) return;
         const double now = system::getTime();
-        if (now - lastSurface < 1.0/30) return;
+        if (!inProcessMode && now - lastSurface < 1.0/30) return;
         auto modules = APP->scene->rack->getModules();
         const bool overlay = overlayVisible();
         const size_t count = modules.size() + previews.size() + (overlay ? 1 : 0);
         if (!count) return;
         widget::Widget* root = nullptr; app::ModuleWidget* mw = nullptr;
         std::string id;
-        for (size_t tries = 0; tries < count; ++tries) {
+        if (inProcessMode && overlay && now - surfaceTimes["scene"] > 1.0 / 60) {
+            root = APP->scene; id = "scene";
+        }
+        for (size_t tries = 0; !root && tries < count; ++tries) {
             size_t index = surfaceIndex++ % count;
             const bool isPreview = index >= modules.size() && index < modules.size() + previews.size();
             if (isPreview && surfaceHashes.count(previews[index - modules.size()].first)) continue;
             mw = index < modules.size() ? modules[index] : isPreview ? previews[index - modules.size()].second.get() : nullptr;
             root = mw ? static_cast<widget::Widget*>(mw) : APP->scene;
             id = isPreview ? previews[index - modules.size()].first : mw ? std::to_string(mw->module->id) : "scene";
-            if (now - surfaceTimes[id] > (mw ? 0.12 : 0.1)) break;
+            const bool liveDisplay = mw && ((mw->model->plugin->slug == "Fundamental" &&
+                (mw->model->slug == "Scope" || mw->model->slug == "ADSR" || mw->model->slug == "VCA-1")) ||
+                (mw->model->plugin->slug == "AudibleInstruments" && mw->model->slug == "Braids"));
+            const double interval = inProcessMode && (liveDisplay || !mw || id == activeModule) ? 1.0 / 60 : mw ? 0.12 : 0.1;
+            if (now - surfaceTimes[id] > interval) break;
             root = nullptr;
         }
         if (!root) return;

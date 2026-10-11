@@ -2,6 +2,12 @@
 
 Playable macOS desktop prototype: Godot renders the rack; the pinned Cardinal standalone owns the audio, controls, connections, undo history and native `.vcv` files. No audio is transported to Godot.
 
+Windows/Quest Link also has an experimental single-process host with the full
+1,412-model Cardinal library, native audio, original artwork and context menus,
+output/MIDI input settings and patch recovery. It builds locally and keeps the
+tested two-process Quest version available. See [embedded host status and remaining
+acceptance work](docs/STANDALONE.md) and [build/check commands](embedded/README.md).
+
 ## Run on this Mac
 
 The tools and prototype are already built in this workspace:

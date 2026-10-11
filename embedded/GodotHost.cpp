@@ -34,6 +34,8 @@ protected:
         ClassDB::bind_method(D_METHOD("panel_image", "module_id"), &CardinalEmbeddedHost::panel_image);
         ClassDB::bind_method(D_METHOD("render_surface"), &CardinalEmbeddedHost::render_surface);
         ClassDB::bind_method(D_METHOD("surface_image"), &CardinalEmbeddedHost::surface_image);
+        ClassDB::bind_method(D_METHOD("push_midi", "bytes"), &CardinalEmbeddedHost::push_midi);
+        ClassDB::bind_method(D_METHOD("midi_panic"), &CardinalEmbeddedHost::midi_panic);
     }
 public:
     ~CardinalEmbeddedHost() { close(); }
@@ -74,6 +76,10 @@ public:
         return result;
     }
     Ref<AudioStream> create_audio_stream();
+    bool push_midi(const PackedByteArray& bytes) {
+        return host && c3d_push_midi(host, bytes.ptr(), uint32_t(bytes.size()));
+    }
+    bool midi_panic() { return host && c3d_midi_panic(host); }
     String render_surface() {
         const char* text = host ? c3d_render_surface(host) : nullptr;
         return text ? String::utf8(text) : String();

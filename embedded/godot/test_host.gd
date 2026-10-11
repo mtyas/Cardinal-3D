@@ -28,7 +28,9 @@ func _run():
 	var models = 0
 	for message in messages:
 		if message.type == "catalog": models = message.models.size()
-	assert(models == 190, "Original registry must be available without TCP")
+	var minimum_models := int(OS.get_environment("CARDINAL_EMBEDDED_MINIMUM_MODELS"))
+	if minimum_models == 0: minimum_models = 190
+	assert(models >= minimum_models, "Original registry must be available without TCP: " + str(models))
 	if OS.get_environment("CARDINAL_EMBEDDED_REQUIRE_GRAPHICS") == "1":
 		var surface_header := ""
 		for _attempt in range(20):
@@ -111,5 +113,5 @@ func _run():
 	var after = JSON.parse_string(host.patch_json())
 	assert(before.modules == after.modules and before.cables == after.cables)
 	assert(host.close())
-	print("PASS: Cardinal DSP inside Godot; offline and real audio-thread playback; native patch roundtrip; direct 190-model catalog")
+	print("PASS: Cardinal DSP inside Godot; offline and real audio-thread playback; native patch roundtrip; direct %d-model catalog" % models)
 	quit(0)

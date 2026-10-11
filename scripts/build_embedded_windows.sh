@@ -18,12 +18,16 @@ set +u
 source deps/PawPaw/local.env win64
 set -u
 args=(-j"${CARDINAL_3D_BUILD_JOBS:-4}" STATIC_BUILD=true PKG_CONFIG=false NOPLUGINS=true CARDINAL_3D_PROTOTYPE=true HEADLESS=true NOOPT=true)
+if [[ "${CARDINAL_EMBEDDED_FULL:-0}" == 1 ]]; then
+    args=(-j"${CARDINAL_3D_BUILD_JOBS:-4}" STATIC_BUILD=true PKG_CONFIG=false NOPLUGINS=false CARDINAL_3D_PROTOTYPE=false HEADLESS=false NOOPT=true)
+    make -C deps all "${args[@]}"
+fi
 make -C plugins plugins.a "${args[@]}" HEADLESS=false
-make -C src rack-headless.a "${args[@]}"
 if [[ "${CARDINAL_EMBEDDED_GRAPHICS:-0}" == 1 ]]; then
     make -C src rack.a "${args[@]}" HEADLESS=false
     make -C src/CardinalEmbedded embedded "${args[@]}" HEADLESS=false EMBEDDED_GRAPHICS=true
 else
+    make -C src rack-headless.a "${args[@]}"
     make -C src/CardinalEmbedded embedded "${args[@]}"
 fi
 mkdir -p "$root/dist/embedded"
@@ -49,3 +53,6 @@ rsync -a --exclude=.godot --exclude=tests --exclude='*.vcv' godot/ dist/embedded
 cp embedded/godot/cardinal_embedded.gdextension dist/embedded/rack/
 cp dist/embedded/godot/bin/*.dll dist/embedded/rack/bin/
 cp embedded/godot/test_rack.gd dist/embedded/rack/
+if [[ "${CARDINAL_EMBEDDED_FULL:-0}" == 1 ]]; then
+    python3 scripts/package_embedded_resources.py
+fi

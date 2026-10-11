@@ -8,6 +8,10 @@ var panel_requests: Dictionary = {}
 var panels: Dictionary = {}
 var local_snapshot := {}
 var native_surface_count := 0
+var recovery_path := ""
+var closed := false
+var recovery_elapsed := 0.0
+var recovery_saved := true
 
 func _ready() -> void:
 	_boot.call_deferred()
@@ -20,10 +24,12 @@ func _boot() -> void:
 	var resources := OS.get_environment("CARDINAL_EMBEDDED_RESOURCES")
 	var user_path := OS.get_environment("CARDINAL_EMBEDDED_USER_DIR")
 	if user_path.is_empty(): user_path = ProjectSettings.globalize_path("user://embedded")
+	recovery_path = user_path.path_join("autosave.vcv")
 	if not native.initialize(resources, user_path, AudioServer.get_mix_rate(), 256):
 		push_error(native.last_error())
 		return
 	var patch := OS.get_environment("CARDINAL_EMBEDDED_PATCH")
+	if patch.is_empty() and FileAccess.file_exists(recovery_path): patch = recovery_path
 	if not patch.is_empty() and not native.load_patch(patch):
 		push_error(native.last_error())
 		native.close()
@@ -51,11 +57,11 @@ func send_command(operation: String, data: Dictionary = {}) -> int:
 	commands.append(command)
 	return command.request
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if not connected: return
 	for _index in range(mini(commands.size(), 8)):
 		var result: String = native.messages_json(JSON.stringify(commands[0]))
-		if result.is_empty(): break # Audio owns this instant; retry next frame.
+		if result.is_empty(): break # Retry a temporarily unavailable owner operation.
 		commands.pop_front()
 		_ingest(result)
 	var state: String = native.messages_json("")
@@ -68,6 +74,10 @@ func _process(_delta: float) -> void:
 		if header is Dictionary and image != null:
 			native_surface_count += 1
 			surface_received.emit(header, image)
+	recovery_elapsed += delta
+	if recovery_elapsed >= 120.0 and commands.is_empty():
+		recovery_elapsed = 0.0
+		_save_recovery()
 
 func _ingest(payload: String) -> void:
 	var messages: Variant = JSON.parse_string(payload)
@@ -109,11 +119,32 @@ func _load_panels(budget: int) -> void:
 		surface_received.emit({"module": id, "generation": generation}, image)
 
 func shutdown() -> bool:
+	if closed: return true
+	if connected and native != null:
+		recovery_saved = _save_recovery()
+		if not recovery_saved: push_error("Could not save embedded recovery patch: " + native.last_error())
 	connected = false
 	commands.clear()
 	if audio_player != null: audio_player.stop()
 	if audio_playback != null: audio_playback.stop()
-	return native == null or native.close()
+	closed = native == null or native.close()
+	return recovery_saved and closed
+
+func _save_recovery() -> bool:
+	var next_path := recovery_path + ".next.vcv"
+	if not native.save_patch(next_path): return false
+	if FileAccess.file_exists(recovery_path):
+		if DirAccess.copy_absolute(recovery_path, recovery_path + ".bak") != OK: return false
+	return DirAccess.rename_absolute(next_path, recovery_path) == OK
 
 func _exit_tree() -> void:
-	shutdown()
+	if not shutdown() and native != null:
+		_close_when_idle(native, get_tree())
+
+static func _close_when_idle(host, tree: SceneTree) -> void:
+	# An in-flight audio callback owns the host until its final block completes.
+	# Retain it outside the departing node and close on the original UI thread.
+	for _attempt in range(30):
+		if host.close(): return
+		await tree.process_frame
+	push_error("Embedded audio callback did not release its host during shutdown")

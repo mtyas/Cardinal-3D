@@ -303,7 +303,7 @@ func _make_ui() -> void:
 		["Undo", func(): host.bridge.send_command("undo")],
 		["Redo", func(): host.bridge.send_command("redo")],
 		["Bring rack here", func(): placed = false],
-		["View & lighting", func(): host.settings_panel.visible = not host.settings_panel.visible],
+		["Audio & view" if OS.get_environment("CARDINAL_3D_EMBEDDED") == "1" else "View & lighting", func(): host.settings_panel.visible = not host.settings_panel.visible],
 		["Control context menu", _context_menu],
 		["Close (B)", _close_ui]]:
 		var button := Button.new()

@@ -39,12 +39,15 @@ def main():
     parser.add_argument('--godot', type=Path, required=True)
     parser.add_argument('--resources', type=Path, required=True)
     parser.add_argument('--graphics', action='store_true')
+    parser.add_argument('--build', type=Path, default=ROOT / 'dist/embedded')
+    parser.add_argument('--minimum-models', type=int, default=190)
     args = parser.parse_args()
-    project = ROOT / 'dist/embedded/godot'
+    project = args.build.resolve() / 'godot'
     env = os.environ.copy()
     if args.graphics: env['CARDINAL_EMBEDDED_REQUIRE_GRAPHICS'] = '1'
-    run([sys.executable, ROOT / 'tests/embedded_host.py', '--dll', ROOT / 'dist/embedded/Cardinal3DEngine.dll',
-         '--resources', args.resources.resolve()], env, '"result": "PASS"')
+    env['CARDINAL_EMBEDDED_MINIMUM_MODELS'] = str(args.minimum_models)
+    run([sys.executable, ROOT / 'tests/embedded_host.py', '--dll', args.build.resolve() / 'Cardinal3DEngine.dll',
+         '--resources', args.resources.resolve(), '--minimum-models', args.minimum_models], env, '"result": "PASS"')
     godot = args.godot.resolve()
     with tempfile.TemporaryDirectory(prefix='cardinal-godot-embedded-', ignore_cleanup_errors=True) as scratch:
         clean_host = Path(scratch) / 'host'
@@ -60,7 +63,7 @@ def main():
         env['CARDINAL_EMBEDDED_USER_DIR'] = str(Path(scratch) / 'rack-settings')
         env.pop('CARDINAL_EMBEDDED_PATCH', None)
         rack = Path(scratch) / 'rack'
-        shutil.copytree(ROOT / 'dist/embedded/rack', rack, ignore=shutil.ignore_patterns('.godot'))
+        shutil.copytree(args.build.resolve() / 'rack', rack, ignore=shutil.ignore_patterns('.godot'))
         base = [godot, '--headless', '--audio-driver', 'Dummy', '--path', rack]
         run(base + ['--editor', '--quit-after', '60', '--frame-delay', '100'], env)
         run(base + ['--script', 'res://test_rack.gd'], env, 'PASS: embedded 3D starter rack')
@@ -69,6 +72,7 @@ def main():
             # headless driver. Use a separate silent, temporary desktop window.
             desktop = [godot, '--audio-driver', 'Dummy', '--path', rack,
                        '--rendering-method', 'gl_compatibility', '--resolution', '960x600']
+            env['CARDINAL_EMBEDDED_USER_DIR'] = str(Path(scratch) / 'rack-settings-desktop')
             run(desktop + ['--script', 'res://test_rack.gd'], env, 'PASS: embedded 3D starter rack')
 
 if __name__ == '__main__':

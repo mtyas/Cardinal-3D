@@ -1,14 +1,16 @@
 # Experimental embedded Windows engine
 
 This is a development target separate from the user-confirmed Quest runtime.
-It loads Cardinal DSP, the original 190-model prototype registry, native patch
+It loads Cardinal DSP, the full 1,412-model registry (or the smaller prototype), native patch
 manager, widget metadata and undo history into Godot's process. There is no
 Cardinal executable or socket in this target. Original upstream DSP is unchanged.
 
 Build locally with `scripts/build_local_windows.ps1 -Embedded` for the engine-only
 variant, or `-EmbeddedGraphics` for the original offscreen graphics backend. Both reuse the
 dedicated WSL compiler cache and writes `dist/embedded`; it does not install over
-the working VR bundle. The normal local build command is unchanged. The builder
+the working VR bundle. Use `-FullRegistry` for the full original graphics library,
+with its own `/root/cardinal3d-full` cache and `dist/embedded-full` output.
+The normal local build command is unchanged. The builder
 needs SCons (`apt-get install scons` in the dedicated build distro). Godot C++
 bindings are pinned to `e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77` (4.5 stable,
 compatible with the project's 4.5.1 runtime).
@@ -56,8 +58,27 @@ Cold editor imports use a frame delay before shutdown to avoid the confirmed
 Checks require success markers and reject native assertions/script errors;
 timeouts terminate only the test's own process tree.
 
+Full-library validation:
+
+```powershell
+scripts/build_local_windows.ps1 -FullRegistry
+py -3 scripts/check_embedded.py --graphics --build dist/embedded-full --minimum-models 1400 --godot .tools/Godot/Godot_v4.5.1-stable_win64_console.exe --resources dist/embedded-full/Cardinal
+py -3 scripts/audit_embedded_library.py --dll dist/embedded-full/Cardinal3DEngine.dll --resources dist/embedded-full/Cardinal --minimum-models 1400 --report reports/embedded-full-library.json
+py -3 scripts/freeze_embedded_windows.py
+py -3 scripts/run_embedded_windows.py --vr
+```
+
+The launch copy lives outside `dist`; compiling again does not overwrite DLLs in
+a running app. Only use the freeze command after checks pass. Development can
+launch a build directly using `--build`, but then that build must not be replaced
+while it is running. Real launches use the normal audio driver; automated tests
+use Dummy output. The embedded audio/view panel selects output devices, volume
+and MIDI inputs. Recovery is saved on shutdown and every 120 seconds, with a backup.
+Short MIDI messages use a preallocated queue; native note gates and panic are
+tested. MIDI output, SysEx and physical MIDI hardware remain acceptance work.
+
 Still required for a playable replacement: complete custom artwork coverage and
 render scheduling, hardware VR input validation, immutable state/command
-queue, complete audio/MIDI and host settings UI, all module menus, full Windows
-registry, and hardware latency comparisons. The existing VR launcher deliberately
+queue/state optimization, complete audio/MIDI and host settings UI, acceptance
+of plugin-specific menu actions, and hardware latency comparisons. The existing VR launcher deliberately
 continues using the tested two-process build until these acceptance checks pass.

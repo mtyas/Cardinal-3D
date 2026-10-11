@@ -14,6 +14,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dll', type=Path, required=True)
     parser.add_argument('--resources', type=Path, required=True, help='Portable Cardinal folder')
+    parser.add_argument('--minimum-models', type=int, default=190)
     args = parser.parse_args()
     dll = c.CDLL(str(args.dll.resolve()))
     dll.c3d_create.argtypes = [c.c_char_p, c.c_char_p, c.c_double, c.c_uint32]
@@ -31,6 +32,8 @@ def main():
     dll.c3d_messages_json.restype = c.c_char_p
     dll.c3d_panel_rgba.argtypes = [c.c_void_p, c.c_char_p, c.POINTER(c.c_uint32), c.POINTER(c.c_uint32)]
     dll.c3d_panel_rgba.restype = c.POINTER(c.c_uint8)
+    dll.c3d_push_midi.argtypes = [c.c_void_p, c.POINTER(c.c_uint8), c.c_uint32]
+    dll.c3d_midi_panic.argtypes = [c.c_void_p]
     fp = c.POINTER(c.c_float)
     dll.c3d_process.argtypes = [c.c_void_p, fp, fp, fp, fp, c.c_uint32]
     dll.c3d_process.restype = c.c_int
@@ -67,7 +70,7 @@ def main():
                 return messages
             hello = command('hello', version=1)
             catalog = next(m for m in hello if m['type'] == 'catalog')
-            assert len(catalog['models']) == 190
+            assert len(catalog['models']) >= args.minimum_models
             assert len(state['modules']) == 2 and len(state['cables']) == 1
             vco = next(m for m in state['modules'] if m['model'] == 'VCO')
             assert any(p.get('body_color') for p in vco['controls'] if p['kind'] == 'knob')
@@ -125,11 +128,35 @@ def main():
             after = json.loads(dll.c3d_patch_json(host))
             assert before['modules'] == after['modules']
             assert before['cables'] == after['cables']
+            midi_verified = False
+            if any(model['plugin'] == 'Cardinal' and model['model'] == 'HostMIDI' for model in catalog['models']):
+                midi_path = Path(scratch) / 'midi.vcv'
+                midi_path.write_text(json.dumps(dict(version='2.4.1', modules=[
+                    dict(id=1, plugin='Cardinal', model='HostMIDI', pos=[0, 0], params=[]),
+                    # Gate is DC, so bypass the audio module's normal DC blocker.
+                    dict(id=2, plugin='Cardinal', model='HostAudio2', pos=[10, 0], params=[], data=dict(dcFilter=False))],
+                    cables=[dict(id=3, outputModuleId=1, outputId=1, inputModuleId=2, inputId=0, color='#ff5252')])), encoding='utf-8')
+                assert dll.c3d_load(host, str(midi_path).encode()), dll.c3d_error(host)
+                def midi(*message):
+                    return dll.c3d_push_midi(host, (c.c_uint8 * len(message))(*message), len(message))
+                assert not midi(0x90, 60), 'Truncated channel message must be rejected'
+                assert midi(0x90, 60, 100)
+                for _ in range(2): assert dll.c3d_process(host, None, None, out_l, out_r, 256)
+                assert sum(abs(v) for v in out_l) / 256 > .2, 'MIDI note must reach native MIDI-to-CV gate'
+                assert midi(0x80, 60, 0)
+                for _ in range(2): assert dll.c3d_process(host, None, None, out_l, out_r, 256)
+                assert max(abs(v) for v in out_l) < .0001, 'MIDI note off must release gate'
+                assert midi(0x90, 60, 100)
+                assert dll.c3d_process(host, None, None, out_l, out_r, 256)
+                assert dll.c3d_midi_panic(host)
+                for _ in range(2): assert dll.c3d_process(host, None, None, out_l, out_r, 256)
+                assert max(abs(v) for v in out_l) < .0001, 'Panic must release held notes'
+                midi_verified = True
             print(json.dumps(dict(result='PASS', pid=os.getpid(), modules=2, cables=1,
                                   audio_rms=rms, audio_peak=peak, offline_seconds=2,
                                   processing_seconds=elapsed, patch_roundtrip=True,
-                                  direct_catalog_models=190, direct_actions_undo=True,
-                                  concurrent_ui_audio_blocks=len(blocks), silent_blocks=0)))
+                                  direct_catalog_models=len(catalog['models']), direct_actions_undo=True,
+                                  concurrent_ui_audio_blocks=len(blocks), silent_blocks=0, midi_gate_and_panic=midi_verified)))
     finally:
         dll.c3d_destroy(host)
     # A fresh lifetime must work after teardown, without stale context or registry.

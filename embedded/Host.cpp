@@ -33,6 +33,7 @@ bool requestMIDI() { return false; }
 #include <thread>
 #include <vector>
 #include <atomic>
+#include <array>
 #include "cardinal3d/Cardinal3DBridge.hpp"
 #define NANOSVGRAST_IMPLEMENTATION
 #include <nanosvgrast.h>
@@ -62,6 +63,11 @@ struct Host {
     CardinalPluginContext* context = nullptr;
     std::atomic_flag busy = ATOMIC_FLAG_INIT;
     std::atomic_flag audio_busy = ATOMIC_FLAG_INIT;
+    static constexpr uint32_t midi_capacity = 1024;
+    std::array<MidiEvent, midi_capacity> midi_queue{};
+    std::array<MidiEvent, midi_capacity + 16> midi_block{};
+    std::atomic<uint32_t> midi_write{0}, midi_read{0};
+    std::atomic<bool> midi_reset{false};
     Host(const char* path, const char* user, double rate, uint32_t frames)
         : bundle(path), block(frames), silence(frames, 0.f) {
         rack::asset::userDir = user;
@@ -181,6 +187,33 @@ const uint8_t* c3d_surface_rgba(void* ptr, uint32_t* width, uint32_t* height) {
     *width = h->surface_width; *height = h->surface_height;
     return h->surface.data();
 }
+int c3d_push_midi(void* ptr, const uint8_t* bytes, uint32_t size) {
+    Host* h = checked(ptr);
+    if (!h || !owner(h) || !bytes || !size || size > 3 || bytes[0] < 0x80) return 0;
+    const uint8_t status = bytes[0];
+    const uint32_t expected = status < 0xf0 ? ((status & 0xe0) == 0xc0 ? 2 : 3)
+        : status >= 0xf8 || status == 0xf6 ? 1 : status == 0xf2 ? 3 : status == 0xf1 || status == 0xf3 ? 2 : 0;
+    if (size != expected) return 0; // SysEx is not supported by this short-message queue.
+    for (uint32_t i = 1; i < size; ++i) if (bytes[i] >= 0x80) return 0;
+    const uint32_t write = h->midi_write.load(std::memory_order_relaxed);
+    const uint32_t next = (write + 1) % Host::midi_capacity;
+    if (next == h->midi_read.load(std::memory_order_acquire)) {
+        h->midi_reset.store(true, std::memory_order_release); // Never leave notes stuck on overflow.
+        h->error = "MIDI input queue overflow; notes will be released";
+        return 0;
+    }
+    auto& event = h->midi_queue[write];
+    event.frame = 0; event.size = size; event.dataExt = nullptr;
+    std::copy(bytes, bytes + size, event.data);
+    h->midi_write.store(next, std::memory_order_release);
+    return 1;
+}
+int c3d_midi_panic(void* ptr) {
+    Host* h = checked(ptr);
+    if (!h || !owner(h)) return 0;
+    h->midi_reset.store(true, std::memory_order_release);
+    return 1;
+}
 const uint8_t* c3d_panel_rgba(void* ptr, const char* id, uint32_t* width, uint32_t* height) {
     if (!id || !width || !height) return nullptr;
     *width = *height = 0;
@@ -217,7 +250,22 @@ int c3d_process(void* ptr, const float* in_l, const float* in_r, float* out_l, f
     if (h->audio_busy.test_and_set(std::memory_order_acquire)) return 0;
     const float* inputs[] = {in_l ? in_l : h->silence.data(), in_r ? in_r : h->silence.data()};
     float* outputs[] = {out_l, out_r};
-    try { h->plugin->run(inputs, outputs, frames, nullptr, 0); }
+    uint32_t count = 0;
+    uint32_t read = h->midi_read.load(std::memory_order_relaxed);
+    const uint32_t write = h->midi_write.load(std::memory_order_acquire);
+    if (h->midi_reset.exchange(false, std::memory_order_acq_rel)) {
+        read = write;
+        for (uint32_t channel = 0; channel < 16; ++channel) {
+            auto& event = h->midi_block[count++];
+            event.frame = 0; event.size = 3; event.dataExt = nullptr;
+            event.data[0] = 0xb0 | channel; event.data[1] = 123; event.data[2] = 0;
+        }
+    }
+    while (read != write && count < h->midi_block.size()) {
+        h->midi_block[count++] = h->midi_queue[read]; read = (read + 1) % Host::midi_capacity;
+    }
+    h->midi_read.store(read, std::memory_order_release);
+    try { h->plugin->run(inputs, outputs, frames, count ? h->midi_block.data() : nullptr, count); }
     catch (...) {
         std::fill(out_l, out_l + frames, 0.f); std::fill(out_r, out_r + frames, 0.f);
         h->audio_busy.clear(std::memory_order_release); return 0;

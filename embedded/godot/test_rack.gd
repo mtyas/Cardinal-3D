@@ -19,9 +19,35 @@ func _run():
 	assert(scene.bridge.audio_playback.get_playback_position() > 0.05)
 	if OS.get_environment("CARDINAL_EMBEDDED_REQUIRE_GRAPHICS") == "1":
 		assert(scene.bridge.native_surface_count >= 2, "Native drawing must update multiple modules")
-	assert(scene.bridge.shutdown())
+	var audio_settings = scene.settings_panel.find_child("EmbeddedAudioSettings", true, false)
+	assert(audio_settings != null and audio_settings.output_picker.item_count >= 1, "Embedded audio routing must be available")
+	scene.bridge.send_command("add", {"plugin": "Fundamental", "model": "VCA-1"})
+	for _attempt in range(40):
+		if scene.modules.size() == 7: break
+		await create_timer(0.05).timeout
+	assert(scene.modules.size() == 7)
+	for _attempt in range(30):
+		if scene.bridge.shutdown(): break
+		await process_frame
+	assert(scene.bridge.closed and scene.bridge.recovery_saved)
+	assert(FileAccess.file_exists(scene.bridge.recovery_path), "Shutdown must preserve the changed patch")
 	print("PASS: embedded 3D starter rack; six original panels; cables; native audio; no TCP")
 	get_root().remove_child(scene)
 	scene.queue_free()
 	await process_frame
+	var restored = load("res://main.tscn").instantiate()
+	get_root().add_child(restored)
+	for _attempt in range(40):
+		if restored.modules.size() == 7 and restored.bridge.audio_playback != null and restored.bridge.audio_playback.get_playback_position() > 0.05: break
+		await create_timer(0.05).timeout
+	assert(restored.modules.size() == 7, "Recovery must reload the actual changed patch")
+	for _attempt in range(30):
+		if restored.bridge.shutdown(): break
+		await process_frame
+	assert(restored.bridge.closed and restored.bridge.recovery_saved)
+	assert(FileAccess.file_exists(restored.bridge.recovery_path + ".bak"), "Replacing recovery must retain a previous copy")
+	get_root().remove_child(restored)
+	restored.queue_free()
+	await process_frame
+	print("PASS: embedded audio output settings and patch recovery across restart")
 	quit(0)

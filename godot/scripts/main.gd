@@ -186,6 +186,11 @@ func _build_ui() -> void:
 	root.add_child(settings_panel)
 	var settings_column := VBoxContainer.new()
 	settings_panel.add_child(settings_column)
+	if OS.get_environment("CARDINAL_3D_EMBEDDED") == "1":
+		var audio_settings = load("res://scripts/embedded_audio_settings.gd").new()
+		audio_settings.name = "EmbeddedAudioSettings"
+		audio_settings.backend = bridge
+		settings_column.add_child(audio_settings)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toolbar.add_child(spacer)

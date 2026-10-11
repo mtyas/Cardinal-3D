@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "validated_date": "2026-10-11",
+  "models": 1412,
+  "registered_plugin_families": 84,
+  "knob_controls": 11121,
+  "original_svg_knob_colours": 9387,
+  "native_custom_knob_faces": 1734,
+  "custom_controls": 674,
+  "attached_to_audio_during_factory_audit": false,
+  "all_module_gpu_drawing_verified": false,
+  "physical_headset_latency_verified": false
+}
