@@ -22,8 +22,11 @@ shader_type spatial;
 varying vec3 local_pos;
 void vertex() { local_pos = VERTEX; }
 void fragment() {
-    float grain = sin(local_pos.y * 680.0 + sin(local_pos.z * 25.0) * 4.0 + sin(local_pos.y * 37.0) * 2.0);
+    float phase = local_pos.y * 680.0 + sin(local_pos.z * 25.0) * 4.0 + sin(local_pos.y * 37.0) * 2.0;
+    float footprint = fwidth(phase);
+    float grain = sin(phase) * exp(-footprint * footprint * 0.2);
     float pores = fract(sin(dot(floor(local_pos.yz * vec2(2800.0, 140.0)), vec2(12.9898, 78.233))) * 43758.5453);
+    pores = mix(pores, 0.5, smoothstep(0.5, 1.5, fwidth(local_pos.y * 2800.0)));
     float tone = clamp(0.5 + grain * 0.18 + pores * 0.12, 0.0, 1.0);
     ALBEDO = mix(vec3(0.12, 0.052, 0.023), vec3(0.32, 0.16, 0.072), tone);
     ROUGHNESS = 0.38 + pores * 0.12;

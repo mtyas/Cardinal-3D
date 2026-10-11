@@ -228,7 +228,7 @@ func run() -> void:
 	session.interact("left", pose(true), {"kind": "case", "world": Vector3.ZERO})
 	session.interact("left", pose(true, Vector3(0.1, 0, 0)), {})
 	session.interact("left", pose(false), {})
-	check(session.spatial.position.is_equal_approx(Vector3(0.1, 0, 0)) and host.bridge.commands.size() == count, "Grabbing the case changes scene placement without patch commands")
+	check(session.spatial.position == Vector3.ZERO and host.bridge.commands.size() == count, "Performance mode must lock case placement without patch commands")
 	check(session.selected_module.is_empty() and not module.selection_strip.visible, "Clicking the case must deselect the module")
 	hit.control = {"kind": "knob"}
 	session.interact("left", pose(true), hit)

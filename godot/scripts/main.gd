@@ -50,6 +50,12 @@ var magnet_latched := ""
 var focus_binding: Dictionary = {}
 var header_panel: PanelContainer
 var settings_panel: PanelContainer
+var settings_scroll: ScrollContainer
+var settings_column: VBoxContainer
+var rack_layout
+var immersive_environment
+var pending_layout_load := {}
+var layout_restore_path := ""
 var settings_button: Button
 var toolbar: HBoxContainer
 var path_edit: LineEdit
@@ -120,6 +126,9 @@ func _ready() -> void:
 	add_child(camera)
 	_update_camera()
 	_build_ui()
+	immersive_environment = load("res://scripts/immersive_environment.gd").new()
+	add_child(immersive_environment)
+	immersive_environment.setup(self)
 	get_tree().auto_accept_quit = false
 	if OS.get_environment("CARDINAL_3D_XR") == "1":
 		xr_session = load("res://scripts/xr_session.gd").new()
@@ -184,8 +193,14 @@ func _build_ui() -> void:
 	settings_panel.position = Vector2(16, 62)
 	settings_panel.visible = false
 	root.add_child(settings_panel)
-	var settings_column := VBoxContainer.new()
-	settings_panel.add_child(settings_column)
+	settings_panel.custom_minimum_size = Vector2(600, 700)
+	settings_panel.size = Vector2(600, 700)
+	settings_scroll = ScrollContainer.new()
+	settings_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	settings_panel.add_child(settings_scroll)
+	settings_column = VBoxContainer.new()
+	settings_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_scroll.add_child(settings_column)
 	if OS.get_environment("CARDINAL_3D_EMBEDDED") == "1":
 		var audio_settings = load("res://scripts/embedded_audio_settings.gd").new()
 		audio_settings.name = "EmbeddedAudioSettings"
@@ -233,6 +248,7 @@ func _build_ui() -> void:
 	settings_column.add_child(lighting_bar)
 	var lighting_label := Label.new()
 	lighting_label.text = "Lighting"
+	lighting_label.hide()
 	lighting_bar.add_child(lighting_label)
 	lighting_picker = OptionButton.new()
 	for preset in LIGHTING_PRESETS:
@@ -241,6 +257,7 @@ func _build_ui() -> void:
 		lighting_preset = index
 		_apply_lighting())
 	lighting_bar.add_child(lighting_picker)
+	lighting_picker.hide()
 	var brightness_label := Label.new()
 	brightness_label.text = "Exposure"
 	lighting_bar.add_child(brightness_label)
@@ -304,7 +321,12 @@ func _build_ui() -> void:
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
 	dialog.filters = PackedStringArray(["*.vcv ; Cardinal patch"])
 	dialog.use_native_dialog = false
-	dialog.file_selected.connect(func(path: String): bridge.send_command("save" if dialog.file_mode == FileDialog.FILE_MODE_SAVE_FILE else "load", {"path": path}))
+	dialog.file_selected.connect(func(path: String):
+		var saving := dialog.file_mode == FileDialog.FILE_MODE_SAVE_FILE
+		var request := bridge.send_command("save" if saving else "load", {"path": path})
+		if rack_layout != null:
+			if saving: rack_layout.save(path + ".3d.json")
+			else: pending_layout_load[request] = path)
 	root.add_child(dialog)
 	module_browser = ModuleBrowser.new()
 	root.add_child(module_browser)
@@ -387,7 +409,12 @@ func _on_message(message: Dictionary) -> void:
 						if control.get("visible", true): tooltip.text = _focus_text(control)
 						else: _clear_focus()
 						break
-			rack_case.sync(message.get("modules", []))
+			if rack_layout != null:
+				if not layout_restore_path.is_empty():
+					rack_layout.restore_from(layout_restore_path)
+					layout_restore_path = ""
+				else: rack_layout.sync()
+			else: rack_case.sync(message.get("modules", []))
 			_rebuild_cables(message.get("cables", []))
 			_pending_wire()
 			if reset:
@@ -401,6 +428,10 @@ func _on_message(message: Dictionary) -> void:
 			# Never flash a cached full scene while waiting for a new context menu.
 			overlay.visible = next_mode != "none" and overlay_surface_mode == next_mode
 		"ack":
+			var request := int(message.get("request", -1))
+			if pending_layout_load.has(request):
+				if message.get("ok", false): layout_restore_path = pending_layout_load[request]
+				pending_layout_load.erase(request)
 			if not message.get("ok", false):
 				status_label.text = "  " + str(message.get("error", "Command failed"))
 				status_timer = 5
@@ -439,7 +470,7 @@ func _on_surface(header: Dictionary, image: Image) -> void:
 func _rebuild_cables(descriptions: Array) -> void:
 	var positions := []
 	for view: CardinalModuleView in modules.values():
-		positions.append([view.descriptor["id"], view.position.x, view.position.y])
+		positions.append([view.descriptor["id"], str(view.global_transform)])
 	var signature := JSON.stringify([descriptions, positions])
 	if signature == cable_signature:
 		return
@@ -560,6 +591,9 @@ func _frame_rack() -> void:
 	_update_camera()
 
 func _apply_lighting() -> void:
+	if immersive_environment != null:
+		immersive_environment.update_light()
+		return
 	var preset: Dictionary = LIGHTING_PRESETS[lighting_preset]
 	environment.background_color = Color(preset["background"])
 	environment.ambient_light_color = Color(preset["ambient"])

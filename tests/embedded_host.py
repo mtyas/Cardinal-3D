@@ -75,6 +75,14 @@ def main():
             vco = next(m for m in state['modules'] if m['model'] == 'VCO')
             assert any(p.get('body_color') for p in vco['controls'] if p['kind'] == 'knob')
             cable = state['cables'][0]
+            invalid_delete = dict(op='remove_many', request=90, generation=state['generation'], modules=['1', 'missing'])
+            invalid_messages = json.loads(dll.c3d_messages_json(host, json.dumps(invalid_delete).encode()))
+            assert not next(m for m in invalid_messages if m['type'] == 'ack')['ok']
+            assert len(json.loads(dll.c3d_patch_json(host))['modules']) == 2, 'Invalid rack deletion must be atomic'
+            command('remove_many', modules=['1', '2'])
+            assert not state['modules'] and not state['cables'], 'Rack deletion must remove its modules and attached cables'
+            command('undo')
+            assert len(state['modules']) == 2 and len(state['cables']) == 1, 'One undo must restore the whole deleted rack contents'
             command('disconnect_cable', cable_id=cable['id'], input_module=cable['input_module'], input_port=cable['input_port'])
             assert not state['cables']
             command('undo')
@@ -142,6 +150,28 @@ def main():
             after = json.loads(dll.c3d_patch_json(host))
             assert before['modules'] == after['modules']
             assert before['cables'] == after['cables']
+            mixer_faders_verified = False
+            if any(model['plugin'] == 'MindMeldModular' and model['model'] == 'MixMaster' for model in catalog['models']):
+                mixer_path = Path(scratch) / 'mixer.vcv'
+                mixer_path.write_text(json.dumps(dict(version='2.4.1', modules=[
+                    dict(id=1, plugin='MindMeldModular', model='MixMaster', pos=[0, 0], params=[])], cables=[])), encoding='utf-8')
+                assert dll.c3d_load(host, str(mixer_path).encode()), dll.c3d_error(host)
+                state = {}
+                command('hello', version=1)
+                sliders = [control for control in state['modules'][0]['controls'] if control['kind'] == 'slider']
+                assert len(sliders) >= 16, 'MixMaster faders must retain native slider semantics'
+                for slider in sliders[:2]:
+                    initial = slider['normalized']
+                    assert abs(slider['y'] - (slider['start_y'] + initial * (slider['end_y'] - slider['start_y']))) < .1, 'Aiming must follow the live fader handle'
+                    command('pointer', module='1', x=slider['x'], y=slider['y'], phase='down', button=0, mods=0)
+                    command('drag_delta', dx=0, dy=30, mods=0)
+                    command('release')
+                    changed = next(control for control in state['modules'][0]['controls'] if control['kind'] == 'slider' and control['id'] == slider['id'])
+                    assert abs(changed['normalized'] - initial) > .01, 'Captured MixMaster fader must respond to vertical dragging'
+                    command('undo')
+                    restored = next(control for control in state['modules'][0]['controls'] if control['kind'] == 'slider' and control['id'] == slider['id'])
+                    assert abs(restored['normalized'] - initial) < .001, 'Fader changes must retain native undo'
+                mixer_faders_verified = True
             midi_verified = False
             if any(model['plugin'] == 'Cardinal' and model['model'] == 'HostMIDI' for model in catalog['models']):
                 midi_path = Path(scratch) / 'midi.vcv'
@@ -170,7 +200,8 @@ def main():
                                   audio_rms=rms, audio_peak=peak, offline_seconds=2,
                                   processing_seconds=elapsed, patch_roundtrip=True,
                                   direct_catalog_models=len(catalog['models']), direct_actions_undo=True,
-                                  concurrent_ui_audio_blocks=len(blocks), silent_blocks=0, midi_gate_and_panic=midi_verified)))
+                                  concurrent_ui_audio_blocks=len(blocks), silent_blocks=0, midi_gate_and_panic=midi_verified,
+                                  mixmaster_faders=mixer_faders_verified)))
     finally:
         dll.c3d_destroy(host)
     # A fresh lifetime must work after teardown, without stale context or registry.

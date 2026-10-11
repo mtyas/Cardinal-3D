@@ -91,10 +91,38 @@ responsiveness remain acceptance work.
 
 Navigation: either joystick pans left/right and moves closer/farther. Hold a
 controller grip while moving the joystick up/down to raise/lower the viewpoint;
-left/right panning stays available. Navigation pauses during captured gestures
+grip plus left/right turns smoothly around the headset. Navigation pauses during captured gestures
 and floating menus, and the browser continues to use the stick for scrolling.
 Native module menus crop the floating panel to their actual clickable bounds.
 Audio/view settings keep the panel visible independently of the main menu.
+
+Long audio/MIDI and other option lists now use joystick up/down to scroll and
+highlight an item. Trigger confirms that highlight; merely scrolling does not
+change the device. The settings panel itself also scrolls with the joystick.
+MixMaster fader aiming follows the actual moving handle and accepts grabs
+along the track. Native tests check fader response and undo.
+
+Grip + B opens the main menu even when a module is selected. Choose **Racks &
+environment**, then enable **Layout mode** to unlock case placement. Add an
+empty rack beside the selected case; select a module title and send that module
+or its whole row to the chosen rack. Hold a case edge to move it and turn the
+controller to rotate it. Line, surrounding and vertical arrangements are also
+available. Disable layout mode for performance: case movement, creation and
+deletion are locked. All cases share the same patch and may connect by cables.
+Delete rack shows a warning with module and cable counts; confirmation removes
+the contents as one native undo action. Undo restores contents but not case
+placement. Clearing the last rack leaves an empty case. Patch saves write a
+neighboring `.vcv.3d.json` layout file; keep it with the patch when copying it.
+The last layout also survives ordinary recovery/restart.
+
+Seven lightweight stylized places are available: recording studio, forest,
+mountain summit, stage, warehouse, desert and flowery field. The time slider
+changes sunlight, sky and ambient light from midnight through the day.
+Environment and quality choices persist separately from the native patch.
+Balanced quality uses 2× MSAA; optional 4× and maximum-speed modes are available.
+Panel mipmaps/anisotropic filtering and spatial filtering of wood grain and
+display scanlines reduce shimmer without buffering live parameter updates.
+Actual headset presentation and performance still need a physical Quest test.
 
 The main menu's wrist-speed slider scales coarse knob rotation from 0.1× to
 12× and persists in the isolated `interaction.cfg`. It leaves push/pull fine

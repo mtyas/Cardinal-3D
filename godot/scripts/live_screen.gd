@@ -25,7 +25,9 @@ uniform bool meter = false;
 void fragment() {
     vec3 native = texture(panel_texture, region_uv.xy + UV * region_uv.zw).rgb;
     // Subtle optical detail only; all traces, readings and meter values are native.
-    float scan = meter ? 1.0 : 0.97 + 0.03 * cos(UV.y * pixel_height * 3.14159);
+    float phase = UV.y * pixel_height * 3.14159;
+    float footprint = fwidth(phase);
+    float scan = meter ? 1.0 : 0.97 + 0.03 * cos(phase) * exp(-footprint * footprint * 0.2);
     float edge = smoothstep(0.0, 0.015, min(min(UV.x, 1.0 - UV.x), min(UV.y, 1.0 - UV.y)));
     float sheen = pow(clamp(1.0 - abs(UV.x * 0.7 + UV.y - 0.28) * 9.0, 0.0, 1.0), 3.0) * 0.025;
     ALBEDO = vec3(0.015, 0.023, 0.03) + native * 0.04 + sheen;

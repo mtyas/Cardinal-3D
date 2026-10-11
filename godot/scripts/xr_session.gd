@@ -39,6 +39,7 @@ func _insertion_positions(view: CardinalModuleView, wanted: Vector2) -> Dictiona
 	var right := []
 	for other in host.modules.values():
 		if other == view or not is_equal_approx(float(other.descriptor.y), position.y): continue
+		if rack_layout != null and other.get_parent() != view.get_parent(): continue
 		if float(other.descriptor.x) < position.x: left.append(other)
 		else: right.append(other)
 	left.sort_custom(func(a, b): return float(a.descriptor.x) < float(b.descriptor.x))
@@ -66,7 +67,7 @@ func _rack_pointer(view: CardinalModuleView, sample: Dictionary) -> Variant:
 	var distance := normal.dot(parent.to_global(Vector3(0, 0, 0.04)) - sample.origin) / divisor
 	if distance < 0 or distance > 5: return null
 	var point := parent.to_local(sample.origin + direction * distance)
-	return Vector2(point.x / SCALE, -point.y / SCALE)
+	return Vector2(point.x / SCALE, -point.y / SCALE) + view.get_meta("rack_offset", Vector2.ZERO)
 var cable_target := {}
 var cable_target_time := 0
 
@@ -164,7 +165,8 @@ func _update_move_preview(view: CardinalModuleView, delta: Vector2) -> void:
 	var slots := _insertion_positions(view, proposed_position)
 	snapped_position = slots[str(view.descriptor.id)]
 	var size: Vector2 = (move_ghost.mesh as QuadMesh).size
-	move_ghost.position = Vector3(snapped_position.x * SCALE + size.x / 2, -snapped_position.y * SCALE - size.y / 2, 0.045)
+	var local_position: Vector2 = snapped_position - view.get_meta("rack_offset", Vector2.ZERO)
+	move_ghost.position = Vector3(local_position.x * SCALE + size.x / 2, -local_position.y * SCALE - size.y / 2, 0.045)
 	move_ghost.visible = proposed_position.distance_to(move_start) > 3
 	for id in neighbor_ghosts: neighbor_ghosts[id].hide()
 	if not move_ghost.visible: return
@@ -183,7 +185,8 @@ func _update_move_preview(view: CardinalModuleView, delta: Vector2) -> void:
 			neighbor_ghosts[id] = ghost
 		var ghost: MeshInstance3D = neighbor_ghosts[id]
 		var panel: QuadMesh = ghost.mesh
-		ghost.position = Vector3(slots[id].x * SCALE + panel.size.x / 2, -slots[id].y * SCALE - panel.size.y / 2, 0.035)
+		var slot: Vector2 = slots[id] - other.get_meta("rack_offset", Vector2.ZERO)
+		ghost.position = Vector3(slot.x * SCALE + panel.size.x / 2, -slot.y * SCALE - panel.size.y / 2, 0.035)
 		ghost.show()
 
 func _clear_move_preview() -> void:
@@ -209,6 +212,57 @@ var fine_distance := 0.0
 var fine_meter: Node3D
 var fine_marker: MeshInstance3D
 var fine_label: Label3D
+var popup_repeat := 0.0
+var popup_scrolled: PopupMenu
+var popup_release := false
+var rack_layout
+var turn_velocity := 0.0
+
+func _visible_popup(node: Node) -> PopupMenu:
+	for child in node.get_children(true):
+		var nested := _visible_popup(child)
+		if nested != null: return nested
+	if node is PopupMenu and node.visible: return node
+	return null
+
+func _window_bounds(node: Node) -> Rect2:
+	var bounds := Rect2()
+	for child in node.get_children(true):
+		var next := _window_bounds(child)
+		if next.has_area(): bounds = next if not bounds.has_area() else bounds.merge(next)
+	if node is Window and node.visible:
+		var rectangle := Rect2(Vector2(node.position), Vector2(node.size)).grow(8)
+		bounds = rectangle if not bounds.has_area() else bounds.merge(rectangle)
+	return bounds
+
+func _scroll_ui(axis: float, delta: float) -> void:
+	var popup := _visible_popup(ui_viewport)
+	if absf(axis) < STICK_DEADZONE:
+		popup_repeat = 0.0
+		return
+	if popup != null:
+		popup_repeat -= delta
+		if popup_repeat > 0: return
+		popup_repeat = lerpf(0.25, 0.09, absf(axis))
+		var direction := -1 if axis > 0 else 1
+		var index := popup.get_focused_item()
+		if index < 0: index = 0 if direction > 0 else popup.item_count - 1
+		else: index = clampi(index + direction, 0, popup.item_count - 1)
+		while index >= 0 and index < popup.item_count and (popup.is_item_disabled(index) or popup.is_item_separator(index)):
+			index += direction
+		if index >= 0 and index < popup.item_count:
+			popup.set_focused_item(index)
+			popup.scroll_to_item(index)
+			popup_scrolled = popup
+	elif host.settings_panel.visible and host.get("settings_scroll") != null:
+		host.settings_scroll.scroll_vertical -= int(axis * 500.0 * delta)
+	elif host.overlay.visible:
+		var event := InputEventMouseButton.new()
+		event.position = ui_position
+		event.button_index = MOUSE_BUTTON_WHEEL_UP if axis > 0 else MOUSE_BUTTON_WHEEL_DOWN
+		event.factor = absf(axis) * delta * 12.0
+		event.pressed = true
+		ui_viewport.push_input(event, true)
 
 func _load_interaction_settings() -> void:
 	var directory := OS.get_environment("CARDINAL_EMBEDDED_USER_DIR")
@@ -282,6 +336,10 @@ func setup(view) -> bool:
 	case_shape = BoxShape3D.new()
 	collision.shape = case_shape
 	case_body.add_child(collision)
+	rack_layout = load("res://scripts/rack_layout.gd").new()
+	add_child(rack_layout)
+	host.rack_layout = rack_layout
+	rack_layout.setup(self)
 	_make_ui()
 	for side in ["left", "right"]:
 		var controller := XRController3D.new()
@@ -382,6 +440,7 @@ func _make_ui() -> void:
 		["Undo", func(): host.bridge.send_command("undo")],
 		["Redo", func(): host.bridge.send_command("redo")],
 		["Bring rack here", func(): placed = false],
+		["Racks & environment", func(): main_menu.hide(); host.settings_panel.show()],
 		["Audio & view" if OS.get_environment("CARDINAL_3D_EMBEDDED") == "1" else "View & lighting", func(): host.settings_panel.visible = not host.settings_panel.visible],
 		["Control context menu", _context_menu],
 		["Close (B)", _close_ui]]:
@@ -406,6 +465,9 @@ func _refresh_ui() -> void:
 		ui_rect = host.overlay.get_global_rect().grow(8)
 	elif host.settings_panel.visible and not main_menu.visible and not host.module_browser.visible and not host.dialog.visible and not host.overlay.visible:
 		ui_rect = host.settings_panel.get_global_rect().grow(8)
+	var window_bounds := _window_bounds(ui_viewport) if visible_ui else Rect2()
+	if window_bounds.has_area(): ui_rect = ui_rect.merge(window_bounds)
+	ui_rect = ui_rect.intersection(Rect2(0, 0, 1440, 900))
 	var size := ui_rect.size * (1.2 / 1440.0)
 	(ui_panel.mesh as QuadMesh).size = size
 	(ui_collision.shape as BoxShape3D).size = Vector3(size.x, size.y, 0.005)
@@ -427,10 +489,10 @@ func _close_ui() -> void:
 	host.bridge.send_command("escape")
 	_refresh_ui()
 
-func _toggle_menu() -> void:
+func _toggle_menu(force_main := false) -> void:
 	if host.overlay.visible: _close_ui(); return
 	if main_menu.visible: _close_ui(); return
-	if _valid_selection():
+	if _valid_selection() and not force_main:
 		_context_menu(selected_module)
 		return
 	cancel()
@@ -450,13 +512,13 @@ func _toggle_browser() -> void:
 	host.module_browser.show_browser()
 	_refresh_ui()
 
-func _menu_buttons(side: String, browse: bool, menu: bool) -> void:
+func _menu_buttons(side: String, browse: bool, menu: bool, force_main := false) -> void:
 	var previous: Dictionary = button_states.get(side, {"browse": false, "menu": false})
 	if browse and not previous.browse:
 		_toggle_browser()
 		print("XR browser button received: ", side)
 	if menu and not previous.menu:
-		_toggle_menu()
+		_toggle_menu(force_main)
 		print("XR menu button received: ", side, "; main=", main_menu.visible, "; module=", host.overlay.visible, "; selected=", _valid_selection())
 		_record_menu_frame()
 	button_states[side] = {"browse": browse, "menu": menu}
@@ -488,6 +550,9 @@ func _sync_layout() -> void:
 		var facing := Basis(Vector3.UP, headset.global_rotation.y)
 		spatial.transform = Transform3D(facing, headset.global_position + facing * Vector3(0.25, -0.2, -1.1) - facing * host.target)
 		placed = true
+	if rack_layout != null:
+		rack_layout.sync()
+		return
 	var bounds: Rect2 = host.rack_case.bounds
 	var key := str(bounds)
 	if key != layout_key and bounds.has_area():
@@ -536,22 +601,35 @@ func _move_player(stick: Vector2, _unused_turn: float, delta: float, vertical :=
 	# Do not move the player under a held knob, cable, module or floating menu.
 	if not gesture_owner.is_empty():
 		move_velocity = Vector3.ZERO
+		turn_velocity = 0.0
 		return
 	if host.module_browser.visible:
 		move_velocity = Vector3.ZERO
+		turn_velocity = 0.0
 		host.module_browser.scroll_vr(stick.y, delta)
 		return
 	if is_instance_valid(ui_panel) and ui_panel.visible:
 		move_velocity = Vector3.ZERO
+		turn_velocity = 0.0
+		_scroll_ui(stick.y, delta)
 		return
 	var amount := stick.length()
 	var desired := Vector3.ZERO
 	if amount > STICK_DEADZONE:
 		var input := stick.normalized() * minf((amount - STICK_DEADZONE) / (1.0 - STICK_DEADZONE), 1.0)
 		var facing := Basis(Vector3.UP, headset.global_rotation.y)
-		desired = facing * (Vector3(input.x, input.y, 0) if vertical else Vector3(input.x, 0, -input.y)) * MOVE_SPEED
+		desired = facing * (Vector3(0, input.y, 0) if vertical else Vector3(input.x, 0, -input.y)) * MOVE_SPEED
+		if vertical:
+			turn_velocity = lerpf(turn_velocity, -input.x * 0.9, 1.0 - exp(-12.0 * delta))
+	if not vertical: turn_velocity = 0.0
+	elif amount <= STICK_DEADZONE:
+		turn_velocity = lerpf(turn_velocity, 0.0, 1.0 - exp(-12.0 * delta))
+	if absf(turn_velocity) > 0.0001:
+		var pivot := headset.global_position
+		origin.rotate_y(turn_velocity * delta)
+		origin.global_position += pivot - headset.global_position
 	# Changing grip mode must not keep drifting along the previous axis.
-	if vertical: move_velocity.z = 0
+	if vertical: move_velocity = Vector3(0, move_velocity.y, 0)
 	else: move_velocity.y = 0
 	var blend := 1.0 - exp(-12.0 * delta)
 	move_velocity = move_velocity.lerp(desired, blend)
@@ -576,7 +654,7 @@ func _hit(from: Vector3, direction: Vector3) -> Dictionary:
 		var local := ui_panel.to_local(hit["position"])
 		var size: Vector2 = (ui_panel.mesh as QuadMesh).size
 		return {"kind": "ui", "pixel": ui_rect.position + Vector2((local.x / size.x + 0.5) * ui_rect.size.x, (0.5 - local.y / size.y) * ui_rect.size.y), "world": hit["position"]}
-	if body.has_meta("xr_case"): return {"kind": "case", "world": hit["position"]}
+	if body.has_meta("xr_case"): return {"kind": "case", "rack_id": body.get_meta("rack_id", 0), "world": hit["position"]}
 	if not body.has_meta("module_view"): return {}
 	var view: CardinalModuleView = body.get_meta("module_view")
 	var pixel := view.pixel_at(hit["position"])
@@ -589,6 +667,11 @@ func _hit(from: Vector3, direction: Vector3) -> Dictionary:
 		if patching and not _compatible_socket({"kind": "module", "control": control}): continue
 		var candidate := Vector2(float(control["x"]), float(control["y"]))
 		var distance := pixel.distance_to(candidate)
+		if control.kind == "slider":
+			var start_point := Vector2(float(control.get("start_x", candidate.x)), float(control.get("start_y", candidate.y)))
+			var end_point := Vector2(float(control.get("end_x", candidate.x)), float(control.get("end_y", candidate.y)))
+			var nearest := Geometry2D.get_closest_point_to_segment(pixel, start_point, end_point)
+			distance = pixel.distance_to(nearest)
 		if distance < separation:
 			separation = distance
 			closest = control
@@ -604,6 +687,7 @@ func _pointer(hit: Dictionary, phase: String, button: int = 0) -> void:
 	host._pending_wire()
 
 func _ui_motion(pixel: Vector2, pressed: bool) -> void:
+	if is_instance_valid(popup_scrolled) and popup_scrolled.visible: return
 	var event := InputEventMouseMotion.new()
 	event.position = pixel
 	event.relative = pixel - ui_position
@@ -612,6 +696,19 @@ func _ui_motion(pixel: Vector2, pressed: bool) -> void:
 	ui_viewport.push_input(event, true)
 
 func _ui_button(pixel: Vector2, pressed: bool) -> void:
+	if popup_release and not pressed:
+		popup_release = false
+		return
+	if pressed and is_instance_valid(popup_scrolled) and popup_scrolled.visible:
+		var index := popup_scrolled.get_focused_item()
+		if index >= 0:
+			var popup := popup_scrolled
+			popup_scrolled = null
+			popup_release = true
+			popup.hide()
+			popup.index_pressed.emit(index)
+			popup.id_pressed.emit(popup.get_item_id(index))
+			return
 	var event := InputEventMouseButton.new()
 	event.position = pixel
 	event.button_index = MOUSE_BUTTON_LEFT
@@ -619,6 +716,7 @@ func _ui_button(pixel: Vector2, pressed: bool) -> void:
 	ui_viewport.push_input(event, true)
 
 func cancel() -> void:
+	if rack_layout != null: rack_layout.end_grab()
 	if fine_meter != null: fine_meter.hide()
 	cable_target.clear()
 	_clear_move_preview()
@@ -678,6 +776,8 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 			"case":
 				if is_instance_valid(selected_module.get("view")): selected_module.view.set_selected(false)
 				selected_module.clear()
+				if rack_layout != null and rack_layout.layout_mode:
+					rack_layout.begin_grab(hit.get("rack_id", 0), sample)
 			"module":
 				capture["generation"] = host.generation
 				capture["module"] = str(hit["view"].descriptor["id"])
@@ -695,6 +795,8 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 	elif finish and gesture_owner == side:
 		if fine_meter != null: fine_meter.hide()
 		match capture.get("kind", ""):
+			"case":
+				if rack_layout != null: rack_layout.end_grab()
 			"ui": _ui_button(hit.get("pixel", ui_position) if hit.get("kind") == "ui" else ui_position, false)
 			"module":
 				if capture["move"]:
@@ -720,7 +822,8 @@ func interact(side: String, sample: Dictionary, hit: Dictionary) -> void:
 		host._pending_wire()
 	elif pressed and gesture_owner == side:
 		match capture.get("kind", ""):
-			"case": spatial.global_position += sample["position"] - last_position
+			"case":
+				if rack_layout != null and rack_layout.layout_mode: rack_layout.drag(sample, last_position)
 			"ui":
 				if hit.get("kind") == "ui": _ui_motion(hit["pixel"], true)
 			"module":
@@ -780,7 +883,8 @@ func _visual_target(side: String, hit: Dictionary) -> Dictionary:
 		return hit
 	var target := capture.duplicate()
 	if capture.get("move", false) and is_instance_valid(move_ghost) and move_ghost.visible:
-		target.world = move_ghost.get_parent().to_global(Vector3((snapped_position.x + capture.pixel.x) * SCALE, -(snapped_position.y + capture.pixel.y) * SCALE, 0.05))
+		var slot: Vector2 = snapped_position - capture.view.get_meta("rack_offset", Vector2.ZERO)
+		target.world = move_ghost.get_parent().to_global(Vector3((slot.x + capture.pixel.x) * SCALE, -(slot.y + capture.pixel.y) * SCALE, 0.05))
 		return target
 	var pixel: Vector2 = capture["pixel"]
 	target["world"] = capture["view"].to_global(Vector3(pixel.x * SCALE, -pixel.y * SCALE, 0.04))
@@ -797,7 +901,7 @@ func _physics_process(delta: float) -> void:
 	was_focused = true
 	for side: String in devices:
 		var controller: XRController3D = devices[side]["controller"]
-		_menu_buttons(side, controller.is_button_pressed("ax_button"), controller.is_button_pressed("by_button"))
+		_menu_buttons(side, controller.is_button_pressed("ax_button"), controller.is_button_pressed("by_button"), controller.get_float("grip") > 0.5 or controller.is_button_pressed("grip_click"))
 		var sample := _sample(side)
 		var hit := {} if sample.is_empty() else _hit(sample["origin"], sample["direction"])
 		interact(side, sample, hit)

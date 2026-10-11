@@ -181,6 +181,9 @@ func update_state(data: Dictionary) -> void:
 			mat.emission = emission
 
 func apply_surface(image: Image) -> void:
+	# Spatial mipmaps suppress shimmering at distance and oblique angles without
+	# buffering controller changes or delaying live control/LED updates.
+	if not image.has_mipmaps(): image.generate_mipmaps()
 	if texture == null:
 		texture = ImageTexture.create_from_image(image)
 		var mat := StandardMaterial3D.new()
@@ -188,7 +191,7 @@ func apply_surface(image: Image) -> void:
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 		mat.metallic = 0.22
 		mat.roughness = 0.48
-		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 		face.material_override = mat
 	else:
 		if texture.get_width() == image.get_width() and texture.get_height() == image.get_height():

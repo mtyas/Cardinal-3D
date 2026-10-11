@@ -261,6 +261,10 @@ class Bridge {
                 if (auto* sw = dynamic_cast<app::Switch*>(w))
                     json_object_set_new(control, "momentary", json_boolean(sw->momentary));
                 if (auto* slider = dynamic_cast<app::SvgSlider*>(w)) {
+                    // Slider aiming follows its moving handle, not the centre of
+                    // the whole track (which can be far away on mixer faders).
+                    const auto handleCenter = slider->getRelativeOffset(slider->handle->box.pos.plus(slider->handle->box.size.div(2)), mw);
+                    real(control, "x", handleCenter.x); real(control, "y", handleCenter.y);
                     const auto start = slider->getRelativeOffset(slider->minHandlePos.plus(slider->handle->box.size.div(2)), mw);
                     const auto end = slider->getRelativeOffset(slider->maxHandlePos.plus(slider->handle->box.size.div(2)), mw);
                     real(control, "start_x", start.x); real(control, "start_y", start.y);
@@ -491,6 +495,29 @@ class Bridge {
             release(); auto* mw = module(text(cmd, "module"));
             if (!mw) throw std::runtime_error("Module was removed");
             mw->removeAction();
+        } else if (op == "remove_many") {
+            release();
+            auto* ids = json_object_get(cmd, "modules");
+            if (!json_is_array(ids)) throw std::runtime_error("Module list required");
+            std::vector<app::ModuleWidget*> targets;
+            size_t index; json_t* value;
+            json_array_foreach(ids, index, value) {
+                if (!json_is_string(value)) throw std::runtime_error("Invalid module id");
+                auto* mw = module(json_string_value(value));
+                if (!mw) throw std::runtime_error("Module was removed; try again");
+                targets.push_back(mw);
+            }
+            // Validate everything before deleting anything. Upstream selection
+            // deletion records modules and attached cables as one undo action.
+            auto* rack = APP->scene->rack;
+            std::vector<std::string> previous;
+            for (auto* mw : rack->getSelected()) previous.push_back(std::to_string(mw->module->id));
+            rack->deselectAll();
+            for (auto* mw : targets) rack->select(mw);
+            if (!targets.empty()) rack->deleteSelectionAction();
+            rack->deselectAll();
+            for (const auto& id : previous) if (auto* mw = module(id)) rack->select(mw);
+            rack->updateExpanders();
         } else if (op == "patch_cable") {
             release();
             auto* output = module(text(cmd, "output_module"));
