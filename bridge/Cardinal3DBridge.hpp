@@ -663,21 +663,36 @@ public:
         if (enabled || localMessages) throw std::runtime_error("Bridge is not an idle local host");
         json_error_t error;
         json_t* cmd = request.empty() ? nullptr : json_loadb(request.data(), request.size(), JSON_REJECT_DUPLICATES, &error);
-        if (!request.empty() && !json_is_object(cmd)) {
+        if (!request.empty() && !json_is_object(cmd) && !json_is_array(cmd)) {
             if (cmd) json_decref(cmd);
             throw std::runtime_error("Invalid local command JSON");
         }
+        std::vector<json_t*> batch;
+        if (json_is_array(cmd)) {
+            if (json_array_size(cmd) > 8) {
+                json_decref(cmd); throw std::runtime_error("Local batch exceeds eight commands");
+            }
+            size_t index; json_t* item;
+            json_array_foreach(cmd, index, item) {
+                if (!json_is_object(item)) {
+                    json_decref(cmd); throw std::runtime_error("Invalid local batch command");
+                }
+                batch.push_back(item);
+            }
+        } else if (cmd) batch.push_back(cmd);
         localMessages = json_array();
         try {
             refreshTopology();
-            if (cmd) {
+            for (auto* item : batch) {
                 try {
-                    command(cmd); refreshTopology();
-                    if (text(cmd, "op") == "describe_library") scanCommand = json_incref(cmd);
-                    else ack(cmd);
+                    command(item); refreshTopology();
+                    if (text(item, "op") == "describe_library") scanCommand = json_incref(item);
+                    else ack(item);
                 }
-                catch (const std::exception& e) { ack(cmd, e.what()); }
+                catch (const std::exception& e) { ack(item, e.what()); }
             }
+            // Controller actions keep their ordering and individual acknowledgments,
+            // but the scene and live descriptors only update once per rendered frame.
             APP->scene->step();
             scanStep();
             const std::string mode = overlayMode();

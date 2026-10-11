@@ -82,3 +82,10 @@ render scheduling, hardware VR input validation, immutable state/command
 queue/state optimization, complete audio/MIDI and host settings UI, acceptance
 of plugin-specific menu actions, and hardware latency comparisons. The existing VR launcher deliberately
 continues using the tested two-process build until these acceptance checks pass.
+
+Direct commands may be a single object or an array of up to eight objects.
+Arrays execute in order, retain individual acknowledgments, and produce one
+final scene step/snapshot. The frontend uses this path once per frame. Invalid
+array members are rejected before execution; ordinary command errors are
+reported per action. `scripts/benchmark_embedded_commands.py` measures this
+owner-thread overhead with the six-module starter, without audio or XR.

@@ -70,6 +70,15 @@ gate/panic, original GL artwork and menus, and Godot headless/desktop startup an
 recovery checks pass. The concurrent UI/audio check processed more than 4,500
 blocks without silent blocks. These checks do not measure headset latency.
 
+The direct frontend now batches up to eight ordered controller commands and
+produces one scene step and snapshot per frame. Individual acknowledgments and
+native history are preserved; malformed batches are rejected before any action.
+In an interleaved six-module benchmark, eight separate commands plus the former
+extra state poll took a median 8.15 ms, versus 0.93 ms for one batch (88.6% less
+owner-thread work). Audio was stopped for this benchmark; it does not measure
+headset latency. The native cable/undo batch check and full embedded graphics,
+audio and recovery checks pass after the change.
+
 In this PC's workspace, run `Build standalone locally.bat` to build, verify and
 copy the result into a fresh runtime directory. `Launch standalone Quest test.bat`
 starts that saved copy with Quest Link. It launches only Godot with Cardinal's

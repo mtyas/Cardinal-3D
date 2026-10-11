@@ -83,6 +83,20 @@ def main():
             assert len(state['modules']) == 3
             command('undo')
             assert len(state['modules']) == 2
+            # Each queued action must keep its own acknowledgment/history while
+            # producing just one final live snapshot. Invalid batches are atomic.
+            batch = [dict(op='disconnect_cable', request=20, generation=state['generation'],
+                          cable_id=cable['id'], input_module=cable['input_module'], input_port=cable['input_port']),
+                     dict(op='undo', request=21, generation=state['generation'])]
+            assert not dll.c3d_messages_json(host, json.dumps([batch[0], None]).encode())
+            assert before == json.loads(dll.c3d_patch_json(host)), 'Malformed batch must not execute its first action'
+            response = dll.c3d_messages_json(host, json.dumps(batch).encode())
+            assert response, dll.c3d_error(host)
+            messages = json.loads(response)
+            acks = [m for m in messages if m['type'] == 'ack']
+            assert [m['request'] for m in acks] == [20, 21] and all(m['ok'] for m in acks), acks
+            assert len([m for m in messages if m['type'] == 'snapshot']) == 1
+            assert len(next(m for m in messages if m['type'] == 'snapshot')['cables']) == 1
             out_l, out_r = (c.c_float * 256)(), (c.c_float * 256)()
             assert not dll.c3d_process(host, None, None, out_l, out_r, 257)
             assert not dll.c3d_process(host, None, None, None, out_r, 256)

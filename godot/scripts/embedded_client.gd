@@ -59,13 +59,13 @@ func send_command(operation: String, data: Dictionary = {}) -> int:
 
 func _process(delta: float) -> void:
 	if not connected: return
-	for _index in range(mini(commands.size(), 8)):
-		var result: String = native.messages_json(JSON.stringify(commands[0]))
-		if result.is_empty(): break # Retry a temporarily unavailable owner operation.
-		commands.pop_front()
-		_ingest(result)
-	var state: String = native.messages_json("")
-	if not state.is_empty(): _ingest(state)
+	var count := mini(commands.size(), 8)
+	var batch := commands.slice(0, count)
+	# One native scene step and snapshot, including on frames without commands.
+	var state: String = native.messages_json(JSON.stringify(batch))
+	if not state.is_empty():
+		for _index in range(count): commands.pop_front()
+		_ingest(state)
 	_load_panels(1)
 	var header_text: String = native.render_surface()
 	if not header_text.is_empty():
